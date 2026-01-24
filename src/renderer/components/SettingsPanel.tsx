@@ -250,7 +250,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                 {t.appName}
               </p>
               <p className="mt-1 text-sm text-warm-500 dark:text-warm-400">
-                {t.version} 0.1.3
+                {t.version} 0.1.4
               </p>
             </div>
           </section>

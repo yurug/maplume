@@ -1,13 +1,11 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
-  LineChart,
   Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   ReferenceLine,
   Area,
@@ -320,15 +318,6 @@ export function ProgressChart({
               />
 
               <Tooltip content={<CustomTooltip t={t} />} />
-
-              <Legend
-                wrapperStyle={{ paddingTop: 20 }}
-                formatter={(value) => (
-                  <span className="text-sm text-warm-600 dark:text-warm-400">
-                    {value === 'actual' ? t.actual : t.target}
-                  </span>
-                )}
-              />
 
               {/* Target reference line */}
               <ReferenceLine
