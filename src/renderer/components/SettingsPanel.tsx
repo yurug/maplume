@@ -11,6 +11,7 @@ import {
   HardDrive,
   FileJson,
   AlertTriangle,
+  Info,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
@@ -116,7 +117,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
           <section className="space-y-4">
             <h3 className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-warm-500 dark:text-warm-400">
               <Sun className="h-4 w-4" />
-              Appearance
+              {t.appearance}
             </h3>
 
             {/* Dark Mode Toggle */}
@@ -130,9 +131,9 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                   )}
                 </div>
                 <div>
-                  <p className="font-medium text-warm-900 dark:text-warm-50">Dark Mode</p>
+                  <p className="font-medium text-warm-900 dark:text-warm-50">{t.darkMode}</p>
                   <p className="text-sm text-warm-500 dark:text-warm-400">
-                    {theme === 'dark' ? 'Currently using dark theme' : 'Currently using light theme'}
+                    {theme === 'dark' ? t.darkTheme : t.lightTheme}
                   </p>
                 </div>
               </div>
@@ -177,7 +178,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                 {t.currentFolder}
               </p>
               <p className="mb-3 truncate font-mono text-sm text-warm-500 dark:text-warm-400">
-                {localStorage.getItem('maplume-data-path') || 'Not set'}
+                {localStorage.getItem('maplume-data-path') || t.notSet}
               </p>
               <Button variant="secondary" size="sm" onClick={handleChangeFolder} className="gap-2">
                 <FolderOpen className="h-4 w-4" />
@@ -220,7 +221,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
             <p className="flex items-start gap-2 text-xs text-warm-500 dark:text-warm-400">
               <AlertTriangle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-              Import will merge with existing data
+              {t.importMergeWarning}
             </p>
           </section>
 
@@ -235,6 +236,23 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
               <Bug className="h-4 w-4" />
               {t.reportBug}
             </Button>
+          </section>
+
+          {/* About */}
+          <section className="space-y-4">
+            <h3 className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-warm-500 dark:text-warm-400">
+              <Info className="h-4 w-4" />
+              {t.about}
+            </h3>
+
+            <div className="rounded-lg border border-warm-200 p-4 dark:border-warm-700 text-center">
+              <p className="font-serif text-lg font-semibold text-warm-900 dark:text-warm-50">
+                {t.appName}
+              </p>
+              <p className="mt-1 text-sm text-warm-500 dark:text-warm-400">
+                {t.version} 0.1.1
+              </p>
+            </div>
           </section>
         </div>
 

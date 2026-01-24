@@ -74,7 +74,7 @@ export function WordEntryForm({ project, selectedDate, onDateChange }: WordEntry
             className="flex items-center gap-2 rounded-full bg-success-500 px-4 py-2 text-white shadow-lg"
           >
             <Sparkles className="h-5 w-5" />
-            <span className="font-medium">Words logged!</span>
+            <span className="font-medium">{t.wordsLogged}</span>
           </motion.div>
         </motion.div>
 

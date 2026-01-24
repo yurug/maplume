@@ -53,7 +53,7 @@ export function ProjectList({ onNewProject, onOpenSettings }: ProjectListProps) 
         </h2>
         <Button size="sm" onClick={onNewProject} className="gap-1.5 h-7 text-xs">
           <Plus className="h-3 w-3" />
-          New
+          {t.new}
         </Button>
       </div>
 

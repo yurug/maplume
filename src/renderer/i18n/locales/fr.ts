@@ -10,9 +10,13 @@ export default {
   chooseDataFolderDesc: 'Sélectionnez un dossier où MaPlume sauvegardera vos projets et votre progression. Cela peut être un dossier local ou un dossier synchronisé dans le cloud (comme Google Drive ou OneDrive).',
   selectFolder: 'Sélectionner un dossier',
   selecting: 'Sélection...',
+  featureTrackProjects: 'Suivez vos projets d\'écriture',
+  featureSetGoals: 'Fixez et atteignez vos objectifs',
+  featureVisualizeProgress: 'Visualisez votre progression',
 
   // Projects
   projects: 'Projets',
+  new: 'Nouveau',
   newProject: '+ Nouveau',
   noProjects: 'Aucun projet pour l\'instant. Créez-en un pour commencer !',
   showArchived: 'Afficher les archivés',
@@ -65,6 +69,11 @@ export default {
   wordsPerDay: 'mots/jour',
   day: 'jour',
   days: 'jours',
+  ofTargetWords: 'sur {target} mots',
+  showMore: 'Voir plus',
+  showLess: 'Voir moins',
+  wordsLogged: 'Mots enregistrés !',
+  wordsPerDayNeeded: 'Soit environ {count} mots par jour',
 
   // Entries
   showEntryHistory: 'Afficher l\'historique',
@@ -76,8 +85,13 @@ export default {
 
   // Settings
   settings: 'Paramètres',
+  appearance: 'Apparence',
+  darkMode: 'Mode sombre',
+  lightTheme: 'Thème clair activé',
+  darkTheme: 'Thème sombre activé',
   dataStorage: 'Stockage des données',
   currentFolder: 'Dossier actuel :',
+  notSet: 'Non défini',
   changeFolder: 'Changer de dossier',
   exportData: 'Exporter les données',
   exportAll: 'Exporter tous les projets',
@@ -87,11 +101,14 @@ export default {
   importConfirm: 'Cela remplacera vos données actuelles. Êtes-vous sûr ?',
   importError: 'Échec de lecture du fichier. Veuillez sélectionner un fichier JSON valide.',
   importInvalidFormat: 'Format de fichier invalide. Veuillez sélectionner un fichier d\'export MaPlume valide.',
+  importMergeWarning: 'L\'import fusionnera avec les données existantes',
   folderChanged: 'Dossier de données modifié. Vos données seront maintenant sauvegardées dans le nouvel emplacement.',
   help: 'Aide',
   reportBug: 'Signaler un bug',
   language: 'Langue',
   close: 'Fermer',
+  version: 'Version',
+  about: 'À propos',
 
   // Messages
   newMessage: 'Nouveau message',

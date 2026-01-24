@@ -181,7 +181,7 @@ export function StatisticsPanel({ stats }: StatisticsPanelProps) {
     {
       label: t.progress,
       value: `${stats.currentWordCount.toLocaleString()}`,
-      sub: `of ${stats.targetWords.toLocaleString()} words`,
+      sub: t.ofTargetWords.replace('{target}', stats.targetWords.toLocaleString()),
       icon: Target,
       trend: stats.percentComplete >= 50 ? 'up' : ('neutral' as const),
       highlight: stats.percentComplete >= 100,
@@ -296,12 +296,12 @@ export function StatisticsPanel({ stats }: StatisticsPanelProps) {
             {expanded ? (
               <>
                 <ChevronUp className="h-4 w-4" />
-                Show less
+                {t.showLess}
               </>
             ) : (
               <>
                 <ChevronDown className="h-4 w-4" />
-                Show more
+                {t.showMore}
               </>
             )}
           </Button>

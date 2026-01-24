@@ -25,9 +25,9 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
   };
 
   const features = [
-    { icon: BookOpen, label: 'Track your writing projects' },
-    { icon: Target, label: 'Set and achieve word count goals' },
-    { icon: TrendingUp, label: 'Visualize your progress' },
+    { icon: BookOpen, label: t.featureTrackProjects },
+    { icon: Target, label: t.featureSetGoals },
+    { icon: TrendingUp, label: t.featureVisualizeProgress },
   ];
 
   return (
