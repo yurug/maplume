@@ -170,14 +170,14 @@ export function ProjectForm({ project, onSave, onCancel, onArchive }: ProjectFor
             />
             <p className="text-xs text-warm-500 dark:text-warm-400">
               {parseInt(targetWords, 10) > 0 &&
-                `That's about ${Math.round(
+                t.wordsPerDayNeeded.replace('{count}', Math.round(
                   parseInt(targetWords, 10) /
                     Math.max(
                       1,
                       (new Date(endDate).getTime() - new Date(startDate).getTime()) /
                         (1000 * 60 * 60 * 24)
                     )
-                ).toLocaleString()} words per day`}
+                ).toLocaleString())}
             </p>
           </div>
 

@@ -10,9 +10,13 @@ export default {
   chooseDataFolderDesc: 'Select a folder where MaPlume will save your projects and progress. This can be a local folder or a cloud-synced folder (like Google Drive or OneDrive).',
   selectFolder: 'Select Folder',
   selecting: 'Selecting...',
+  featureTrackProjects: 'Track your writing projects',
+  featureSetGoals: 'Set and achieve word count goals',
+  featureVisualizeProgress: 'Visualize your progress',
 
   // Projects
   projects: 'Projects',
+  new: 'New',
   newProject: '+ New',
   noProjects: 'No projects yet. Create one to get started!',
   showArchived: 'Show archived',
@@ -65,6 +69,11 @@ export default {
   wordsPerDay: 'words/day',
   day: 'day',
   days: 'days',
+  ofTargetWords: 'of {target} words',
+  showMore: 'Show more',
+  showLess: 'Show less',
+  wordsLogged: 'Words logged!',
+  wordsPerDayNeeded: "That's about {count} words per day",
 
   // Entries
   showEntryHistory: 'Show Entry History',
@@ -76,8 +85,13 @@ export default {
 
   // Settings
   settings: 'Settings',
+  appearance: 'Appearance',
+  darkMode: 'Dark Mode',
+  lightTheme: 'Currently using light theme',
+  darkTheme: 'Currently using dark theme',
   dataStorage: 'Data Storage',
   currentFolder: 'Current folder:',
+  notSet: 'Not set',
   changeFolder: 'Change Folder',
   exportData: 'Export Data',
   exportAll: 'Export All Projects',
@@ -87,11 +101,14 @@ export default {
   importConfirm: 'This will replace your current data. Are you sure?',
   importError: 'Failed to read file. Please select a valid JSON file.',
   importInvalidFormat: 'Invalid file format. Please select a valid MaPlume export file.',
+  importMergeWarning: 'Import will merge with existing data',
   folderChanged: 'Data folder changed. Your data will now be saved to the new location.',
   help: 'Help',
   reportBug: 'Report a Bug',
   language: 'Language',
   close: 'Close',
+  version: 'Version',
+  about: 'About',
 
   // Messages
   newMessage: 'New message',
