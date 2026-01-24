@@ -1,4 +1,5 @@
 import type { AppData, Project, WordEntry, AppSettings } from '@shared/types';
+import { STORAGE_VERSION } from '@shared/types';
 
 const DATA_FILE = 'maplume-data.json';
 
@@ -13,9 +14,38 @@ function getDefaultSettings(): AppSettings {
 
 function getDefaultData(): AppData {
   return {
+    version: STORAGE_VERSION,
     projects: [],
     entries: [],
     settings: getDefaultSettings(),
+  };
+}
+
+/**
+ * Migrate data from older versions to the current version.
+ * Each migration function transforms data from version N to N+1.
+ */
+function migrateData(data: Record<string, unknown>): AppData {
+  let version = (data.version as number) || 0;
+
+  // Migration from v0 (no version field) to v1
+  if (version === 0) {
+    // v0 -> v1: Just add the version field, schema is otherwise compatible
+    version = 1;
+  }
+
+  // Add future migrations here:
+  // if (version === 1) {
+  //   // v1 -> v2 migration logic
+  //   version = 2;
+  // }
+
+  return {
+    ...data,
+    version: STORAGE_VERSION,
+    projects: (data.projects as Project[]) || [],
+    entries: (data.entries as WordEntry[]) || [],
+    settings: (data.settings as AppSettings) || getDefaultSettings(),
   };
 }
 
@@ -27,6 +57,14 @@ export async function loadData(dataPath: string): Promise<AppData> {
   const filePath = `${dataPath}/${DATA_FILE}`;
   const data = await window.electronAPI.readData(filePath);
   if (data) {
+    // Check if migration is needed
+    const loadedData = data as Record<string, unknown>;
+    if (!loadedData.version || loadedData.version !== STORAGE_VERSION) {
+      const migratedData = migrateData(loadedData);
+      // Save migrated data back to file
+      await saveData(dataPath, migratedData);
+      return migratedData;
+    }
     return data as AppData;
   }
   return getDefaultData();
