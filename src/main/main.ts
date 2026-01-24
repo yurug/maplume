@@ -30,11 +30,72 @@ function createWindow() {
   });
 }
 
+// Auto-updater configuration
+function setupAutoUpdater() {
+  // Disable auto-download - we'll handle it manually
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('update-available', (info) => {
+    dialog
+      .showMessageBox(mainWindow!, {
+        type: 'info',
+        title: 'Update Available',
+        message: `A new version (${info.version}) is available. Would you like to download it now?`,
+        buttons: ['Download', 'Later'],
+        defaultId: 0,
+      })
+      .then((result) => {
+        if (result.response === 0) {
+          autoUpdater.downloadUpdate();
+        }
+      });
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    dialog
+      .showMessageBox(mainWindow!, {
+        type: 'info',
+        title: 'Update Ready',
+        message: `Version ${info.version} has been downloaded. The application will restart to install the update.`,
+        buttons: ['Restart Now', 'Later'],
+        defaultId: 0,
+      })
+      .then((result) => {
+        if (result.response === 0) {
+          // Force quit and install - this ensures the app is fully closed
+          setImmediate(() => {
+            app.removeAllListeners('window-all-closed');
+            if (mainWindow) {
+              mainWindow.close();
+            }
+            autoUpdater.quitAndInstall(false, true);
+          });
+        }
+      });
+  });
+
+  autoUpdater.on('error', (error) => {
+    dialog.showMessageBox(mainWindow!, {
+      type: 'error',
+      title: 'Update Error',
+      message: `An error occurred while updating: ${error.message}`,
+      buttons: ['OK'],
+    });
+  });
+
+  // Check for updates
+  autoUpdater.checkForUpdates();
+}
+
 app.whenReady().then(() => {
   createWindow();
 
   if (!isDev) {
-    autoUpdater.checkForUpdatesAndNotify();
+    // Delay update check to ensure window is ready
+    setTimeout(() => {
+      setupAutoUpdater();
+    }, 3000);
   }
 
   app.on('activate', () => {
