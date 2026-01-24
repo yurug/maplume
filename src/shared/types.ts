@@ -20,7 +20,11 @@ export interface WordEntry {
   updatedAt: string;
 }
 
+// Current storage schema version
+export const STORAGE_VERSION = 1;
+
 export interface AppData {
+  version: number;
   projects: Project[];
   entries: WordEntry[];
   settings: AppSettings;

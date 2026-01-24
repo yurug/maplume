@@ -1,5 +1,6 @@
 import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import type { AppData, Project, WordEntry, AppSettings } from '@shared/types';
+import { STORAGE_VERSION } from '@shared/types';
 import { loadData, saveData, generateId } from '../services/storage';
 
 interface AppState {
@@ -153,6 +154,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (state.initialized && state.dataPath) {
       const data: AppData = {
+        version: STORAGE_VERSION,
         projects: state.projects,
         entries: state.entries,
         settings: state.settings,
@@ -220,12 +222,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     exportData: (projectId?: string) => {
       if (projectId) {
         return {
+          version: STORAGE_VERSION,
           projects: state.projects.filter((p) => p.id === projectId),
           entries: state.entries.filter((e) => e.projectId === projectId),
           settings: state.settings,
         };
       }
       return {
+        version: STORAGE_VERSION,
         projects: state.projects,
         entries: state.entries,
         settings: state.settings,
