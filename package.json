@@ -1,6 +1,6 @@
 {
   "name": "maplume",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "A word tracker for novel writers",
   "main": "dist/main/main.js",
   "scripts": {

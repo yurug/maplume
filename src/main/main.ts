@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -89,6 +89,9 @@ function setupAutoUpdater() {
 }
 
 app.whenReady().then(() => {
+  // Remove the default menu bar
+  Menu.setApplicationMenu(null);
+
   createWindow();
 
   if (!isDev) {
