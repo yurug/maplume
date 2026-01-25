@@ -1,6 +1,6 @@
 {
   "name": "maplume",
-  "version": "0.4.9",
+  "version": "0.5.0",
   "description": "A word tracker for novel writers",
   "repository": {
     "type": "git",
@@ -19,7 +19,8 @@
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win",
     "dist:mac": "npm run build && electron-builder --mac",
-    "dist:linux": "npm run build && electron-builder --linux"
+    "dist:linux": "npm run build && electron-builder --linux",
+    "bundle:renderer": "node scripts/bundle-renderer.js"
   },
   "author": "",
   "license": "MIT",

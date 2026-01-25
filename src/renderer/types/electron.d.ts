@@ -1,3 +1,27 @@
+export interface UpdateInfo {
+  available: boolean;
+  currentVersion: string;
+  latestVersion: string;
+  downloadUrl?: string;
+  checksumUrl?: string;
+}
+
+export interface CheckUpdateResult extends UpdateInfo {
+  success: boolean;
+  error?: string;
+}
+
+export interface DownloadUpdateResult {
+  success: boolean;
+  error?: string;
+}
+
+export interface AppUpdateInfo {
+  appVersion: string;
+  rendererVersion: string;
+  hasUserRenderer: boolean;
+}
+
 export interface ElectronAPI {
   selectDataFolder: () => Promise<string | null>;
   readData: (filePath: string) => Promise<unknown | null>;
@@ -12,6 +36,11 @@ export interface ElectronAPI {
   copyBackgroundImage: (sourcePath: string, dataPath: string, projectId: string) => Promise<string | null>;
   deleteBackgroundImage: (dataPath: string, relativePath: string) => Promise<boolean>;
   getBackgroundImageUrl: (dataPath: string, relativePath: string) => Promise<string>;
+  // Custom updater
+  checkForUpdates: () => Promise<CheckUpdateResult>;
+  downloadUpdate: (updateInfo: UpdateInfo) => Promise<DownloadUpdateResult>;
+  getUpdateInfo: () => Promise<AppUpdateInfo>;
+  restartApp: () => Promise<void>;
 }
 
 declare global {

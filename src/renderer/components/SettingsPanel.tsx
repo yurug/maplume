@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import {
   X,
   FolderOpen,
@@ -14,7 +15,12 @@ import {
   Info,
   Coffee,
   Heart,
+  RefreshCw,
+  CheckCircle,
+  XCircle,
+  Loader2,
 } from 'lucide-react';
+import type { UpdateInfo } from '../types/electron';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { useI18n, supportedLanguages } from '../i18n';
@@ -28,10 +34,24 @@ interface SettingsPanelProps {
   onClose: () => void;
 }
 
+type UpdateStatus = 'idle' | 'checking' | 'downloading' | 'downloaded' | 'no-update' | 'error';
+
 export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const { state, actions } = useApp();
   const { theme, toggleTheme } = useTheme();
   const { t, language, setLanguage } = useI18n();
+
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle');
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [currentVersion, setCurrentVersion] = useState<string>('');
+
+  useEffect(() => {
+    // Get current version info on mount
+    window.electronAPI.getUpdateInfo().then((info) => {
+      setCurrentVersion(info.rendererVersion);
+    });
+  }, []);
 
   const handleChangeFolder = async () => {
     const folder = await selectDataFolder();
@@ -88,6 +108,56 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
   const handleSponsor = () => {
     window.electronAPI.openExternalUrl('https://github.com/sponsors/yurug');
+  };
+
+  const handleCheckForUpdates = async () => {
+    setUpdateStatus('checking');
+    setUpdateError(null);
+
+    try {
+      const result = await window.electronAPI.checkForUpdates();
+
+      if (!result.success) {
+        setUpdateStatus('error');
+        setUpdateError(result.error || 'Unknown error');
+        return;
+      }
+
+      if (result.available) {
+        setUpdateInfo(result);
+        setUpdateStatus('idle');
+      } else {
+        setUpdateStatus('no-update');
+        setTimeout(() => setUpdateStatus('idle'), 3000);
+      }
+    } catch (error) {
+      setUpdateStatus('error');
+      setUpdateError((error as Error).message);
+    }
+  };
+
+  const handleDownloadUpdate = async () => {
+    if (!updateInfo) return;
+
+    setUpdateStatus('downloading');
+
+    try {
+      const result = await window.electronAPI.downloadUpdate(updateInfo);
+
+      if (result.success) {
+        setUpdateStatus('downloaded');
+      } else {
+        setUpdateStatus('error');
+        setUpdateError(result.error || 'Download failed');
+      }
+    } catch (error) {
+      setUpdateStatus('error');
+      setUpdateError((error as Error).message);
+    }
+  };
+
+  const handleRestartApp = () => {
+    window.electronAPI.restartApp();
   };
 
   return (
@@ -258,7 +328,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                 {t.appName}
               </p>
               <p className="mt-1 text-sm text-warm-500 dark:text-warm-400">
-                {t.version} 0.4.9
+                {t.version} {currentVersion || '0.5.0'}
               </p>
             </div>
 
@@ -271,6 +341,84 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
               {t.buyMeCoffee}
               <Heart className="h-3 w-3 text-danger-500" />
             </Button>
+          </section>
+
+          {/* Updates */}
+          <section className="space-y-4">
+            <h3 className="flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-warm-500 dark:text-warm-400">
+              <RefreshCw className="h-4 w-4" />
+              {t.updates}
+            </h3>
+
+            <div className="rounded-lg border border-warm-200 p-4 dark:border-warm-700 space-y-3">
+              {/* Update status messages */}
+              {updateStatus === 'no-update' && (
+                <div className="flex items-center gap-2 text-sm text-success-600 dark:text-success-400">
+                  <CheckCircle className="h-4 w-4" />
+                  {t.noUpdatesAvailable}
+                </div>
+              )}
+
+              {updateStatus === 'error' && (
+                <div className="flex items-center gap-2 text-sm text-danger-600 dark:text-danger-400">
+                  <XCircle className="h-4 w-4" />
+                  {t.updateError}: {updateError}
+                </div>
+              )}
+
+              {updateInfo?.available && updateStatus !== 'downloaded' && (
+                <div className="flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400">
+                  <Info className="h-4 w-4" />
+                  {t.updateAvailable.replace('{version}', updateInfo.latestVersion)}
+                </div>
+              )}
+
+              {updateStatus === 'downloaded' && (
+                <div className="flex items-center gap-2 text-sm text-success-600 dark:text-success-400">
+                  <CheckCircle className="h-4 w-4" />
+                  {t.updateDownloaded}
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex gap-2">
+                {updateStatus === 'downloaded' ? (
+                  <Button onClick={handleRestartApp} className="gap-2">
+                    <RefreshCw className="h-4 w-4" />
+                    {t.restartNow}
+                  </Button>
+                ) : updateInfo?.available && updateStatus !== 'downloading' ? (
+                  <Button onClick={handleDownloadUpdate} className="gap-2">
+                    <Download className="h-4 w-4" />
+                    {t.downloadUpdate}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    onClick={handleCheckForUpdates}
+                    disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
+                    className="gap-2"
+                  >
+                    {updateStatus === 'checking' ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {t.checkingForUpdates}
+                      </>
+                    ) : updateStatus === 'downloading' ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {t.downloading}
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4" />
+                        {t.checkForUpdates}
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
           </section>
         </div>
 

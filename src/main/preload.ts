@@ -17,4 +17,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('delete-background-image', dataPath, relativePath),
   getBackgroundImageUrl: (dataPath: string, relativePath: string) =>
     ipcRenderer.invoke('get-background-image-url', dataPath, relativePath),
+  // Custom updater
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate: (updateInfo: unknown) => ipcRenderer.invoke('download-update', updateInfo),
+  getUpdateInfo: () => ipcRenderer.invoke('get-update-info'),
+  restartApp: () => ipcRenderer.invoke('restart-app'),
 });
