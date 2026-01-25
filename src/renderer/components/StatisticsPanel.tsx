@@ -10,7 +10,7 @@ import {
   BarChart3,
   Sparkles,
 } from 'lucide-react';
-import type { Statistics } from '@shared/types';
+import type { Statistics, UnitType } from '@shared/types';
 import { useI18n } from '../i18n';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Progress } from './ui/progress';
@@ -18,6 +18,7 @@ import { cn } from '../lib/utils';
 
 interface StatisticsPanelProps {
   stats: Statistics;
+  unitType: UnitType;
 }
 
 // Circular progress ring component
@@ -155,7 +156,7 @@ function StatCard({
   );
 }
 
-export function StatisticsPanel({ stats }: StatisticsPanelProps) {
+export function StatisticsPanel({ stats, unitType }: StatisticsPanelProps) {
   const { t } = useI18n();
 
   const formatDate = (dateStr: string | null) => {
@@ -167,6 +168,51 @@ export function StatisticsPanel({ stats }: StatisticsPanelProps) {
     });
   };
 
+  // Format number with decimals for averages
+  const formatAverage = (value: number): string => {
+    if (unitType === 'words') {
+      return Math.round(value).toLocaleString();
+    }
+    // Show one decimal for pages/chapters
+    return value.toFixed(1);
+  };
+
+  // Format count (no decimals for totals)
+  const formatCount = (value: number): string => {
+    if (unitType === 'words') {
+      return Math.round(value).toLocaleString();
+    }
+    // Show one decimal for pages/chapters totals too
+    return Number.isInteger(value) ? value.toLocaleString() : value.toFixed(1);
+  };
+
+  // Get "remaining" label based on unit
+  const getRemainingLabel = (): string => {
+    switch (unitType) {
+      case 'words': return t.wordsRemaining;
+      case 'pages': return t.pagesRemaining;
+      case 'chapters': return t.chaptersRemaining;
+    }
+  };
+
+  // Get "of target" label based on unit
+  const getOfTargetLabel = (): string => {
+    switch (unitType) {
+      case 'words': return t.ofTargetWords.replace('{target}', stats.targetWords.toLocaleString());
+      case 'pages': return t.ofTargetPages.replace('{target}', stats.targetWords.toLocaleString());
+      case 'chapters': return t.ofTargetChapters.replace('{target}', stats.targetWords.toLocaleString());
+    }
+  };
+
+  // Get "per day" label based on unit
+  const getPerDayLabel = (): string => {
+    switch (unitType) {
+      case 'words': return t.wordsPerDay;
+      case 'pages': return t.pagesPerDay;
+      case 'chapters': return t.chaptersPerDay;
+    }
+  };
+
   const isOnTrack =
     stats.projectedCompletionDate === null ||
     new Date(stats.projectedCompletionDate) <= new Date(stats.projectedCompletionDate);
@@ -175,23 +221,23 @@ export function StatisticsPanel({ stats }: StatisticsPanelProps) {
   const allStats = [
     {
       label: t.progress,
-      value: `${stats.currentWordCount.toLocaleString()}`,
-      sub: t.ofTargetWords.replace('{target}', stats.targetWords.toLocaleString()),
+      value: formatCount(stats.currentWordCount),
+      sub: getOfTargetLabel(),
       icon: Target,
       trend: stats.percentComplete >= 50 ? 'up' : ('neutral' as const),
       highlight: stats.percentComplete >= 100,
     },
     {
-      label: t.wordsRemaining,
-      value: stats.wordsRemaining.toLocaleString(),
+      label: getRemainingLabel(),
+      value: formatCount(stats.wordsRemaining),
       sub: undefined,
       icon: BarChart3,
       trend: 'neutral' as const,
     },
     {
       label: t.dailyAverage,
-      value: stats.dailyAverage.toLocaleString(),
-      sub: t.wordsPerDay,
+      value: formatAverage(stats.dailyAverage),
+      sub: getPerDayLabel(),
       icon: TrendingUp,
       trend: stats.dailyAverage > 0 ? 'up' : ('neutral' as const),
     },
@@ -205,14 +251,14 @@ export function StatisticsPanel({ stats }: StatisticsPanelProps) {
     },
     {
       label: t.weeklyAverage,
-      value: stats.weeklyAverage.toLocaleString(),
-      sub: t.wordsPerDay,
+      value: formatAverage(stats.weeklyAverage),
+      sub: getPerDayLabel(),
       icon: Calendar,
       trend: 'neutral' as const,
     },
     {
       label: t.bestDay,
-      value: stats.bestDay ? stats.bestDay.words.toLocaleString() : '-',
+      value: stats.bestDay ? formatCount(stats.bestDay.words) : '-',
       sub: stats.bestDay ? formatDate(stats.bestDay.date) : undefined,
       icon: Trophy,
       trend: 'neutral' as const,

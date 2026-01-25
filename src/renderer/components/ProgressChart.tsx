@@ -12,7 +12,7 @@ import {
   ComposedChart,
 } from 'recharts';
 import { ZoomIn, ZoomOut, RotateCcw, TrendingUp, Target, ChevronLeft, ChevronRight } from 'lucide-react';
-import type { Project, WordEntry } from '@shared/types';
+import type { Project, WordEntry, UnitType } from '@shared/types';
 import { getChartData } from '../services/statistics';
 import { useI18n } from '../i18n';
 import { useTheme } from '../context/ThemeContext';
@@ -27,8 +27,17 @@ interface ProgressChartProps {
   onDateSelect?: (date: string) => void;
 }
 
+// Get unit display name
+function getUnitDisplay(unitType: UnitType, t: Record<string, string>): string {
+  switch (unitType) {
+    case 'words': return t.wordsUnit;
+    case 'pages': return t.unitPages?.toLowerCase() || 'pages';
+    case 'chapters': return t.unitChapters?.toLowerCase() || 'chapters';
+  }
+}
+
 // Custom tooltip component
-function CustomTooltip({ active, payload, label, t }: any) {
+function CustomTooltip({ active, payload, label, t, unitType }: any) {
   if (!active || !payload?.length) return null;
 
   const formatDate = (dateStr: string) => {
@@ -39,6 +48,15 @@ function CustomTooltip({ active, payload, label, t }: any) {
       day: 'numeric',
     });
   };
+
+  const formatValue = (value: number) => {
+    if (unitType === 'words') {
+      return value?.toLocaleString();
+    }
+    return Number.isInteger(value) ? value?.toLocaleString() : value?.toFixed(1);
+  };
+
+  const unit = getUnitDisplay(unitType, t);
 
   return (
     <div className="chart-tooltip">
@@ -54,7 +72,7 @@ function CustomTooltip({ active, payload, label, t }: any) {
               {entry.dataKey === 'actual' ? t.actual : t.target}:
             </span>
             <span className="font-mono font-medium text-warm-900 dark:text-warm-100">
-              {entry.value?.toLocaleString()} {t.wordsUnit}
+              {formatValue(entry.value)} {unit}
             </span>
           </div>
         ))}
@@ -82,6 +100,7 @@ export function ProgressChart({
   const chartRef = useRef<HTMLDivElement>(null);
 
   const isDark = theme === 'dark';
+  const unitType: UnitType = project.unitType || 'words';
 
   // Colors based on theme
   const colors = {
@@ -98,11 +117,16 @@ export function ProgressChart({
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
 
-  const formatWords = (value: number) => {
-    if (value >= 1000) {
-      return `${(value / 1000).toFixed(1)}k`;
+  // Format Y-axis values based on unit type
+  const formatAxisValue = (value: number) => {
+    if (unitType === 'words') {
+      if (value >= 1000) {
+        return `${(value / 1000).toFixed(1)}k`;
+      }
+      return value.toString();
     }
-    return value.toString();
+    // For pages and chapters, just show the number
+    return Number.isInteger(value) ? value.toString() : value.toFixed(1);
   };
 
   const handleClick = (state: { activePayload?: Array<{ payload: { date: string } }> } | null) => {
@@ -309,7 +333,7 @@ export function ProgressChart({
               />
 
               <YAxis
-                tickFormatter={formatWords}
+                tickFormatter={formatAxisValue}
                 tick={{ fontSize: 11, fill: isDark ? '#a8a29e' : '#78716c' }}
                 tickLine={false}
                 axisLine={false}
@@ -317,7 +341,7 @@ export function ProgressChart({
                 width={50}
               />
 
-              <Tooltip content={<CustomTooltip t={t} />} />
+              <Tooltip content={<CustomTooltip t={t} unitType={unitType} />} />
 
               {/* Target reference line */}
               <ReferenceLine
@@ -326,7 +350,7 @@ export function ProgressChart({
                 strokeDasharray="8 4"
                 strokeWidth={2}
                 label={{
-                  value: `${t.target}: ${formatWords(project.targetWords)}`,
+                  value: `${t.target}: ${formatAxisValue(project.targetWords)}`,
                   position: 'right',
                   fill: colors.target,
                   fontSize: 11,

@@ -1,10 +1,14 @@
+// Unit types for tracking progress
+export type UnitType = 'words' | 'pages' | 'chapters';
+
 export interface Project {
   id: string;
   title: string;
   notes: string;
   startDate: string; // ISO date string
   endDate: string; // ISO date string
-  targetWords: number;
+  targetWords: number; // Target count in chosen unit (field name kept for compatibility)
+  unitType: UnitType; // Cannot be changed after creation
   archived: boolean;
   createdAt: string;
   updatedAt: string;
@@ -21,7 +25,7 @@ export interface WordEntry {
 }
 
 // Current storage schema version
-export const STORAGE_VERSION = 1;
+export const STORAGE_VERSION = 2;
 
 export interface AppData {
   version: number;

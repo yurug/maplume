@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, BookOpen, Calendar, Target, FileText, Archive } from 'lucide-react';
-import type { Project } from '@shared/types';
+import { X, BookOpen, Calendar, Target, FileText, Archive, Ruler, Lock } from 'lucide-react';
+import type { Project, UnitType } from '@shared/types';
 import { useI18n } from '../i18n';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -25,6 +25,18 @@ export function ProjectForm({ project, onSave, onCancel, onArchive }: ProjectFor
   const [startDate, setStartDate] = useState(project?.startDate || today);
   const [endDate, setEndDate] = useState(project?.endDate || defaultEnd.toISOString().split('T')[0]);
   const [targetWords, setTargetWords] = useState(project?.targetWords?.toString() || '50000');
+  const [unitType, setUnitType] = useState<UnitType>(project?.unitType || 'words');
+
+  const isEditing = !!project;
+
+  // Get the appropriate default target based on unit type
+  const getDefaultTarget = (unit: UnitType): string => {
+    switch (unit) {
+      case 'words': return '50000';
+      case 'pages': return '200';
+      case 'chapters': return '20';
+    }
+  };
 
   useEffect(() => {
     if (project) {
@@ -33,19 +45,48 @@ export function ProjectForm({ project, onSave, onCancel, onArchive }: ProjectFor
       setStartDate(project.startDate);
       setEndDate(project.endDate);
       setTargetWords(project.targetWords.toString());
+      setUnitType(project.unitType);
     }
   }, [project]);
+
+  // Update default target when unit type changes (only for new projects)
+  const handleUnitTypeChange = (newUnitType: UnitType) => {
+    setUnitType(newUnitType);
+    if (!isEditing) {
+      setTargetWords(getDefaultTarget(newUnitType));
+    }
+  };
+
+  // Get target label based on unit type
+  const getTargetLabel = (): string => {
+    switch (unitType) {
+      case 'words': return t.targetWords;
+      case 'pages': return t.targetPages;
+      case 'chapters': return t.targetChapters;
+    }
+  };
+
+  // Get unit name for display
+  const getUnitName = (): string => {
+    switch (unitType) {
+      case 'words': return t.unitWords.toLowerCase();
+      case 'pages': return t.unitPages.toLowerCase();
+      case 'chapters': return t.unitChapters.toLowerCase();
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
+    const defaultTarget = unitType === 'words' ? 50000 : unitType === 'pages' ? 200 : 20;
     onSave({
       title: title.trim(),
       notes: notes.trim(),
       startDate,
       endDate,
-      targetWords: parseInt(targetWords, 10) || 50000,
+      targetWords: parseInt(targetWords, 10) || defaultTarget,
+      unitType,
     });
   };
 
@@ -154,11 +195,44 @@ export function ProjectForm({ project, onSave, onCancel, onArchive }: ProjectFor
             </div>
           </div>
 
-          {/* Target Words */}
+          {/* Unit Type */}
+          <div className="space-y-2">
+            <label htmlFor="unitType" className="form-label flex items-center gap-2">
+              <Ruler className="h-3.5 w-3.5 text-warm-400" />
+              {t.unitType}
+              {isEditing && <Lock className="h-3 w-3 text-warm-400" />}
+            </label>
+            <div className="flex gap-2">
+              {(['words', 'pages', 'chapters'] as UnitType[]).map((unit) => (
+                <button
+                  key={unit}
+                  type="button"
+                  disabled={isEditing}
+                  onClick={() => handleUnitTypeChange(unit)}
+                  className={cn(
+                    'flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                    unitType === unit
+                      ? 'border-primary-400 bg-primary-50 text-primary-700 dark:border-primary-500 dark:bg-primary-900/30 dark:text-primary-300'
+                      : 'border-warm-300 bg-white text-warm-600 hover:border-warm-400 dark:border-warm-600 dark:bg-warm-800 dark:text-warm-300',
+                    isEditing && 'cursor-not-allowed opacity-60'
+                  )}
+                >
+                  {unit === 'words' ? t.unitWords : unit === 'pages' ? t.unitPages : t.unitChapters}
+                </button>
+              ))}
+            </div>
+            {isEditing && (
+              <p className="text-xs text-warm-500 dark:text-warm-400">
+                {t.unitTypeHelp}
+              </p>
+            )}
+          </div>
+
+          {/* Target */}
           <div className="space-y-2">
             <label htmlFor="targetWords" className="form-label flex items-center gap-2">
               <Target className="h-3.5 w-3.5 text-warm-400" />
-              {t.targetWords}
+              {getTargetLabel()}
             </label>
             <Input
               id="targetWords"
@@ -170,14 +244,16 @@ export function ProjectForm({ project, onSave, onCancel, onArchive }: ProjectFor
             />
             <p className="text-xs text-warm-500 dark:text-warm-400">
               {parseInt(targetWords, 10) > 0 &&
-                t.wordsPerDayNeeded.replace('{count}', Math.round(
-                  parseInt(targetWords, 10) /
-                    Math.max(
-                      1,
-                      (new Date(endDate).getTime() - new Date(startDate).getTime()) /
-                        (1000 * 60 * 60 * 24)
-                    )
-                ).toLocaleString())}
+                t.wordsPerDayNeeded
+                  .replace('{count}', Math.round(
+                    parseInt(targetWords, 10) /
+                      Math.max(
+                        1,
+                        (new Date(endDate).getTime() - new Date(startDate).getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      )
+                  ).toLocaleString())
+                  .replace(t.unitWords.toLowerCase(), getUnitName())}
             </p>
           </div>
 
