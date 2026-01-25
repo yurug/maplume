@@ -87,7 +87,7 @@ export function MotivationalMessage({ behindSchedule }: MotivationalMessageProps
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         className={cn(
-          'flex-1 font-serif text-sm italic leading-relaxed',
+          'flex-1 font-serif text-base italic leading-relaxed',
           behindSchedule
             ? 'text-primary-800 dark:text-primary-200'
             : 'text-success-800 dark:text-success-200'
@@ -98,6 +98,7 @@ export function MotivationalMessage({ behindSchedule }: MotivationalMessageProps
 
       {/* Refresh button */}
       <Button
+        type="button"
         variant="ghost"
         size="icon-sm"
         onClick={refreshMessage}
