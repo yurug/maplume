@@ -19,6 +19,7 @@ import { cn } from '../lib/utils';
 interface StatisticsPanelProps {
   stats: Statistics;
   unitType: UnitType;
+  endDate: string;
 }
 
 // Circular progress ring component
@@ -156,7 +157,7 @@ function StatCard({
   );
 }
 
-export function StatisticsPanel({ stats, unitType }: StatisticsPanelProps) {
+export function StatisticsPanel({ stats, unitType, endDate }: StatisticsPanelProps) {
   const { t } = useI18n();
 
   const formatDate = (dateStr: string | null) => {
@@ -215,7 +216,7 @@ export function StatisticsPanel({ stats, unitType }: StatisticsPanelProps) {
 
   const isOnTrack =
     stats.projectedCompletionDate === null ||
-    new Date(stats.projectedCompletionDate) <= new Date(stats.projectedCompletionDate);
+    new Date(stats.projectedCompletionDate) <= new Date(endDate);
 
   // All stats displayed together
   const allStats = [

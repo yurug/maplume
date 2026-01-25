@@ -325,7 +325,7 @@ function AppContent() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.25 }}
                     >
-                      <StatisticsPanel stats={stats} unitType={activeProject.unitType || 'words'} />
+                      <StatisticsPanel stats={stats} unitType={activeProject.unitType || 'words'} endDate={activeProject.endDate} />
                     </motion.div>
                   )}
 
