@@ -173,4 +173,18 @@ export default {
   colorPink: 'Rose',
   colorGray: 'Gris',
   colorDark: 'Sombre',
+
+  // Updates
+  updates: 'Mises à jour',
+  checkForUpdates: 'Vérifier les mises à jour',
+  checkingForUpdates: 'Vérification...',
+  noUpdatesAvailable: 'Vous utilisez la dernière version',
+  updateAvailable: 'Mise à jour disponible : v{version}',
+  downloadUpdate: 'Télécharger',
+  downloading: 'Téléchargement...',
+  downloadingUpdate: 'Téléchargement de la mise à jour...',
+  updateDownloaded: 'Mise à jour téléchargée ! Redémarrez pour appliquer.',
+  restartNow: 'Redémarrer',
+  updateError: 'Échec de la vérification',
+  currentVersionLabel: 'Version actuelle',
 } as const;

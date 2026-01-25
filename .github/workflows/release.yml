@@ -9,6 +9,39 @@ permissions:
   contents: write
 
 jobs:
+  # Build renderer bundle for JS-only updates (platform-independent)
+  bundle-renderer:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build renderer
+        run: npm run build:renderer
+
+      - name: Create renderer bundle with checksum
+        run: npm run bundle:renderer
+
+      - name: Upload renderer bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: renderer-bundle
+          path: |
+            release/renderer-bundle.zip
+            release/renderer-bundle.sha256
+          retention-days: 7
+
+  # Build platform-specific installers
   build:
     runs-on: ${{ matrix.os }}
 
@@ -69,7 +102,7 @@ jobs:
           retention-days: 7
 
   publish:
-    needs: build
+    needs: [bundle-renderer, build]
     runs-on: ubuntu-latest
 
     steps:

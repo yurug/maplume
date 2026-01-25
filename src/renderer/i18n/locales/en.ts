@@ -173,4 +173,18 @@ export default {
   colorPink: 'Pink',
   colorGray: 'Gray',
   colorDark: 'Dark',
+
+  // Updates
+  updates: 'Updates',
+  checkForUpdates: 'Check for Updates',
+  checkingForUpdates: 'Checking...',
+  noUpdatesAvailable: 'You are running the latest version',
+  updateAvailable: 'Update available: v{version}',
+  downloadUpdate: 'Download Update',
+  downloading: 'Downloading...',
+  downloadingUpdate: 'Downloading update...',
+  updateDownloaded: 'Update downloaded! Restart to apply.',
+  restartNow: 'Restart Now',
+  updateError: 'Update check failed',
+  currentVersionLabel: 'Current version',
 } as const;

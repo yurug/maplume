@@ -1,7 +1,13 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron';
-import { autoUpdater } from 'electron-updater';
 import * as path from 'path';
 import * as fs from 'fs';
+import {
+  checkForUpdates,
+  downloadAndInstallUpdate,
+  getRendererLoadPath,
+  getUserRendererVersion,
+  hasUserRenderer,
+} from './updater';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -49,7 +55,9 @@ function createWindow() {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    // Load renderer from user folder if available (for JS-only updates)
+    const rendererPath = getRendererLoadPath();
+    mainWindow.loadFile(rendererPath);
   }
 
   mainWindow.on('closed', () => {
@@ -57,96 +65,74 @@ function createWindow() {
   });
 }
 
-// Auto-updater configuration
-function setupAutoUpdater() {
+// Custom JS-only auto-updater (bypasses macOS code signing)
+async function setupAutoUpdater() {
   const currentVersion = app.getVersion();
+  const rendererVersion = getUserRendererVersion() || currentVersion;
 
-  // Enable logging
-  autoUpdater.logger = {
-    info: (message: string) => console.log('[AutoUpdater]', message),
-    warn: (message: string) => console.warn('[AutoUpdater]', message),
-    error: (message: string) => console.error('[AutoUpdater]', message),
-    debug: (message: string) => console.log('[AutoUpdater DEBUG]', message),
-  } as typeof autoUpdater.logger;
+  console.log('[Updater] App version:', currentVersion);
+  console.log('[Updater] Renderer version:', rendererVersion);
+  console.log('[Updater] Using user renderer:', hasUserRenderer());
 
-  // Disable auto-download - we'll handle it manually
-  autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = true;
+  try {
+    const updateInfo = await checkForUpdates();
 
-  autoUpdater.on('checking-for-update', () => {
-    console.log('[AutoUpdater] Checking for updates... Current version:', currentVersion);
-  });
+    if (updateInfo.available) {
+      console.log('[Updater] Update available:', updateInfo.latestVersion);
 
-  autoUpdater.on('update-not-available', (info) => {
-    console.log('[AutoUpdater] No update available. Latest:', info.version);
-    // Silent when no update - only log to console
-  });
-
-  autoUpdater.on('update-available', async (info) => {
-    console.log('[AutoUpdater] Update available:', info.version);
-    const result = await dialog.showMessageBox(mainWindow!, {
-      type: 'info',
-      title: 'Update Available',
-      message: `A new version (${info.version}) is available.\n\nCurrent: ${currentVersion}\n\nWould you like to download it now?`,
-      buttons: ['Download', 'Later'],
-      defaultId: 0,
-    });
-    if (result.response === 0) {
-      autoUpdater.downloadUpdate();
-    }
-  });
-
-  autoUpdater.on('download-progress', (progress) => {
-    console.log('[AutoUpdater] Download progress:', Math.round(progress.percent), '%');
-  });
-
-  autoUpdater.on('update-downloaded', (info) => {
-    dialog
-      .showMessageBox(mainWindow!, {
+      const result = await dialog.showMessageBox(mainWindow!, {
         type: 'info',
-        title: 'Update Ready',
-        message: `Version ${info.version} has been downloaded. The application will restart to install the update.`,
-        buttons: ['Restart Now', 'Later'],
+        title: 'Update Available',
+        message: `A new version (${updateInfo.latestVersion}) is available.\n\nCurrent: ${updateInfo.currentVersion}\n\nWould you like to download and install it now?`,
+        buttons: ['Download', 'Later'],
         defaultId: 0,
-      })
-      .then((result) => {
-        if (result.response === 0) {
-          setImmediate(() => {
-            app.removeAllListeners('window-all-closed');
-            if (mainWindow) {
-              mainWindow.close();
-            }
-            autoUpdater.quitAndInstall(false, true);
+      });
+
+      if (result.response === 0) {
+        // Show progress dialog
+        const progressDialog = await dialog.showMessageBox(mainWindow!, {
+          type: 'info',
+          title: 'Downloading Update',
+          message: 'Downloading update... Please wait.',
+          buttons: [],
+          noLink: true,
+        });
+
+        try {
+          await downloadAndInstallUpdate(updateInfo, mainWindow, (percent) => {
+            console.log('[Updater] Download progress:', percent, '%');
+            // Note: Can't update dialog in Electron, progress is logged to console
+          });
+
+          const restartResult = await dialog.showMessageBox(mainWindow!, {
+            type: 'info',
+            title: 'Update Installed',
+            message: `Version ${updateInfo.latestVersion} has been installed.\n\nRestart now to use the new version.`,
+            buttons: ['Restart Now', 'Later'],
+            defaultId: 0,
+          });
+
+          if (restartResult.response === 0) {
+            app.relaunch();
+            app.exit(0);
+          }
+        } catch (downloadError) {
+          console.error('[Updater] Download failed:', downloadError);
+          dialog.showMessageBox(mainWindow!, {
+            type: 'error',
+            title: 'Update Failed',
+            message: `Failed to download update:\n\n${(downloadError as Error).message}`,
+            buttons: ['OK'],
           });
         }
-      });
-  });
-
-  autoUpdater.on('error', (error) => {
-    console.error('[AutoUpdater] Error:', error);
-    dialog.showMessageBox(mainWindow!, {
-      type: 'error',
-      title: 'Update Error',
-      message: `Error checking for updates:\n\n${error.message}\n\nCurrent version: ${currentVersion}`,
-      buttons: ['OK'],
-    });
-  });
-
-  // Check for updates
-  console.log('[AutoUpdater] Starting update check for version', currentVersion);
-  autoUpdater.checkForUpdates()
-    .then((result) => {
-      console.log('[AutoUpdater] Check result:', result?.updateInfo?.version || 'no result');
-    })
-    .catch((err) => {
-      console.error('[AutoUpdater] checkForUpdates failed:', err);
-      dialog.showMessageBox(mainWindow!, {
-        type: 'error',
-        title: 'Update Check Failed',
-        message: `Failed to check for updates:\n\n${err.message}\n\nCurrent version: ${currentVersion}`,
-        buttons: ['OK'],
-      });
-    });
+      }
+    } else {
+      console.log('[Updater] No update available. Latest:', updateInfo.latestVersion);
+    }
+  } catch (error) {
+    console.error('[Updater] Error checking for updates:', error);
+    // Silent failure on startup - don't bother the user
+  }
 }
 
 app.whenReady().then(() => {
@@ -288,3 +274,44 @@ ipcMain.handle(
     return `file://${fullPath}`;
   }
 );
+
+// Custom updater IPC handlers
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    const updateInfo = await checkForUpdates();
+    return {
+      success: true,
+      ...updateInfo,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: (error as Error).message,
+    };
+  }
+});
+
+ipcMain.handle('download-update', async (_event, updateInfo) => {
+  try {
+    await downloadAndInstallUpdate(updateInfo, mainWindow);
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: (error as Error).message,
+    };
+  }
+});
+
+ipcMain.handle('get-update-info', () => {
+  return {
+    appVersion: app.getVersion(),
+    rendererVersion: getUserRendererVersion() || app.getVersion(),
+    hasUserRenderer: hasUserRenderer(),
+  };
+});
+
+ipcMain.handle('restart-app', () => {
+  app.relaunch();
+  app.exit(0);
+});
