@@ -15,7 +15,9 @@ import { EntriesTable } from './components/EntriesTable';
 import { MotivationalMessage } from './components/MotivationalMessage';
 import { SettingsPanel } from './components/SettingsPanel';
 import { EmptyState } from './components/EmptyState';
+import { WhatsNewDialog } from './components/WhatsNewDialog';
 import { calculateStatistics } from './services/statistics';
+import { getNewFeaturesSince, getLatestWhatsNewVersion, type VersionChanges } from './data/whatsNew';
 import { Button } from './components/ui/button';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from './components/ui/tooltip';
 import { cn } from './lib/utils';
@@ -31,6 +33,8 @@ function AppContent() {
   const [showEntries, setShowEntries] = useState(false);
   const [dataPath, setDataPath] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const [whatsNewChanges, setWhatsNewChanges] = useState<VersionChanges[]>([]);
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
 
   const activeProject = state.projects.find((p) => p.id === state.activeProjectId);
 
@@ -69,6 +73,30 @@ function AppContent() {
       setSelectedDate(maxDate);
     }
   }, [activeProject?.id]);
+
+  // Check for What's New on app initialization
+  useEffect(() => {
+    const checkWhatsNew = async () => {
+      if (!state.initialized) return;
+
+      const lastSeenVersion = await window.electronAPI.getConfigValue('lastSeenWhatsNewVersion');
+      const changes = getNewFeaturesSince(lastSeenVersion as string | null);
+
+      if (changes.length > 0) {
+        setWhatsNewChanges(changes);
+        setShowWhatsNew(true);
+      }
+    };
+    checkWhatsNew();
+  }, [state.initialized]);
+
+  const handleWhatsNewClose = async () => {
+    const latestVersion = getLatestWhatsNewVersion();
+    if (latestVersion) {
+      await window.electronAPI.setConfigValue('lastSeenWhatsNewVersion', latestVersion);
+    }
+    setShowWhatsNew(false);
+  };
 
   const handleSetupComplete = async (path: string) => {
     // Store in both config (reliable) and localStorage (backup)
@@ -234,7 +262,7 @@ function AppContent() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.25 }}
                     >
-                      <StatisticsPanel stats={stats} />
+                      <StatisticsPanel stats={stats} unitType={activeProject.unitType || 'words'} />
                     </motion.div>
                   )}
 
@@ -294,6 +322,13 @@ function AppContent() {
         {/* Settings Panel */}
         <AnimatePresence>
           {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+        </AnimatePresence>
+
+        {/* What's New Dialog */}
+        <AnimatePresence>
+          {showWhatsNew && whatsNewChanges.length > 0 && (
+            <WhatsNewDialog changes={whatsNewChanges} onClose={handleWhatsNewClose} />
+          )}
         </AnimatePresence>
       </div>
     </TooltipProvider>

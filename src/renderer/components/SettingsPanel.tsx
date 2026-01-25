@@ -12,6 +12,8 @@ import {
   FileJson,
   AlertTriangle,
   Info,
+  Coffee,
+  Heart,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
@@ -81,7 +83,11 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
   };
 
   const handleReportBug = () => {
-    window.electronAPI.openExternalUrl('https://github.com/maplume/maplume/issues/new');
+    window.electronAPI.openExternalUrl('https://github.com/yurug/maplume/issues/new');
+  };
+
+  const handleSponsor = () => {
+    window.electronAPI.openExternalUrl('https://github.com/sponsors/yurug');
   };
 
   return (
@@ -252,9 +258,19 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                 {t.appName}
               </p>
               <p className="mt-1 text-sm text-warm-500 dark:text-warm-400">
-                {t.version} 0.1.6
+                {t.version} 0.2.0
               </p>
             </div>
+
+            <Button
+              variant="outline"
+              onClick={handleSponsor}
+              className="w-full gap-2 border-primary-300 text-primary-700 hover:bg-primary-50 hover:border-primary-400 dark:border-primary-600 dark:text-primary-400 dark:hover:bg-primary-900/20"
+            >
+              <Coffee className="h-4 w-4" />
+              {t.buyMeCoffee}
+              <Heart className="h-3 w-3 text-danger-500" />
+            </Button>
           </section>
         </div>
 

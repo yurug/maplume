@@ -36,20 +36,34 @@ export default {
   startDate: 'Date de début',
   endDate: 'Date de fin',
   targetWords: 'Objectif de mots',
+  targetPages: 'Objectif de pages',
+  targetChapters: 'Objectif de chapitres',
+  unitType: 'Unité de mesure',
+  unitTypeHelp: 'Ne peut pas être modifié après création',
   archive: 'Archiver',
   cancel: 'Annuler',
   save: 'Enregistrer',
   create: 'Créer',
+
+  // Unit types
+  unitWords: 'Mots',
+  unitPages: 'Pages',
+  unitChapters: 'Chapitres',
 
   // Word Entry
   date: 'Date',
   words: 'Mots',
   wordsWrittenToday: 'Mots écrits aujourd\'hui',
   totalWordCount: 'Nombre total de mots',
+  pagesWrittenToday: 'Pages écrites aujourd\'hui',
+  totalPageCount: 'Nombre total de pages',
+  chaptersWrittenToday: 'Chapitres écrits aujourd\'hui',
+  totalChapterCount: 'Nombre total de chapitres',
   type: 'Type',
   add: '+ Ajouter',
   total: '= Total',
   log: 'Enregistrer',
+  unitsLogged: '{unit} enregistrés !',
 
   // Chart
   actual: 'Réel',
@@ -61,19 +75,27 @@ export default {
   statistics: 'Statistiques',
   progress: 'Progression',
   wordsRemaining: 'Mots restants',
+  pagesRemaining: 'Pages restantes',
+  chaptersRemaining: 'Chapitres restants',
   dailyAverage: 'Moyenne quotidienne',
   weeklyAverage: 'Moyenne hebdomadaire',
   bestDay: 'Meilleur jour',
   currentStreak: 'Série en cours',
   projectedFinish: 'Fin prévue',
   wordsPerDay: 'mots/jour',
+  pagesPerDay: 'pages/jour',
+  chaptersPerDay: 'chapitres/jour',
   day: 'jour',
   days: 'jours',
   ofTargetWords: 'sur {target} mots',
+  ofTargetPages: 'sur {target} pages',
+  ofTargetChapters: 'sur {target} chapitres',
   showMore: 'Voir plus',
   showLess: 'Voir moins',
   wordsLogged: 'Mots enregistrés !',
   wordsPerDayNeeded: 'Soit environ {count} mots par jour',
+  pagesPerDayNeeded: 'Soit environ {count} pages par jour',
+  chaptersPerDayNeeded: 'Soit environ {count} chapitres par jour',
 
   // Entries
   showEntryHistory: 'Afficher l\'historique',
@@ -109,7 +131,16 @@ export default {
   close: 'Fermer',
   version: 'Version',
   about: 'À propos',
+  buyMeCoffee: 'Envie de dire merci ? Offrez-moi un café !',
 
   // Messages
   newMessage: 'Nouveau message',
+
+  // What's New Dialog
+  whatsNew: 'Nouveautés',
+  getStarted: 'Commencer',
+
+  // What's New - v0.2.0
+  whatsNew_unitTypes_title: 'Suivez les pages et chapitres',
+  whatsNew_unitTypes_desc: 'Vous pouvez maintenant créer des projets qui comptent les pages ou les chapitres au lieu des mots. Choisissez votre unité préférée lors de la création d\'un nouveau projet.',
 } as const;

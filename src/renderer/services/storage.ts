@@ -34,11 +34,15 @@ function migrateData(data: Record<string, unknown>): AppData {
     version = 1;
   }
 
-  // Add future migrations here:
-  // if (version === 1) {
-  //   // v1 -> v2 migration logic
-  //   version = 2;
-  // }
+  // Migration from v1 to v2: Add unitType to projects
+  if (version === 1) {
+    const projects = (data.projects as Record<string, unknown>[]) || [];
+    data.projects = projects.map((project) => ({
+      ...project,
+      unitType: 'words', // Default existing projects to words
+    }));
+    version = 2;
+  }
 
   return {
     ...data,

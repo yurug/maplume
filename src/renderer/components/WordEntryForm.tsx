@@ -8,7 +8,7 @@ import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 import { cn } from '../lib/utils';
-import type { Project } from '@shared/types';
+import type { Project, UnitType } from '@shared/types';
 
 interface WordEntryFormProps {
   project: Project;
@@ -29,6 +29,40 @@ export function WordEntryForm({ project, selectedDate, onDateChange }: WordEntry
   const [wordCount, setWordCount] = useState('');
   const [isIncrement, setIsIncrement] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  const unitType: UnitType = project.unitType || 'words';
+
+  // Get the label for the unit field
+  const getUnitLabel = (): string => {
+    switch (unitType) {
+      case 'words': return t.words;
+      case 'pages': return t.unitPages;
+      case 'chapters': return t.unitChapters;
+    }
+  };
+
+  // Get placeholder text based on unit and mode
+  const getPlaceholder = (): string => {
+    if (isIncrement) {
+      switch (unitType) {
+        case 'words': return t.wordsWrittenToday;
+        case 'pages': return t.pagesWrittenToday;
+        case 'chapters': return t.chaptersWrittenToday;
+      }
+    } else {
+      switch (unitType) {
+        case 'words': return t.totalWordCount;
+        case 'pages': return t.totalPageCount;
+        case 'chapters': return t.totalChapterCount;
+      }
+    }
+  };
+
+  // Get success message
+  const getSuccessMessage = (): string => {
+    const unitName = getUnitLabel();
+    return t.unitsLogged.replace('{unit}', unitName);
+  };
 
   // Focus word input when date changes (from chart click)
   const prevDateRef = useRef(selectedDate);
@@ -74,7 +108,7 @@ export function WordEntryForm({ project, selectedDate, onDateChange }: WordEntry
             className="flex items-center gap-2 rounded-full bg-success-500 px-4 py-2 text-white shadow-lg"
           >
             <Sparkles className="h-5 w-5" />
-            <span className="font-medium">{t.wordsLogged}</span>
+            <span className="font-medium">{getSuccessMessage()}</span>
           </motion.div>
         </motion.div>
 
@@ -99,15 +133,16 @@ export function WordEntryForm({ project, selectedDate, onDateChange }: WordEntry
           <div className="min-w-[180px] flex-[2]">
             <label className="form-label flex items-center gap-2">
               <PenLine className="h-3.5 w-3.5 text-warm-400" />
-              {t.words}
+              {getUnitLabel()}
             </label>
             <Input
               ref={wordInputRef}
               type="number"
               value={wordCount}
               onChange={(e) => setWordCount(e.target.value)}
-              placeholder={isIncrement ? t.wordsWrittenToday : t.totalWordCount}
+              placeholder={getPlaceholder()}
               min="0"
+              step={unitType === 'words' ? '1' : '0.1'}
               className="font-mono text-lg"
             />
           </div>

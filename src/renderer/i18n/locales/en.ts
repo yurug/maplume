@@ -36,20 +36,34 @@ export default {
   startDate: 'Start Date',
   endDate: 'End Date',
   targetWords: 'Target Words',
+  targetPages: 'Target Pages',
+  targetChapters: 'Target Chapters',
+  unitType: 'Unit Type',
+  unitTypeHelp: 'Cannot be changed after creation',
   archive: 'Archive',
   cancel: 'Cancel',
   save: 'Save',
   create: 'Create',
+
+  // Unit types
+  unitWords: 'Words',
+  unitPages: 'Pages',
+  unitChapters: 'Chapters',
 
   // Word Entry
   date: 'Date',
   words: 'Words',
   wordsWrittenToday: 'Words written today',
   totalWordCount: 'Total word count',
+  pagesWrittenToday: 'Pages written today',
+  totalPageCount: 'Total page count',
+  chaptersWrittenToday: 'Chapters written today',
+  totalChapterCount: 'Total chapter count',
   type: 'Type',
   add: '+ Add',
   total: '= Total',
   log: 'Log',
+  unitsLogged: '{unit} logged!',
 
   // Chart
   actual: 'Actual',
@@ -61,19 +75,27 @@ export default {
   statistics: 'Statistics',
   progress: 'Progress',
   wordsRemaining: 'Words Remaining',
+  pagesRemaining: 'Pages Remaining',
+  chaptersRemaining: 'Chapters Remaining',
   dailyAverage: 'Daily Average',
   weeklyAverage: 'Weekly Average',
   bestDay: 'Best Day',
   currentStreak: 'Current Streak',
   projectedFinish: 'Projected Finish',
   wordsPerDay: 'words/day',
+  pagesPerDay: 'pages/day',
+  chaptersPerDay: 'chapters/day',
   day: 'day',
   days: 'days',
   ofTargetWords: 'of {target} words',
+  ofTargetPages: 'of {target} pages',
+  ofTargetChapters: 'of {target} chapters',
   showMore: 'Show more',
   showLess: 'Show less',
   wordsLogged: 'Words logged!',
   wordsPerDayNeeded: "That's about {count} words per day",
+  pagesPerDayNeeded: "That's about {count} pages per day",
+  chaptersPerDayNeeded: "That's about {count} chapters per day",
 
   // Entries
   showEntryHistory: 'Show Entry History',
@@ -109,7 +131,16 @@ export default {
   close: 'Close',
   version: 'Version',
   about: 'About',
+  buyMeCoffee: 'Want to say thanks? Buy me a coffee!',
 
   // Messages
   newMessage: 'New message',
+
+  // What's New Dialog
+  whatsNew: "What's New",
+  getStarted: 'Get Started',
+
+  // What's New - v0.2.0
+  whatsNew_unitTypes_title: 'Track Pages & Chapters',
+  whatsNew_unitTypes_desc: 'You can now create projects that track pages or chapters instead of words. Choose your preferred unit when creating a new project.',
 } as const;
