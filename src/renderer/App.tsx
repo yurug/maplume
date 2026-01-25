@@ -17,6 +17,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { EmptyState } from './components/EmptyState';
 import { WhatsNewDialog } from './components/WhatsNewDialog';
 import { GlobalStatistics } from './components/GlobalStatistics';
+import { SponsorDialog } from './components/SponsorDialog';
 import { calculateStatistics } from './services/statistics';
 import { getNewFeaturesSince, getLatestWhatsNewVersion, type VersionChanges } from './data/whatsNew';
 import { Button } from './components/ui/button';
@@ -33,6 +34,7 @@ function AppContent() {
   const [showSettings, setShowSettings] = useState(false);
   const [showEntries, setShowEntries] = useState(false);
   const [showGlobalStats, setShowGlobalStats] = useState(false);
+  const [showSponsor, setShowSponsor] = useState(false);
   const [dataPath, setDataPath] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [whatsNewChanges, setWhatsNewChanges] = useState<VersionChanges[]>([]);
@@ -231,6 +233,7 @@ function AppContent() {
               onNewProject={handleNewProject}
               onOpenSettings={() => setShowSettings(true)}
               onOpenGlobalStats={() => setShowGlobalStats(true)}
+              onOpenSponsor={() => setShowSponsor(true)}
             />
           </aside>
 
@@ -396,6 +399,11 @@ function AppContent() {
               onClose={() => setShowGlobalStats(false)}
             />
           )}
+        </AnimatePresence>
+
+        {/* Sponsor Dialog */}
+        <AnimatePresence>
+          {showSponsor && <SponsorDialog onClose={() => setShowSponsor(false)} />}
         </AnimatePresence>
 
         {/* What's New Dialog */}
