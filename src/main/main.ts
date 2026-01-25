@@ -82,21 +82,36 @@ function setupAutoUpdater() {
     // Silent when no update - only log to console
   });
 
-  autoUpdater.on('update-available', (info) => {
+  autoUpdater.on('update-available', async (info) => {
     console.log('[AutoUpdater] Update available:', info.version);
-    dialog
-      .showMessageBox(mainWindow!, {
+
+    // On macOS without code signing, auto-update won't work
+    // Direct users to download manually instead
+    if (process.platform === 'darwin') {
+      const { shell } = await import('electron');
+      const result = await dialog.showMessageBox(mainWindow!, {
+        type: 'info',
+        title: 'Update Available',
+        message: `A new version (${info.version}) is available.\n\nCurrent: ${currentVersion}\n\nWould you like to open the download page?`,
+        buttons: ['Open Download Page', 'Later'],
+        defaultId: 0,
+      });
+      if (result.response === 0) {
+        shell.openExternal('https://github.com/yurug/maplume/releases/latest');
+      }
+    } else {
+      // Windows/Linux can auto-update
+      const result = await dialog.showMessageBox(mainWindow!, {
         type: 'info',
         title: 'Update Available',
         message: `A new version (${info.version}) is available.\n\nCurrent: ${currentVersion}\n\nWould you like to download it now?`,
         buttons: ['Download', 'Later'],
         defaultId: 0,
-      })
-      .then((result) => {
-        if (result.response === 0) {
-          autoUpdater.downloadUpdate();
-        }
       });
+      if (result.response === 0) {
+        autoUpdater.downloadUpdate();
+      }
+    }
   });
 
   autoUpdater.on('download-progress', (progress) => {
