@@ -142,6 +142,7 @@ interface AppContextValue {
     updateSettings: (settings: Partial<AppSettings>) => void;
     exportData: (projectId?: string) => AppData;
     importData: (data: AppData) => void;
+    toggleShowArchived: () => void;
   };
 }
 
@@ -238,6 +239,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     importData: (data) => {
       dispatch({ type: 'IMPORT_DATA', data });
+    },
+
+    toggleShowArchived: () => {
+      dispatch({ type: 'TOGGLE_SHOW_ARCHIVED' });
     },
   };
 

@@ -148,7 +148,7 @@ export function ProjectList({ onNewProject, onOpenSettings }: ProjectListProps) 
           </span>
           <Switch
             checked={state.showArchived}
-            onCheckedChange={() => actions.dispatch({ type: 'TOGGLE_SHOW_ARCHIVED' })}
+            onCheckedChange={() => actions.toggleShowArchived()}
           />
         </label>
       </div>
