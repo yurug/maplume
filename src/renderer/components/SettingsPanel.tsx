@@ -34,6 +34,8 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const handleChangeFolder = async () => {
     const folder = await selectDataFolder();
     if (folder) {
+      // Store in both config (reliable) and localStorage (backup)
+      await window.electronAPI.setConfigValue('dataPath', folder);
       localStorage.setItem('maplume-data-path', folder);
       actions.initialize(folder);
       alert(t.folderChanged);
@@ -250,7 +252,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                 {t.appName}
               </p>
               <p className="mt-1 text-sm text-warm-500 dark:text-warm-400">
-                {t.version} 0.1.5
+                {t.version} 0.1.6
               </p>
             </div>
           </section>

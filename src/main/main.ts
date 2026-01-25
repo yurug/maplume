@@ -7,6 +7,33 @@ let mainWindow: BrowserWindow | null = null;
 
 const isDev = process.env.NODE_ENV === 'development';
 
+// Config file path for storing app settings (more reliable than localStorage on Windows)
+function getConfigPath(): string {
+  return path.join(app.getPath('userData'), 'config.json');
+}
+
+function readConfig(): Record<string, unknown> {
+  try {
+    const configPath = getConfigPath();
+    if (fs.existsSync(configPath)) {
+      const data = fs.readFileSync(configPath, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch {
+    // Config doesn't exist or is invalid
+  }
+  return {};
+}
+
+function writeConfig(config: Record<string, unknown>): void {
+  try {
+    const configPath = getConfigPath();
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('Failed to write config:', error);
+  }
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -149,4 +176,17 @@ ipcMain.handle('get-system-locale', () => {
 ipcMain.handle('open-external-url', async (_event, url: string) => {
   const { shell } = await import('electron');
   shell.openExternal(url);
+});
+
+// Config handlers for persistent storage (fixes Windows localStorage issues)
+ipcMain.handle('get-config-value', (_event, key: string) => {
+  const config = readConfig();
+  return config[key] ?? null;
+});
+
+ipcMain.handle('set-config-value', (_event, key: string, value: unknown) => {
+  const config = readConfig();
+  config[key] = value;
+  writeConfig(config);
+  return true;
 });
