@@ -17,9 +17,10 @@ import { cn } from '../lib/utils';
 interface ProjectListProps {
   onNewProject: () => void;
   onOpenSettings?: () => void;
+  onOpenGlobalStats?: () => void;
 }
 
-export function ProjectList({ onNewProject, onOpenSettings }: ProjectListProps) {
+export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats }: ProjectListProps) {
   const { state, actions } = useApp();
   const { t, language, setLanguage } = useI18n();
 
@@ -41,10 +42,18 @@ export function ProjectList({ onNewProject, onOpenSettings }: ProjectListProps) 
     <div className="flex h-full flex-col">
       {/* App Header */}
       <div className="flex items-center justify-between border-b border-warm-200/60 px-4 py-3 bg-gradient-to-r from-primary-600 to-primary-700 dark:border-warm-700/60">
-        <div className="flex items-center gap-2">
-          <Feather className="h-5 w-5 text-white" />
-          <span className="font-serif text-lg font-semibold text-white">{t.appName}</span>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onOpenGlobalStats}
+              className="flex items-center gap-2 rounded-lg px-2 py-1 -mx-2 -my-1 transition-colors hover:bg-white/10"
+            >
+              <Feather className="h-5 w-5 text-white" />
+              <span className="font-serif text-lg font-semibold text-white">{t.appName}</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">{t.globalStatistics}</TooltipContent>
+        </Tooltip>
         <div className="flex items-center gap-1">
           {/* Language Toggle */}
           <Tooltip>

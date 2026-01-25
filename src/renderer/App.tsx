@@ -16,6 +16,7 @@ import { MotivationalMessage } from './components/MotivationalMessage';
 import { SettingsPanel } from './components/SettingsPanel';
 import { EmptyState } from './components/EmptyState';
 import { WhatsNewDialog } from './components/WhatsNewDialog';
+import { GlobalStatistics } from './components/GlobalStatistics';
 import { calculateStatistics } from './services/statistics';
 import { getNewFeaturesSince, getLatestWhatsNewVersion, type VersionChanges } from './data/whatsNew';
 import { Button } from './components/ui/button';
@@ -31,6 +32,7 @@ function AppContent() {
   const [editingProject, setEditingProject] = useState<Project | undefined>();
   const [showSettings, setShowSettings] = useState(false);
   const [showEntries, setShowEntries] = useState(false);
+  const [showGlobalStats, setShowGlobalStats] = useState(false);
   const [dataPath, setDataPath] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [whatsNewChanges, setWhatsNewChanges] = useState<VersionChanges[]>([]);
@@ -225,7 +227,11 @@ function AppContent() {
         <div className="app-layout">
           {/* Sidebar */}
           <aside className="sidebar">
-            <ProjectList onNewProject={handleNewProject} onOpenSettings={() => setShowSettings(true)} />
+            <ProjectList
+              onNewProject={handleNewProject}
+              onOpenSettings={() => setShowSettings(true)}
+              onOpenGlobalStats={() => setShowGlobalStats(true)}
+            />
           </aside>
 
           {/* Main Content */}
@@ -379,6 +385,17 @@ function AppContent() {
         {/* Settings Panel */}
         <AnimatePresence>
           {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+        </AnimatePresence>
+
+        {/* Global Statistics */}
+        <AnimatePresence>
+          {showGlobalStats && (
+            <GlobalStatistics
+              projects={state.projects}
+              entries={state.entries}
+              onClose={() => setShowGlobalStats(false)}
+            />
+          )}
         </AnimatePresence>
 
         {/* What's New Dialog */}

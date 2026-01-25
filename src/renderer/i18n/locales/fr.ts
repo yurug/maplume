@@ -174,6 +174,16 @@ export default {
   colorGray: 'Gris',
   colorDark: 'Sombre',
 
+  // Global Statistics
+  globalStatistics: 'Votre Parcours d\'Écriture',
+  allProjectsOverview: 'Statistiques de tous vos projets',
+  totalProjects: 'Total Projets',
+  totalEntries: 'Total Entrées',
+  active: 'actifs',
+  daysWriting: 'jours d\'écriture',
+  progressByType: 'Progression par Type',
+  noProjectsYet: 'Aucun projet pour l\'instant. Créez-en un pour commencer !',
+
   // Updates
   updates: 'Mises à jour',
   checkForUpdates: 'Vérifier les mises à jour',
