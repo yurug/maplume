@@ -61,14 +61,6 @@ function createWindow() {
 function setupAutoUpdater() {
   const currentVersion = app.getVersion();
 
-  // Show dialog immediately to confirm this code is running
-  dialog.showMessageBox(mainWindow!, {
-    type: 'info',
-    title: 'Checking for Updates',
-    message: `Checking for updates...\n\nCurrent version: ${currentVersion}`,
-    buttons: ['OK'],
-  });
-
   // Enable logging
   autoUpdater.logger = {
     info: (message: string) => console.log('[AutoUpdater]', message),

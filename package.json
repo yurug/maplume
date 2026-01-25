@@ -1,6 +1,6 @@
 {
   "name": "maplume",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "A word tracker for novel writers",
   "repository": {
     "type": "git",
@@ -77,10 +77,16 @@
       "differentialPackage": false
     },
     "mac": {
-      "target": {
-        "target": "dmg",
-        "arch": ["universal"]
-      },
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["universal"]
+        },
+        {
+          "target": "zip",
+          "arch": ["universal"]
+        }
+      ],
       "icon": "build/icon.png"
     },
     "linux": {
