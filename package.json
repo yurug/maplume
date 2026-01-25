@@ -1,7 +1,11 @@
 {
   "name": "maplume",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "A word tracker for novel writers",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yurug/maplume.git"
+  },
   "main": "dist/main/main.js",
   "scripts": {
     "dev": "concurrently -k \"npm run dev:renderer\" \"npm run dev:main\" \"npm run dev:electron\"",
@@ -84,7 +88,9 @@
       "icon": "build/icon.png"
     },
     "publish": {
-      "provider": "github"
+      "provider": "github",
+      "owner": "yurug",
+      "repo": "maplume"
     }
   }
 }
