@@ -1,13 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import * as LucideIcons from 'lucide-react';
-import { Plus, Archive, BookOpen, ChevronRight, Settings, Feather } from 'lucide-react';
+import { Plus, Archive, BookOpen, ChevronRight, Settings, Feather, Languages } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 // Helper to get icon component by name
 function getIconComponent(name: string): React.ComponentType<{ className?: string }> {
   return (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[name] || LucideIcons.BookOpen;
 }
-import { useI18n } from '../i18n';
+import { useI18n, supportedLanguages } from '../i18n';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Switch } from './ui/switch';
@@ -21,7 +21,17 @@ interface ProjectListProps {
 
 export function ProjectList({ onNewProject, onOpenSettings }: ProjectListProps) {
   const { state, actions } = useApp();
-  const { t } = useI18n();
+  const { t, language, setLanguage } = useI18n();
+
+  // Cycle through supported languages
+  const toggleLanguage = () => {
+    const currentIndex = supportedLanguages.findIndex((l) => l.code === language);
+    const nextIndex = (currentIndex + 1) % supportedLanguages.length;
+    setLanguage(supportedLanguages[nextIndex].code);
+  };
+
+  // Get short language code for display (e.g., "EN", "FR")
+  const shortLang = language.toUpperCase().slice(0, 2);
 
   const visibleProjects = state.showArchived
     ? state.projects
@@ -35,21 +45,39 @@ export function ProjectList({ onNewProject, onOpenSettings }: ProjectListProps) 
           <Feather className="h-5 w-5 text-white" />
           <span className="font-serif text-lg font-semibold text-white">{t.appName}</span>
         </div>
-        {onOpenSettings && (
+        <div className="flex items-center gap-1">
+          {/* Language Toggle */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon-sm"
-                onClick={onOpenSettings}
-                className="text-white/80 hover:text-white hover:bg-white/10"
+                onClick={toggleLanguage}
+                className="text-white/80 hover:text-white hover:bg-white/10 text-xs font-medium"
               >
-                <Settings className="h-4 w-4" />
+                {shortLang}
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right">{t.settings}</TooltipContent>
+            <TooltipContent side="right">{t.language}</TooltipContent>
           </Tooltip>
-        )}
+
+          {/* Settings Button */}
+          {onOpenSettings && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={onOpenSettings}
+                  className="text-white/80 hover:text-white hover:bg-white/10"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{t.settings}</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       </div>
 
       {/* Projects Header */}
