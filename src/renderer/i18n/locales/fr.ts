@@ -143,4 +143,29 @@ export default {
   // What's New - v0.2.0
   whatsNew_unitTypes_title: 'Suivez les pages et chapitres',
   whatsNew_unitTypes_desc: 'Vous pouvez maintenant créer des projets qui comptent les pages ou les chapitres au lieu des mots. Choisissez votre unité préférée lors de la création d\'un nouveau projet.',
+
+  // What's New - v0.3.0
+  whatsNew_backgrounds_title: 'Arrière-plans personnalisés',
+  whatsNew_backgrounds_desc: 'Personnalisez chaque projet avec une couleur ou une image de fond. Créez votre espace d\'écriture unique !',
+
+  // Background Picker
+  background: 'Arrière-plan',
+  backgroundColor: 'Couleur',
+  backgroundImage: 'Image',
+  selectImage: 'Choisir une image',
+  removeBackground: 'Supprimer',
+  opacity: 'Opacité',
+  customColor: 'Personnalisé',
+  noBackground: 'Aucun',
+
+  // Preset colors
+  colorCream: 'Crème',
+  colorAmber: 'Ambre',
+  colorOrange: 'Orange',
+  colorBrown: 'Marron',
+  colorMint: 'Menthe',
+  colorLavender: 'Lavande',
+  colorPink: 'Rose',
+  colorGray: 'Gris',
+  colorDark: 'Sombre',
 } as const;

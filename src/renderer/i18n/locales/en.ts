@@ -143,4 +143,29 @@ export default {
   // What's New - v0.2.0
   whatsNew_unitTypes_title: 'Track Pages & Chapters',
   whatsNew_unitTypes_desc: 'You can now create projects that track pages or chapters instead of words. Choose your preferred unit when creating a new project.',
+
+  // What's New - v0.3.0
+  whatsNew_backgrounds_title: 'Custom Backgrounds',
+  whatsNew_backgrounds_desc: 'Personalize each project with a custom background color or image. Make your writing space truly yours!',
+
+  // Background Picker
+  background: 'Background',
+  backgroundColor: 'Color',
+  backgroundImage: 'Image',
+  selectImage: 'Select Image',
+  removeBackground: 'Remove',
+  opacity: 'Opacity',
+  customColor: 'Custom',
+  noBackground: 'None',
+
+  // Preset colors
+  colorCream: 'Cream',
+  colorAmber: 'Amber',
+  colorOrange: 'Orange',
+  colorBrown: 'Brown',
+  colorMint: 'Mint',
+  colorLavender: 'Lavender',
+  colorPink: 'Pink',
+  colorGray: 'Gray',
+  colorDark: 'Dark',
 } as const;

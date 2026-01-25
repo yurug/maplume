@@ -1,6 +1,13 @@
 // Unit types for tracking progress
 export type UnitType = 'words' | 'pages' | 'chapters';
 
+// Background customization for projects
+export interface ProjectBackground {
+  type: 'color' | 'image';
+  value: string; // hex color or relative image path (e.g., "backgrounds/project-123.jpg")
+  opacity: number; // 0-1 (controls overlay opacity for readability)
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -9,6 +16,7 @@ export interface Project {
   endDate: string; // ISO date string
   targetWords: number; // Target count in chosen unit (field name kept for compatibility)
   unitType: UnitType; // Cannot be changed after creation
+  background?: ProjectBackground; // Optional custom background
   archived: boolean;
   createdAt: string;
   updatedAt: string;
@@ -25,7 +33,7 @@ export interface WordEntry {
 }
 
 // Current storage schema version
-export const STORAGE_VERSION = 2;
+export const STORAGE_VERSION = 3;
 
 export interface AppData {
   version: number;
