@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, BookOpen, Calendar, Target, FileText, Archive, Ruler, Lock } from 'lucide-react';
-import type { Project, UnitType, ProjectBackground } from '@shared/types';
+import * as LucideIcons from 'lucide-react';
+import { X, BookOpen, Calendar, Target, FileText, Archive, Ruler, Lock, Smile } from 'lucide-react';
+import type { Project, UnitType, ProjectBackground, ProjectIcon } from '@shared/types';
+import { PROJECT_ICONS } from '@shared/types';
 import { useI18n } from '../i18n';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { BackgroundPicker } from './BackgroundPicker';
 import { cn } from '../lib/utils';
+
+// Helper to get icon component by name
+function getIconComponent(name: string): React.ComponentType<{ className?: string }> {
+  return (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[name] || LucideIcons.BookOpen;
+}
 
 interface ProjectFormProps {
   project?: Project;
@@ -28,6 +35,7 @@ export function ProjectForm({ project, onSave, onCancel, onArchive, dataPath }: 
   const [endDate, setEndDate] = useState(project?.endDate || defaultEnd.toISOString().split('T')[0]);
   const [targetWords, setTargetWords] = useState(project?.targetWords?.toString() || '50000');
   const [unitType, setUnitType] = useState<UnitType>(project?.unitType || 'words');
+  const [icon, setIcon] = useState<ProjectIcon>(project?.icon || 'BookOpen');
   const [background, setBackground] = useState<ProjectBackground | undefined>(project?.background);
 
   const isEditing = !!project;
@@ -51,6 +59,7 @@ export function ProjectForm({ project, onSave, onCancel, onArchive, dataPath }: 
       setEndDate(project.endDate);
       setTargetWords(project.targetWords.toString());
       setUnitType(project.unitType);
+      setIcon(project.icon || 'BookOpen');
       setBackground(project.background);
     }
   }, [project]);
@@ -93,6 +102,7 @@ export function ProjectForm({ project, onSave, onCancel, onArchive, dataPath }: 
       endDate,
       targetWords: parseInt(targetWords, 10) || defaultTarget,
       unitType,
+      icon,
       background,
     });
   };
@@ -116,7 +126,10 @@ export function ProjectForm({ project, onSave, onCancel, onArchive, dataPath }: 
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-primary-100 p-2.5 dark:bg-primary-900/30">
-              <BookOpen className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+              {(() => {
+                const HeaderIcon = getIconComponent(icon);
+                return <HeaderIcon className="h-5 w-5 text-primary-600 dark:text-primary-400" />;
+              })()}
             </div>
             <h2 className="font-serif text-xl font-semibold text-warm-900 dark:text-warm-50">
               {project ? t.editProjectTitle : t.newProjectTitle}
@@ -148,6 +161,34 @@ export function ProjectForm({ project, onSave, onCancel, onArchive, dataPath }: 
               required
               className="text-lg font-medium"
             />
+          </div>
+
+          {/* Icon Picker */}
+          <div className="space-y-2">
+            <label className="form-label flex items-center gap-2">
+              <Smile className="h-3.5 w-3.5 text-warm-400" />
+              {t.projectIcon}
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {PROJECT_ICONS.map((iconName) => {
+                const IconComponent = getIconComponent(iconName);
+                return (
+                  <button
+                    key={iconName}
+                    type="button"
+                    onClick={() => setIcon(iconName)}
+                    className={cn(
+                      'flex h-10 w-10 items-center justify-center rounded-lg border transition-colors',
+                      icon === iconName
+                        ? 'border-primary-400 bg-primary-50 text-primary-700 dark:border-primary-500 dark:bg-primary-900/30 dark:text-primary-300'
+                        : 'border-warm-300 bg-white text-warm-600 hover:border-warm-400 hover:bg-warm-50 dark:border-warm-600 dark:bg-warm-800 dark:text-warm-300 dark:hover:bg-warm-700'
+                    )}
+                  >
+                    <IconComponent className="h-5 w-5" />
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Notes */}

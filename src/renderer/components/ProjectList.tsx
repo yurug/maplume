@@ -1,6 +1,12 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import * as LucideIcons from 'lucide-react';
 import { Plus, Archive, BookOpen, ChevronRight, Settings, Feather } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+
+// Helper to get icon component by name
+function getIconComponent(name: string): React.ComponentType<{ className?: string }> {
+  return (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[name] || LucideIcons.BookOpen;
+}
 import { useI18n } from '../i18n';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -99,7 +105,10 @@ export function ProjectList({ onNewProject, onOpenSettings }: ProjectListProps) 
                       'dark:bg-warm-700 dark:text-warm-400'
                     )}
                   >
-                    <BookOpen className="h-4 w-4" />
+                    {(() => {
+                      const ProjectIcon = getIconComponent(project.icon || 'BookOpen');
+                      return <ProjectIcon className="h-4 w-4" />;
+                    })()}
                   </div>
 
                   {/* Project title */}

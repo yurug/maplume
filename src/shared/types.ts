@@ -8,6 +8,16 @@ export interface ProjectBackground {
   opacity: number; // 0-1 (controls overlay opacity for readability)
 }
 
+// Available project icons
+export const PROJECT_ICONS = [
+  'BookOpen', 'Feather', 'PenTool', 'FileText', 'Scroll',
+  'BookMarked', 'Library', 'Notebook', 'GraduationCap', 'Sparkles',
+  'Heart', 'Star', 'Flame', 'Zap', 'Moon',
+  'Sun', 'Cloud', 'Flower2', 'TreePine', 'Mountain',
+] as const;
+
+export type ProjectIcon = typeof PROJECT_ICONS[number];
+
 export interface Project {
   id: string;
   title: string;
@@ -16,6 +26,7 @@ export interface Project {
   endDate: string; // ISO date string
   targetWords: number; // Target count in chosen unit (field name kept for compatibility)
   unitType: UnitType; // Cannot be changed after creation
+  icon?: ProjectIcon; // Optional custom icon (defaults to BookOpen)
   background?: ProjectBackground; // Optional custom background
   archived: boolean;
   createdAt: string;

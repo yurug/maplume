@@ -31,6 +31,7 @@ export default {
   editProjectTitle: 'Edit Project',
   projectTitle: 'Title',
   projectTitlePlaceholder: 'My Novel',
+  projectIcon: 'Icon',
   projectNotes: 'Notes',
   projectNotesPlaceholder: 'Optional notes about your project...',
   startDate: 'Start Date',
@@ -143,6 +144,10 @@ export default {
   // What's New - v0.2.0
   whatsNew_unitTypes_title: 'Track Pages & Chapters',
   whatsNew_unitTypes_desc: 'You can now create projects that track pages or chapters instead of words. Choose your preferred unit when creating a new project.',
+
+  // What's New - v0.4.0
+  whatsNew_projectIcons_title: 'Project Icons',
+  whatsNew_projectIcons_desc: 'Choose a unique icon for each project to make them easy to identify at a glance in the sidebar.',
 
   // What's New - v0.3.0
   whatsNew_backgrounds_title: 'Custom Backgrounds',

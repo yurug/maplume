@@ -31,6 +31,7 @@ export default {
   editProjectTitle: 'Modifier le projet',
   projectTitle: 'Titre',
   projectTitlePlaceholder: 'Mon Roman',
+  projectIcon: 'Icône',
   projectNotes: 'Notes',
   projectNotesPlaceholder: 'Notes optionnelles sur votre projet...',
   startDate: 'Date de début',
@@ -143,6 +144,10 @@ export default {
   // What's New - v0.2.0
   whatsNew_unitTypes_title: 'Suivez les pages et chapitres',
   whatsNew_unitTypes_desc: 'Vous pouvez maintenant créer des projets qui comptent les pages ou les chapitres au lieu des mots. Choisissez votre unité préférée lors de la création d\'un nouveau projet.',
+
+  // What's New - v0.4.0
+  whatsNew_projectIcons_title: 'Icônes de projet',
+  whatsNew_projectIcons_desc: 'Choisissez une icône unique pour chaque projet afin de les identifier facilement dans la barre latérale.',
 
   // What's New - v0.3.0
   whatsNew_backgrounds_title: 'Arrière-plans personnalisés',
