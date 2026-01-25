@@ -119,7 +119,7 @@ export function ProjectForm({ project, onSave, onCancel, onArchive, dataPath }: 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="w-full max-w-lg rounded-2xl border border-warm-200/80 bg-white p-6 shadow-warm-xl dark:border-warm-700 dark:bg-warm-850"
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-warm-200/80 bg-white p-6 shadow-warm-xl dark:border-warm-700 dark:bg-warm-850"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
