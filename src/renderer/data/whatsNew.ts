@@ -18,6 +18,16 @@ export interface VersionChanges {
 // Ordered from newest to oldest
 export const whatsNewData: VersionChanges[] = [
   {
+    version: '0.4.0',
+    features: [
+      {
+        titleKey: 'whatsNew_projectIcons_title',
+        descriptionKey: 'whatsNew_projectIcons_desc',
+        icon: 'Smile',
+      },
+    ],
+  },
+  {
     version: '0.3.0',
     features: [
       {
