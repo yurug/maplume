@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Target,
   TrendingUp,
@@ -8,8 +7,6 @@ import {
   Flame,
   Trophy,
   Clock,
-  ChevronDown,
-  ChevronUp,
   BarChart3,
   Sparkles,
 } from 'lucide-react';
@@ -17,7 +14,6 @@ import type { Statistics } from '@shared/types';
 import { useI18n } from '../i18n';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Progress } from './ui/progress';
-import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 
 interface StatisticsPanelProps {
@@ -161,7 +157,6 @@ function StatCard({
 
 export function StatisticsPanel({ stats }: StatisticsPanelProps) {
   const { t } = useI18n();
-  const [expanded, setExpanded] = useState(false);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '-';
@@ -176,8 +171,8 @@ export function StatisticsPanel({ stats }: StatisticsPanelProps) {
     stats.projectedCompletionDate === null ||
     new Date(stats.projectedCompletionDate) <= new Date(stats.projectedCompletionDate);
 
-  // Primary stats (always visible)
-  const primaryStats = [
+  // All stats displayed together
+  const allStats = [
     {
       label: t.progress,
       value: `${stats.currentWordCount.toLocaleString()}`,
@@ -208,21 +203,19 @@ export function StatisticsPanel({ stats }: StatisticsPanelProps) {
       trend: stats.currentStreak >= 3 ? 'up' : ('neutral' as const),
       highlight: stats.currentStreak >= 7,
     },
-  ];
-
-  // Secondary stats (visible when expanded)
-  const secondaryStats = [
     {
       label: t.weeklyAverage,
       value: stats.weeklyAverage.toLocaleString(),
       sub: t.wordsPerDay,
       icon: Calendar,
+      trend: 'neutral' as const,
     },
     {
       label: t.bestDay,
       value: stats.bestDay ? stats.bestDay.words.toLocaleString() : '-',
       sub: stats.bestDay ? formatDate(stats.bestDay.date) : undefined,
       icon: Trophy,
+      trend: 'neutral' as const,
     },
     {
       label: t.projectedFinish,
@@ -251,60 +244,15 @@ export function StatisticsPanel({ stats }: StatisticsPanelProps) {
       </CardHeader>
 
       <CardContent className="pt-0">
-        {/* Primary stats grid */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {primaryStats.map((stat, index) => (
+        {/* All stats grid */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+          {allStats.map((stat, index) => (
             <StatCard
               key={stat.label}
               {...stat}
               delay={index * 0.05}
             />
           ))}
-        </div>
-
-        {/* Expand/Collapse for secondary stats */}
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              <div className="mt-3 grid grid-cols-2 gap-3 border-t border-warm-200/60 pt-3 dark:border-warm-700/60 sm:grid-cols-3">
-                {secondaryStats.map((stat, index) => (
-                  <StatCard
-                    key={stat.label}
-                    {...stat}
-                    delay={index * 0.05}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Toggle button */}
-        <div className="mt-4 flex justify-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setExpanded(!expanded)}
-            className="gap-1.5 text-warm-500 hover:text-warm-700"
-          >
-            {expanded ? (
-              <>
-                <ChevronUp className="h-4 w-4" />
-                {t.showLess}
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-4 w-4" />
-                {t.showMore}
-              </>
-            )}
-          </Button>
         </div>
       </CardContent>
     </Card>

@@ -4,6 +4,9 @@ export interface ElectronAPI {
   writeData: (filePath: string, data: unknown) => Promise<boolean>;
   getSystemLocale: () => Promise<string>;
   openExternalUrl: (url: string) => Promise<void>;
+  // Config storage (more reliable than localStorage on Windows)
+  getConfigValue: (key: string) => Promise<unknown | null>;
+  setConfigValue: (key: string, value: unknown) => Promise<boolean>;
 }
 
 declare global {

@@ -36,10 +36,22 @@ function AppContent() {
 
   // Check for stored data path on mount
   useEffect(() => {
-    const storedPath = localStorage.getItem('maplume-data-path');
-    if (storedPath) {
-      setDataPath(storedPath);
-    }
+    const loadDataPath = async () => {
+      // Try new config storage first (more reliable on Windows)
+      const configPath = await window.electronAPI.getConfigValue('dataPath');
+      if (configPath && typeof configPath === 'string') {
+        setDataPath(configPath);
+        return;
+      }
+      // Fallback to localStorage for migration
+      const storedPath = localStorage.getItem('maplume-data-path');
+      if (storedPath) {
+        // Migrate to new config storage
+        await window.electronAPI.setConfigValue('dataPath', storedPath);
+        setDataPath(storedPath);
+      }
+    };
+    loadDataPath();
   }, []);
 
   // Initialize app when data path is set
@@ -58,7 +70,9 @@ function AppContent() {
     }
   }, [activeProject?.id]);
 
-  const handleSetupComplete = (path: string) => {
+  const handleSetupComplete = async (path: string) => {
+    // Store in both config (reliable) and localStorage (backup)
+    await window.electronAPI.setConfigValue('dataPath', path);
     localStorage.setItem('maplume-data-path', path);
     setDataPath(path);
   };

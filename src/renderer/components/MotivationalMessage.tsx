@@ -34,7 +34,14 @@ export function MotivationalMessage({ behindSchedule }: MotivationalMessageProps
 
   const refreshMessage = () => {
     setIsRefreshing(true);
-    const newMessage = getMotivationalMessage(behindSchedule, language);
+
+    // Keep trying until we get a different message
+    let newMessage = getMotivationalMessage(behindSchedule, language);
+    let attempts = 0;
+    while (newMessage === message && attempts < 10) {
+      newMessage = getMotivationalMessage(behindSchedule, language);
+      attempts++;
+    }
 
     // Brief delay for animation
     setTimeout(() => {
