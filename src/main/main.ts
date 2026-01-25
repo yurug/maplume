@@ -79,13 +79,7 @@ function setupAutoUpdater() {
 
   autoUpdater.on('update-not-available', (info) => {
     console.log('[AutoUpdater] No update available. Latest:', info.version);
-    // Show dialog for debugging - remove in production
-    dialog.showMessageBox(mainWindow!, {
-      type: 'info',
-      title: 'No Update Available',
-      message: `You're running the latest version.\n\nCurrent: ${currentVersion}\nLatest: ${info.version}`,
-      buttons: ['OK'],
-    });
+    // Silent when no update - only log to console
   });
 
   autoUpdater.on('update-available', (info) => {
