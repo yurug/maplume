@@ -163,16 +163,46 @@ export function GlobalStatistics({ projects, entries, onClose }: GlobalStatistic
     statsByUnit[unitType].projectCount += 1;
   }
 
-  // Find best day across all projects
-  const dailyTotals: Record<string, number> = {};
-  for (const entry of entries) {
-    if (entry.isIncrement) {
-      dailyTotals[entry.date] = (dailyTotals[entry.date] || 0) + entry.wordCount;
+  // Find best day across all projects (only for words, as mixing units doesn't make sense)
+  // Build cumulative totals per project, then calculate daily amounts
+  const wordProjectDailyAmounts: Record<string, number> = {};
+
+  for (const project of projects) {
+    if ((project.unitType || 'words') !== 'words') continue; // Only count word-based projects
+
+    const projectEntries = entries
+      .filter((e) => e.projectId === project.id)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // Build cumulative totals by date for this project
+    const cumulativeByDate: Record<string, number> = {};
+    let cumulative = 0;
+
+    for (const entry of projectEntries) {
+      if (entry.isIncrement) {
+        cumulative += entry.wordCount;
+      } else {
+        cumulative = entry.wordCount;
+      }
+      cumulativeByDate[entry.date] = cumulative;
+    }
+
+    // Calculate daily amounts and add to global totals
+    const sortedDates = Object.keys(cumulativeByDate).sort();
+    let prevCumulative = 0;
+
+    for (const date of sortedDates) {
+      const todayCumulative = cumulativeByDate[date];
+      const dailyAmount = todayCumulative - prevCumulative;
+      if (dailyAmount > 0) {
+        wordProjectDailyAmounts[date] = (wordProjectDailyAmounts[date] || 0) + dailyAmount;
+      }
+      prevCumulative = todayCumulative;
     }
   }
 
   let bestDay: { date: string; count: number } | null = null;
-  for (const [date, count] of Object.entries(dailyTotals)) {
+  for (const [date, count] of Object.entries(wordProjectDailyAmounts)) {
     if (!bestDay || count > bestDay.count) {
       bestDay = { date, count };
     }

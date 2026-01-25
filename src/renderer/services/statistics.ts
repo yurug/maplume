@@ -5,66 +5,70 @@ export function calculateStatistics(project: Project, entries: WordEntry[]): Sta
     .filter((e) => e.projectId === project.id)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  // Calculate current word count (sum of all entries, handling increments)
-  let currentWordCount = 0;
-  const dailyTotals: Record<string, number> = {};
+  // Build cumulative totals by date (handles both increment and total entry modes)
+  const cumulativeByDate: Record<string, number> = {};
+  let cumulative = 0;
 
   for (const entry of projectEntries) {
     if (entry.isIncrement) {
-      currentWordCount += entry.wordCount;
-      dailyTotals[entry.date] = (dailyTotals[entry.date] || 0) + entry.wordCount;
+      cumulative += entry.wordCount;
     } else {
-      // For total entries, take the latest one for that day
-      currentWordCount = entry.wordCount;
-      dailyTotals[entry.date] = entry.wordCount;
+      // For total entries, the value IS the cumulative total
+      cumulative = entry.wordCount;
     }
+    cumulativeByDate[entry.date] = cumulative;
   }
 
+  const currentWordCount = cumulative;
   const wordsRemaining = Math.max(0, project.targetWords - currentWordCount);
   const percentComplete = project.targetWords > 0
     ? Math.min(100, (currentWordCount / project.targetWords) * 100)
     : 0;
 
-  // Daily averages
-  const days = Object.keys(dailyTotals);
-  const dailyAmounts = days.map((day, i) => {
-    if (i === 0) return dailyTotals[day];
-    const prevDay = days[i - 1];
-    return dailyTotals[day] - (dailyTotals[prevDay] || 0);
-  }).filter(d => d > 0);
+  // Calculate daily amounts as difference between consecutive cumulative values
+  const sortedDates = Object.keys(cumulativeByDate).sort();
+  const dailyAmounts: Array<{ date: string; amount: number }> = [];
+  let prevCumulative = 0;
 
+  for (const date of sortedDates) {
+    const todayCumulative = cumulativeByDate[date];
+    const dailyAmount = todayCumulative - prevCumulative;
+    if (dailyAmount > 0) {
+      dailyAmounts.push({ date, amount: dailyAmount });
+    }
+    prevCumulative = todayCumulative;
+  }
+
+  // Daily average (across all days with positive writing)
   const dailyAverage = dailyAmounts.length > 0
-    ? dailyAmounts.reduce((a, b) => a + b, 0) / dailyAmounts.length
+    ? dailyAmounts.reduce((sum, d) => sum + d.amount, 0) / dailyAmounts.length
     : 0;
 
   // Weekly average (last 7 days of writing)
   const last7Days = dailyAmounts.slice(-7);
   const weeklyAverage = last7Days.length > 0
-    ? last7Days.reduce((a, b) => a + b, 0) / last7Days.length
+    ? last7Days.reduce((sum, d) => sum + d.amount, 0) / last7Days.length
     : 0;
 
   // Best day
   let bestDay: { date: string; words: number } | null = null;
-  for (let i = 0; i < days.length; i++) {
-    const wordsToday = i === 0
-      ? dailyTotals[days[i]]
-      : dailyTotals[days[i]] - (dailyTotals[days[i - 1]] || 0);
-    if (!bestDay || wordsToday > bestDay.words) {
-      bestDay = { date: days[i], words: wordsToday };
+  for (const { date, amount } of dailyAmounts) {
+    if (!bestDay || amount > bestDay.words) {
+      bestDay = { date, words: amount };
     }
   }
 
   // Current streak (consecutive days up to today)
   const today = new Date().toISOString().split('T')[0];
   let currentStreak = 0;
-  const sortedDays = [...days].sort().reverse();
+  const datesWithWriting = new Set(sortedDates);
 
-  for (let i = 0; i < sortedDays.length; i++) {
-    const expectedDate = new Date();
-    expectedDate.setDate(expectedDate.getDate() - i);
-    const expected = expectedDate.toISOString().split('T')[0];
+  for (let i = 0; i < 365; i++) {
+    const checkDate = new Date();
+    checkDate.setDate(checkDate.getDate() - i);
+    const dateStr = checkDate.toISOString().split('T')[0];
 
-    if (sortedDays.includes(expected)) {
+    if (datesWithWriting.has(dateStr)) {
       currentStreak++;
     } else {
       break;
