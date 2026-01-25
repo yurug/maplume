@@ -190,3 +190,67 @@ ipcMain.handle('set-config-value', (_event, key: string, value: unknown) => {
   writeConfig(config);
   return true;
 });
+
+// Background image handlers
+ipcMain.handle('select-background-image', async () => {
+  const result = await dialog.showOpenDialog(mainWindow!, {
+    properties: ['openFile'],
+    title: 'Select Background Image',
+    filters: [
+      { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] },
+    ],
+  });
+  return result.canceled ? null : result.filePaths[0];
+});
+
+ipcMain.handle(
+  'copy-background-image',
+  async (_event, sourcePath: string, dataPath: string, projectId: string) => {
+    try {
+      // Create backgrounds folder if it doesn't exist
+      const backgroundsDir = path.join(dataPath, 'backgrounds');
+      if (!fs.existsSync(backgroundsDir)) {
+        fs.mkdirSync(backgroundsDir, { recursive: true });
+      }
+
+      // Generate unique filename
+      const ext = path.extname(sourcePath);
+      const filename = `${projectId}-${Date.now()}${ext}`;
+      const destPath = path.join(backgroundsDir, filename);
+
+      // Copy the file
+      await fs.promises.copyFile(sourcePath, destPath);
+
+      // Return relative path for storage
+      return `backgrounds/${filename}`;
+    } catch (error) {
+      console.error('Failed to copy background image:', error);
+      return null;
+    }
+  }
+);
+
+ipcMain.handle(
+  'delete-background-image',
+  async (_event, dataPath: string, relativePath: string) => {
+    try {
+      const fullPath = path.join(dataPath, relativePath);
+      if (fs.existsSync(fullPath)) {
+        await fs.promises.unlink(fullPath);
+      }
+      return true;
+    } catch (error) {
+      console.error('Failed to delete background image:', error);
+      return false;
+    }
+  }
+);
+
+ipcMain.handle(
+  'get-background-image-url',
+  (_event, dataPath: string, relativePath: string) => {
+    const fullPath = path.join(dataPath, relativePath);
+    // Return file:// URL for use in CSS
+    return `file://${fullPath}`;
+  }
+);

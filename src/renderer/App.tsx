@@ -35,8 +35,22 @@ function AppContent() {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [whatsNewChanges, setWhatsNewChanges] = useState<VersionChanges[]>([]);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
 
   const activeProject = state.projects.find((p) => p.id === state.activeProjectId);
+
+  // Load background image URL when project changes
+  useEffect(() => {
+    const loadBackgroundImage = async () => {
+      if (activeProject?.background?.type === 'image' && activeProject.background.value && dataPath) {
+        const url = await window.electronAPI.getBackgroundImageUrl(dataPath, activeProject.background.value);
+        setBackgroundImageUrl(url);
+      } else {
+        setBackgroundImageUrl(null);
+      }
+    };
+    loadBackgroundImage();
+  }, [activeProject?.background, dataPath]);
 
   // Check for stored data path on mount
   useEffect(() => {
@@ -171,6 +185,39 @@ function AppContent() {
     }
   };
 
+  // Generate background styles for main content
+  const getBackgroundStyles = (): React.CSSProperties => {
+    if (!activeProject?.background) return {};
+
+    const { type, value, opacity } = activeProject.background;
+
+    if (type === 'color') {
+      return {
+        backgroundColor: value,
+      };
+    }
+
+    if (type === 'image' && backgroundImageUrl) {
+      return {
+        backgroundImage: `url("${backgroundImageUrl}")`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+      };
+    }
+
+    return {};
+  };
+
+  // Get overlay opacity for readability (mainly for images)
+  const getOverlayOpacity = (): number => {
+    if (!activeProject?.background) return 0;
+    if (activeProject.background.type === 'image') {
+      return 1 - (activeProject.background.opacity || 0.3);
+    }
+    return 0;
+  };
+
   return (
     <TooltipProvider>
       <div className="app-container">
@@ -182,7 +229,14 @@ function AppContent() {
           </aside>
 
           {/* Main Content */}
-          <main className="main-content">
+          <main className="main-content relative" style={getBackgroundStyles()}>
+            {/* Overlay for readability when using background images */}
+            {activeProject?.background?.type === 'image' && backgroundImageUrl && (
+              <div
+                className="pointer-events-none absolute inset-0 bg-white dark:bg-warm-900"
+                style={{ opacity: getOverlayOpacity() }}
+              />
+            )}
             <AnimatePresence mode="wait">
               {activeProject ? (
                 <motion.div
@@ -191,7 +245,7 @@ function AppContent() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-6"
+                  className="relative z-10 space-y-6"
                 >
                   {/* Project Header */}
                   <div className="flex items-start justify-between gap-4">
@@ -298,7 +352,9 @@ function AppContent() {
                   </motion.div>
                 </motion.div>
               ) : (
-                <EmptyState onCreateProject={handleNewProject} />
+                <div className="relative z-10">
+                  <EmptyState onCreateProject={handleNewProject} />
+                </div>
               )}
             </AnimatePresence>
           </main>
@@ -306,7 +362,7 @@ function AppContent() {
 
         {/* Project Form Modal */}
         <AnimatePresence>
-          {showProjectForm && (
+          {showProjectForm && dataPath && (
             <ProjectForm
               project={editingProject}
               onSave={handleSaveProject}
@@ -315,6 +371,7 @@ function AppContent() {
                 setEditingProject(undefined);
               }}
               onArchive={editingProject ? handleArchiveProject : undefined}
+              dataPath={dataPath}
             />
           )}
         </AnimatePresence>

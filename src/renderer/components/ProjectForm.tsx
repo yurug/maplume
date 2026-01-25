@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, BookOpen, Calendar, Target, FileText, Archive, Ruler, Lock } from 'lucide-react';
-import type { Project, UnitType } from '@shared/types';
+import type { Project, UnitType, ProjectBackground } from '@shared/types';
 import { useI18n } from '../i18n';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { BackgroundPicker } from './BackgroundPicker';
 import { cn } from '../lib/utils';
 
 interface ProjectFormProps {
@@ -12,9 +13,10 @@ interface ProjectFormProps {
   onSave: (data: Omit<Project, 'id' | 'archived' | 'createdAt' | 'updatedAt'>) => void;
   onCancel: () => void;
   onArchive?: () => void;
+  dataPath: string;
 }
 
-export function ProjectForm({ project, onSave, onCancel, onArchive }: ProjectFormProps) {
+export function ProjectForm({ project, onSave, onCancel, onArchive, dataPath }: ProjectFormProps) {
   const { t } = useI18n();
   const today = new Date().toISOString().split('T')[0];
   const defaultEnd = new Date();
@@ -26,8 +28,11 @@ export function ProjectForm({ project, onSave, onCancel, onArchive }: ProjectFor
   const [endDate, setEndDate] = useState(project?.endDate || defaultEnd.toISOString().split('T')[0]);
   const [targetWords, setTargetWords] = useState(project?.targetWords?.toString() || '50000');
   const [unitType, setUnitType] = useState<UnitType>(project?.unitType || 'words');
+  const [background, setBackground] = useState<ProjectBackground | undefined>(project?.background);
 
   const isEditing = !!project;
+  // Use existing project ID or generate a temporary one for new projects
+  const projectId = project?.id || `temp-${Date.now()}`;
 
   // Get the appropriate default target based on unit type
   const getDefaultTarget = (unit: UnitType): string => {
@@ -46,6 +51,7 @@ export function ProjectForm({ project, onSave, onCancel, onArchive }: ProjectFor
       setEndDate(project.endDate);
       setTargetWords(project.targetWords.toString());
       setUnitType(project.unitType);
+      setBackground(project.background);
     }
   }, [project]);
 
@@ -87,6 +93,7 @@ export function ProjectForm({ project, onSave, onCancel, onArchive }: ProjectFor
       endDate,
       targetWords: parseInt(targetWords, 10) || defaultTarget,
       unitType,
+      background,
     });
   };
 
@@ -256,6 +263,14 @@ export function ProjectForm({ project, onSave, onCancel, onArchive }: ProjectFor
                   .replace(t.unitWords.toLowerCase(), getUnitName())}
             </p>
           </div>
+
+          {/* Background */}
+          <BackgroundPicker
+            value={background}
+            onChange={setBackground}
+            dataPath={dataPath}
+            projectId={projectId}
+          />
 
           {/* Actions */}
           <div className="flex items-center justify-between border-t border-warm-200 pt-5 dark:border-warm-700">

@@ -44,6 +44,12 @@ function migrateData(data: Record<string, unknown>): AppData {
     version = 2;
   }
 
+  // Migration from v2 to v3: Add background support (optional field, no changes needed)
+  if (version === 2) {
+    // background field is optional, existing projects simply won't have it
+    version = 3;
+  }
+
   return {
     ...data,
     version: STORAGE_VERSION,
