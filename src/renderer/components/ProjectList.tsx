@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import * as LucideIcons from 'lucide-react';
-import { Plus, Archive, BookOpen, ChevronRight, Settings, Feather, Languages } from 'lucide-react';
+import { Plus, Archive, BookOpen, ChevronRight, Settings, Feather, Languages, Coffee } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 // Helper to get icon component by name
@@ -18,9 +18,10 @@ interface ProjectListProps {
   onNewProject: () => void;
   onOpenSettings?: () => void;
   onOpenGlobalStats?: () => void;
+  onOpenSponsor?: () => void;
 }
 
-export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats }: ProjectListProps) {
+export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats, onOpenSponsor }: ProjectListProps) {
   const { state, actions } = useApp();
   const { t, language, setLanguage } = useI18n();
 
@@ -42,18 +43,35 @@ export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats }:
     <div className="flex h-full flex-col">
       {/* App Header */}
       <div className="flex items-center justify-between border-b border-warm-200/60 px-4 py-3 bg-gradient-to-r from-primary-600 to-primary-700 dark:border-warm-700/60">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={onOpenGlobalStats}
-              className="flex items-center gap-2 rounded-lg px-2 py-1 -mx-2 -my-1 transition-colors hover:bg-white/10"
-            >
-              <Feather className="h-5 w-5 text-white" />
-              <span className="font-serif text-lg font-semibold text-white">{t.appName}</span>
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">{t.globalStatistics}</TooltipContent>
-        </Tooltip>
+        <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onOpenGlobalStats}
+                className="flex items-center gap-2 rounded-lg px-2 py-1 -ml-2 transition-colors hover:bg-white/10"
+              >
+                <Feather className="h-5 w-5 text-white" />
+                <span className="font-serif text-lg font-semibold text-white">{t.appName}</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{t.globalStatistics}</TooltipContent>
+          </Tooltip>
+
+          {/* Sponsor Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={onOpenSponsor}
+                className="text-white/70 hover:text-white hover:bg-white/10"
+              >
+                <Coffee className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{t.buyMeCoffee}</TooltipContent>
+          </Tooltip>
+        </div>
         <div className="flex items-center gap-1">
           {/* Language Toggle */}
           <Tooltip>

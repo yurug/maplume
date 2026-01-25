@@ -132,7 +132,9 @@ export default {
   close: 'Fermer',
   version: 'Version',
   about: 'À propos',
-  buyMeCoffee: 'Envie de dire merci ? Offrez-moi un café !',
+  buyMeCoffee: 'Offrez-moi un café !',
+  supportMaPlume: 'Soutenir MaPlume',
+  supportDescription: 'Si MaPlume vous aide dans votre parcours d\'écriture, pensez à soutenir son développement avec un petit don.',
 
   // Messages
   newMessage: 'Nouveau message',
