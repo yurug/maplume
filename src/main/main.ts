@@ -59,18 +59,33 @@ function createWindow() {
 
 // Auto-updater configuration
 function setupAutoUpdater() {
-  console.log('[AutoUpdater] Setting up auto-updater...');
+  const currentVersion = app.getVersion();
+
+  // Enable logging
+  autoUpdater.logger = {
+    info: (message: string) => console.log('[AutoUpdater]', message),
+    warn: (message: string) => console.warn('[AutoUpdater]', message),
+    error: (message: string) => console.error('[AutoUpdater]', message),
+    debug: (message: string) => console.log('[AutoUpdater DEBUG]', message),
+  } as typeof autoUpdater.logger;
 
   // Disable auto-download - we'll handle it manually
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
   autoUpdater.on('checking-for-update', () => {
-    console.log('[AutoUpdater] Checking for updates...');
+    console.log('[AutoUpdater] Checking for updates... Current version:', currentVersion);
   });
 
   autoUpdater.on('update-not-available', (info) => {
-    console.log('[AutoUpdater] No update available. Current version:', info.version);
+    console.log('[AutoUpdater] No update available. Latest:', info.version);
+    // Show dialog for debugging - remove in production
+    dialog.showMessageBox(mainWindow!, {
+      type: 'info',
+      title: 'No Update Available',
+      message: `You're running the latest version.\n\nCurrent: ${currentVersion}\nLatest: ${info.version}`,
+      buttons: ['OK'],
+    });
   });
 
   autoUpdater.on('update-available', (info) => {
@@ -79,7 +94,7 @@ function setupAutoUpdater() {
       .showMessageBox(mainWindow!, {
         type: 'info',
         title: 'Update Available',
-        message: `A new version (${info.version}) is available. Would you like to download it now?`,
+        message: `A new version (${info.version}) is available.\n\nCurrent: ${currentVersion}\n\nWould you like to download it now?`,
         buttons: ['Download', 'Later'],
         defaultId: 0,
       })
@@ -88,6 +103,10 @@ function setupAutoUpdater() {
           autoUpdater.downloadUpdate();
         }
       });
+  });
+
+  autoUpdater.on('download-progress', (progress) => {
+    console.log('[AutoUpdater] Download progress:', Math.round(progress.percent), '%');
   });
 
   autoUpdater.on('update-downloaded', (info) => {
@@ -101,7 +120,6 @@ function setupAutoUpdater() {
       })
       .then((result) => {
         if (result.response === 0) {
-          // Force quit and install - this ensures the app is fully closed
           setImmediate(() => {
             app.removeAllListeners('window-all-closed');
             if (mainWindow) {
@@ -114,20 +132,30 @@ function setupAutoUpdater() {
   });
 
   autoUpdater.on('error', (error) => {
-    console.error('[AutoUpdater] Error:', error.message);
+    console.error('[AutoUpdater] Error:', error);
     dialog.showMessageBox(mainWindow!, {
       type: 'error',
       title: 'Update Error',
-      message: `An error occurred while updating: ${error.message}`,
+      message: `Error checking for updates:\n\n${error.message}\n\nCurrent version: ${currentVersion}`,
       buttons: ['OK'],
     });
   });
 
   // Check for updates
-  console.log('[AutoUpdater] Triggering update check...');
-  autoUpdater.checkForUpdates().catch((err) => {
-    console.error('[AutoUpdater] checkForUpdates failed:', err);
-  });
+  console.log('[AutoUpdater] Starting update check for version', currentVersion);
+  autoUpdater.checkForUpdates()
+    .then((result) => {
+      console.log('[AutoUpdater] Check result:', result?.updateInfo?.version || 'no result');
+    })
+    .catch((err) => {
+      console.error('[AutoUpdater] checkForUpdates failed:', err);
+      dialog.showMessageBox(mainWindow!, {
+        type: 'error',
+        title: 'Update Check Failed',
+        message: `Failed to check for updates:\n\n${err.message}\n\nCurrent version: ${currentVersion}`,
+        buttons: ['OK'],
+      });
+    });
 }
 
 app.whenReady().then(() => {
