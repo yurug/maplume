@@ -61,7 +61,7 @@ export function MotivationalMessage({ behindSchedule }: MotivationalMessageProps
       )}
     >
       {/* Decorative background element */}
-      <div className="absolute -right-4 -top-4 h-24 w-24 opacity-10">
+      <div className="pointer-events-none absolute -right-4 -top-4 h-24 w-24 opacity-10">
         {behindSchedule ? (
           <AlertCircle className="h-full w-full" />
         ) : (
@@ -104,7 +104,7 @@ export function MotivationalMessage({ behindSchedule }: MotivationalMessageProps
         onClick={refreshMessage}
         disabled={isRefreshing}
         className={cn(
-          'flex-shrink-0',
+          'relative z-10 flex-shrink-0',
           behindSchedule
             ? 'text-primary-600 hover:text-primary-800 hover:bg-primary-200/50'
             : 'text-success-600 hover:text-success-800 hover:bg-success-200/50'
