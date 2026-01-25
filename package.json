@@ -1,6 +1,6 @@
 {
   "name": "maplume",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A word tracker for novel writers",
   "main": "dist/main/main.js",
   "scripts": {
@@ -73,7 +73,10 @@
       "differentialPackage": false
     },
     "mac": {
-      "target": "dmg",
+      "target": {
+        "target": "dmg",
+        "arch": ["universal"]
+      },
       "icon": "build/icon.png"
     },
     "linux": {

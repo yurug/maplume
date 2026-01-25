@@ -59,11 +59,22 @@ function createWindow() {
 
 // Auto-updater configuration
 function setupAutoUpdater() {
+  console.log('[AutoUpdater] Setting up auto-updater...');
+
   // Disable auto-download - we'll handle it manually
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
+  autoUpdater.on('checking-for-update', () => {
+    console.log('[AutoUpdater] Checking for updates...');
+  });
+
+  autoUpdater.on('update-not-available', (info) => {
+    console.log('[AutoUpdater] No update available. Current version:', info.version);
+  });
+
   autoUpdater.on('update-available', (info) => {
+    console.log('[AutoUpdater] Update available:', info.version);
     dialog
       .showMessageBox(mainWindow!, {
         type: 'info',
@@ -103,6 +114,7 @@ function setupAutoUpdater() {
   });
 
   autoUpdater.on('error', (error) => {
+    console.error('[AutoUpdater] Error:', error.message);
     dialog.showMessageBox(mainWindow!, {
       type: 'error',
       title: 'Update Error',
@@ -112,7 +124,10 @@ function setupAutoUpdater() {
   });
 
   // Check for updates
-  autoUpdater.checkForUpdates();
+  console.log('[AutoUpdater] Triggering update check...');
+  autoUpdater.checkForUpdates().catch((err) => {
+    console.error('[AutoUpdater] checkForUpdates failed:', err);
+  });
 }
 
 app.whenReady().then(() => {
