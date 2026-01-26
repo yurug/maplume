@@ -3,7 +3,9 @@ import en from './locales/en';
 import fr from './locales/fr';
 import de from './locales/de';
 import es from './locales/es';
+import it from './locales/it';
 import ja from './locales/ja';
+import pt from './locales/pt';
 import zh from './locales/zh';
 
 export type TranslationKey = keyof typeof en;
@@ -13,7 +15,9 @@ const locales: Record<string, typeof en> = {
   fr,
   de,
   es,
+  it,
   ja,
+  pt,
   zh,
 };
 
@@ -22,7 +26,9 @@ export const supportedLanguages = [
   { code: 'fr', name: 'Français' },
   { code: 'de', name: 'Deutsch' },
   { code: 'es', name: 'Español' },
+  { code: 'it', name: 'Italiano' },
   { code: 'ja', name: '日本語' },
+  { code: 'pt', name: 'Português' },
   { code: 'zh', name: '中文' },
 ];
 
