@@ -2,7 +2,9 @@
 
 A beautiful, distraction-free word tracker for novel writers. Track your daily writing progress, visualize your journey, and stay motivated to reach your goals.
 
-![MaPlume](https://img.shields.io/badge/version-1.0.1-amber)
+**[🌐 Website](https://yurug.github.io/maplume/)** | **[⬇️ Download](https://github.com/yurug/maplume/releases/latest)**
+
+![MaPlume](https://img.shields.io/badge/version-1.0.2-amber)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)
 

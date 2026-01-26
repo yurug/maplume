@@ -112,3 +112,14 @@ src/
 - **IPC**: Renderer communicates with main process via `window.electronAPI` (preload bridge)
 - **Charts**: Recharts with responsive container, shows actual progress vs linear target line
 - **i18n**: Custom implementation using React Context. Auto-detects system locale, falls back to English. Add new languages by creating a file in `src/renderer/i18n/locales/` and registering in `src/renderer/i18n/index.ts`
+
+## Website & Releases
+
+- **Website**: https://yurug.github.io/maplume/ (served from `docs/` folder)
+- **Landing pages**: `docs/index.html` (EN) and `docs/fr/index.html` (FR)
+
+### When releasing a new version:
+1. Update download links in `docs/index.html` and `docs/fr/index.html` to the new version
+2. Update the version badge in `README.md`
+3. Create and push the git tag
+4. Create the GitHub release
