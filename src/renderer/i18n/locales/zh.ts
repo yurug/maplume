@@ -1,0 +1,202 @@
+export default {
+  // App
+  appName: 'MaPlume',
+  loading: '加载中...',
+
+  // Setup
+  welcome: '欢迎使用 MaPlume',
+  welcomeSubtitle: '为小说作者打造的字数追踪助手',
+  chooseDataFolder: '选择数据存储位置',
+  chooseDataFolderDesc: '选择一个文件夹来保存您的项目和进度。可以是本地文件夹，也可以是云同步文件夹（如 Google Drive 或 OneDrive）。',
+  selectFolder: '选择文件夹',
+  selecting: '选择中...',
+  featureTrackProjects: '追踪您的写作项目',
+  featureSetGoals: '设定并实现字数目标',
+  featureVisualizeProgress: '可视化您的进度',
+
+  // Projects
+  projects: '项目',
+  new: '新建',
+  newProject: '+ 新建',
+  noProjects: '暂无项目，创建一个开始吧！',
+  showArchived: '显示已归档',
+  archived: '已归档',
+  noProjectSelected: '未选择项目',
+  noProjectSelectedDesc: '创建新项目或选择现有项目以开始。',
+  createFirstProject: '创建您的第一个项目',
+  editProject: '编辑项目',
+
+  // Project Form
+  newProjectTitle: '新建项目',
+  editProjectTitle: '编辑项目',
+  projectTitle: '标题',
+  projectTitlePlaceholder: '我的小说',
+  projectIcon: '图标',
+  projectNotes: '备注',
+  projectNotesPlaceholder: '关于项目的可选备注...',
+  startDate: '开始日期',
+  endDate: '结束日期',
+  targetWords: '目标字数',
+  targetPages: '目标页数',
+  targetChapters: '目标章节数',
+  unitType: '单位类型',
+  unitTypeHelp: '创建后无法更改',
+  archive: '归档',
+  cancel: '取消',
+  save: '保存',
+  create: '创建',
+
+  // Unit types
+  unitWords: '字数',
+  unitPages: '页数',
+  unitChapters: '章节',
+
+  // Word Entry
+  date: '日期',
+  words: '字数',
+  wordsWrittenToday: '今日写作字数',
+  totalWordCount: '总字数',
+  pagesWrittenToday: '今日写作页数',
+  totalPageCount: '总页数',
+  chaptersWrittenToday: '今日写作章节数',
+  totalChapterCount: '总章节数',
+  type: '类型',
+  add: '+ 增量',
+  total: '= 总计',
+  log: '记录',
+  unitsLogged: '{unit} 已记录！',
+
+  // Chart
+  actual: '实际',
+  target: '目标',
+  today: '今天',
+  wordsUnit: '字',
+
+  // Statistics
+  statistics: '统计',
+  progress: '进度',
+  wordsRemaining: '剩余字数',
+  pagesRemaining: '剩余页数',
+  chaptersRemaining: '剩余章节',
+  dailyAverage: '日均',
+  weeklyAverage: '周均',
+  bestDay: '最佳日',
+  currentStreak: '连续天数',
+  projectedFinish: '预计完成',
+  wordsPerDay: '字/天',
+  pagesPerDay: '页/天',
+  chaptersPerDay: '章/天',
+  day: '天',
+  days: '天',
+  ofTargetWords: '目标 {target} 字',
+  ofTargetPages: '目标 {target} 页',
+  ofTargetChapters: '目标 {target} 章',
+  showMore: '显示更多',
+  showLess: '收起',
+  wordsLogged: '字数已记录！',
+  wordsPerDayNeeded: '约需每天 {count} 字',
+  pagesPerDayNeeded: '约需每天 {count} 页',
+  chaptersPerDayNeeded: '约需每天 {count} 章',
+
+  // Entries
+  showEntryHistory: '显示记录历史',
+  hideEntryHistory: '隐藏记录历史',
+  entries: '条记录',
+  noEntries: '暂无记录，开始记录您的进度吧！',
+  deleteEntryConfirm: '确定删除此记录？',
+  actions: '操作',
+
+  // Settings
+  settings: '设置',
+  appearance: '外观',
+  darkMode: '深色模式',
+  lightTheme: '当前使用浅色主题',
+  darkTheme: '当前使用深色主题',
+  dataStorage: '数据存储',
+  currentFolder: '当前文件夹：',
+  notSet: '未设置',
+  changeFolder: '更改文件夹',
+  exportData: '导出数据',
+  exportAll: '导出所有项目',
+  exportCurrent: '导出当前项目',
+  importData: '导入数据',
+  importFromFile: '从文件导入',
+  importConfirm: '这将替换您当前的数据，确定继续吗？',
+  importError: '文件读取失败，请选择有效的 JSON 文件。',
+  importInvalidFormat: '文件格式无效，请选择有效的 MaPlume 导出文件。',
+  importMergeWarning: '导入将与现有数据合并',
+  folderChanged: '数据文件夹已更改，您的数据将保存到新位置。',
+  help: '帮助',
+  reportBug: '报告问题',
+  language: '语言',
+  close: '关闭',
+  version: '版本',
+  about: '关于',
+  buyMeCoffee: '请我喝杯咖啡！',
+  supportMaPlume: '支持 MaPlume',
+  supportDescription: '如果 MaPlume 对您的写作有所帮助，欢迎支持项目发展。',
+
+  // Messages
+  newMessage: '新消息',
+
+  // What's New Dialog
+  whatsNew: '新功能',
+  getStarted: '开始使用',
+
+  // What's New - v0.2.0
+  whatsNew_unitTypes_title: '追踪页数和章节',
+  whatsNew_unitTypes_desc: '现在可以创建追踪页数或章节的项目。创建新项目时选择您偏好的单位。',
+
+  // What's New - v0.4.0
+  whatsNew_projectIcons_title: '项目图标',
+  whatsNew_projectIcons_desc: '为每个项目选择独特的图标，在侧边栏中一目了然。',
+
+  // What's New - v0.3.0
+  whatsNew_backgrounds_title: '自定义背景',
+  whatsNew_backgrounds_desc: '为每个项目设置自定义背景颜色或图片，打造专属于您的写作空间！',
+
+  // Background Picker
+  background: '背景',
+  backgroundColor: '颜色',
+  backgroundImage: '图片',
+  selectImage: '选择图片',
+  removeBackground: '移除',
+  opacity: '透明度',
+  customColor: '自定义',
+  noBackground: '无',
+
+  // Preset colors
+  colorCream: '奶油色',
+  colorAmber: '琥珀色',
+  colorOrange: '橙色',
+  colorBrown: '棕色',
+  colorMint: '薄荷色',
+  colorLavender: '薰衣草色',
+  colorPink: '粉色',
+  colorGray: '灰色',
+  colorDark: '深色',
+
+  // Global Statistics
+  globalStatistics: '您的写作旅程',
+  allProjectsOverview: '所有项目的统计概览',
+  totalProjects: '项目总数',
+  totalEntries: '记录总数',
+  active: '活跃',
+  daysWriting: '天写作',
+  progressByType: '按类型统计',
+  noProjectsYet: '暂无项目，创建一个开始吧！',
+
+  // Updates
+  updates: '更新',
+  checkForUpdates: '检查更新',
+  checkingForUpdates: '检查中...',
+  noUpdatesAvailable: '您正在使用最新版本',
+  updateAvailable: '有可用更新：v{version}',
+  downloadUpdate: '下载更新',
+  downloading: '下载中...',
+  downloadingUpdate: '正在下载更新...',
+  updateDownloaded: '更新已下载！重启以应用。',
+  restartNow: '立即重启',
+  updateError: '更新检查失败',
+  currentVersionLabel: '当前版本',
+} as const;

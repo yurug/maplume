@@ -1,17 +1,29 @@
 import { createContext, useContext } from 'react';
 import en from './locales/en';
 import fr from './locales/fr';
+import de from './locales/de';
+import es from './locales/es';
+import ja from './locales/ja';
+import zh from './locales/zh';
 
 export type TranslationKey = keyof typeof en;
 
 const locales: Record<string, typeof en> = {
   en,
   fr,
+  de,
+  es,
+  ja,
+  zh,
 };
 
 export const supportedLanguages = [
   { code: 'en', name: 'English' },
   { code: 'fr', name: 'Français' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'es', name: 'Español' },
+  { code: 'ja', name: '日本語' },
+  { code: 'zh', name: '中文' },
 ];
 
 export function getTranslations(lang: string): typeof en {
