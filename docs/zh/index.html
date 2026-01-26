@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaPlume - 小说作者的字数追踪器</title>
+  <meta name="description" content="为小说作者打造的精美、专注的字数追踪器。追踪每日写作进度，可视化您的旅程，保持创作动力。">
+  <meta name="keywords" content="写作, 字数统计, 小说, 作家, 生产力, 字数追踪器">
+  <meta property="og:title" content="MaPlume - 小说作者的字数追踪器">
+  <meta property="og:description" content="追踪每日写作进度，可视化您的旅程，保持创作动力，完成您的杰作。">
+  <meta property="og:image" content="https://raw.githubusercontent.com/yurug/maplume/master/assets/screenshot-main.png">
+  <meta property="og:url" content="https://yurug.github.io/maplume/zh/">
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/yurug/maplume/master/build/icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-50: #fffbeb;
+      --primary-100: #fef3c7;
+      --primary-200: #fde68a;
+      --primary-300: #fcd34d;
+      --primary-400: #fbbf24;
+      --primary-500: #f59e0b;
+      --primary-600: #d97706;
+      --primary-700: #b45309;
+      --warm-50: #fafaf9;
+      --warm-100: #f5f5f4;
+      --warm-200: #e7e5e4;
+      --warm-300: #d6d3d1;
+      --warm-400: #a8a29e;
+      --warm-500: #78716c;
+      --warm-600: #57534e;
+      --warm-700: #44403c;
+      --warm-800: #292524;
+      --warm-900: #1c1917;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--primary-50) 0%, var(--warm-100) 100%);
+      color: var(--warm-800);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    header {
+      padding: 24px 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+      border-bottom: 1px solid var(--warm-200);
+    }
+
+    header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--warm-800);
+    }
+
+    .logo svg {
+      width: 32px;
+      height: 32px;
+      color: var(--primary-600);
+    }
+
+    .logo span {
+      font-family: 'Noto Serif SC', Georgia, serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    nav {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+    }
+
+    nav a {
+      color: var(--warm-600);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: var(--primary-600);
+    }
+
+    .lang-switch {
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: var(--warm-100);
+      color: var(--warm-600);
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+
+    .lang-switch:hover {
+      background: var(--primary-100);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+      font-size: 1rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+      color: white;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--warm-700);
+      border: 2px solid var(--warm-200);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--primary-400);
+      color: var(--primary-700);
+    }
+
+    .hero {
+      padding: 160px 0 80px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-family: 'Noto Serif SC', Georgia, serif;
+      font-size: 3.5rem;
+      font-weight: 600;
+      color: var(--warm-900);
+      margin-bottom: 24px;
+      line-height: 1.2;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: 1.25rem;
+      color: var(--warm-600);
+      max-width: 600px;
+      margin: 0 auto 40px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .hero-image {
+      margin-top: 60px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    }
+
+    .hero-image img {
+      width: 100%;
+      display: block;
+    }
+
+    .features {
+      padding: 100px 0;
+      background: white;
+    }
+
+    .features h2 {
+      font-family: 'Noto Serif SC', Georgia, serif;
+      font-size: 2.5rem;
+      text-align: center;
+      margin-bottom: 60px;
+      color: var(--warm-900);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 32px;
+    }
+
+    .feature-card {
+      padding: 32px;
+      border-radius: 16px;
+      background: var(--warm-50);
+      border: 1px solid var(--warm-200);
+      transition: all 0.3s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+      border-color: var(--primary-300);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-200) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      color: var(--primary-700);
+    }
+
+    .feature-card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 12px;
+      color: var(--warm-800);
+    }
+
+    .feature-card p {
+      color: var(--warm-500);
+    }
+
+    .screenshot-section {
+      padding: 100px 0;
+      background: linear-gradient(135deg, var(--primary-50) 0%, var(--warm-100) 100%);
+    }
+
+    .screenshot-section h2 {
+      font-family: 'Noto Serif SC', Georgia, serif;
+      font-size: 2.5rem;
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--warm-900);
+    }
+
+    .screenshot-section > .container > p {
+      text-align: center;
+      color: var(--warm-500);
+      margin-bottom: 40px;
+    }
+
+    .screenshot-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .screenshot-card {
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+      background: white;
+    }
+
+    .screenshot-card img {
+      width: 100%;
+      display: block;
+    }
+
+    .screenshot-label {
+      padding: 16px 20px;
+      font-weight: 500;
+      color: var(--warm-600);
+      border-top: 1px solid var(--warm-200);
+    }
+
+    .download {
+      padding: 100px 0;
+      background: white;
+      text-align: center;
+    }
+
+    .download h2 {
+      font-family: 'Noto Serif SC', Georgia, serif;
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+      color: var(--warm-900);
+    }
+
+    .download > .container > p {
+      color: var(--warm-500);
+      margin-bottom: 40px;
+    }
+
+    .download-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .download-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 28px;
+      border-radius: 12px;
+      background: var(--warm-800);
+      color: white;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+
+    .download-btn:hover {
+      background: var(--warm-900);
+      transform: translateY(-2px);
+    }
+
+    .download-btn svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .download-btn span {
+      text-align: left;
+    }
+
+    .download-btn .platform {
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+
+    .download-btn .label {
+      font-weight: 600;
+    }
+
+    .download-note {
+      color: var(--warm-400);
+      font-size: 0.875rem;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 16px;
+      max-width: 560px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-header {
+      padding: 24px 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h3 {
+      font-family: 'Noto Serif SC', Georgia, serif;
+      font-size: 1.5rem;
+      color: var(--warm-900);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--warm-400);
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: var(--warm-100);
+      color: var(--warm-600);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-body p {
+      color: var(--warm-600);
+      margin-bottom: 16px;
+    }
+
+    .modal-body code {
+      display: block;
+      background: var(--warm-800);
+      color: var(--primary-300);
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 0.875rem;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+
+    .modal-body ol {
+      color: var(--warm-600);
+      padding-left: 24px;
+      margin-bottom: 16px;
+    }
+
+    .modal-body li {
+      margin-bottom: 8px;
+    }
+
+    .modal-body .warning {
+      background: var(--primary-50);
+      border: 1px solid var(--primary-200);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+
+    .modal-body .warning-title {
+      font-weight: 600;
+      color: var(--primary-700);
+      margin-bottom: 8px;
+    }
+
+    .modal-body .support-note {
+      background: var(--warm-50);
+      border: 1px solid var(--warm-200);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .modal-footer {
+      padding: 0 24px 24px;
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .modal-footer .btn {
+      padding: 10px 20px;
+    }
+
+    footer {
+      padding: 60px 0;
+      background: var(--warm-900);
+      color: var(--warm-300);
+      text-align: center;
+    }
+
+    footer .logo {
+      justify-content: center;
+      margin-bottom: 24px;
+      color: white;
+    }
+
+    footer .logo svg {
+      color: var(--primary-400);
+    }
+
+    footer p {
+      margin-bottom: 24px;
+    }
+
+    footer a {
+      color: var(--primary-400);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    .sponsor-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #ea4aaa 0%, #c026d3 100%);
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .sponsor-btn:hover {
+      transform: translateY(-2px);
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+
+      .hero p {
+        font-size: 1.1rem;
+      }
+
+      nav {
+        display: none;
+      }
+
+      .screenshot-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="#" class="logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path>
+          <line x1="16" y1="8" x2="2" y2="22"></line>
+          <line x1="17.5" y1="15" x2="9" y2="15"></line>
+        </svg>
+        <span>MaPlume</span>
+      </a>
+      <nav>
+        <a href="#features">功能</a>
+        <a href="#screenshots">截图</a>
+        <a href="https://github.com/yurug/maplume" target="_blank">GitHub</a>
+        <a href="../" class="lang-switch">EN</a>
+        <a href="#download" class="btn btn-primary">下载</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <h1>记录您的写作旅程<br><span>每一个字都值得纪念</span></h1>
+      <p>为小说作者打造的专注型字数追踪器。设定目标，可视化进度，保持创作动力，完成您的杰作。</p>
+      <div class="hero-buttons">
+        <a href="#download" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          免费下载
+        </a>
+        <a href="https://github.com/yurug/maplume" target="_blank" class="btn btn-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+          </svg>
+          在 GitHub 上查看
+        </a>
+      </div>
+      <div class="hero-image">
+        <img src="https://raw.githubusercontent.com/yurug/maplume/master/assets/screenshot-main.png" alt="MaPlume 截图">
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="container">
+      <h2>写作所需的一切</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+          </div>
+          <h3>多项目管理</h3>
+          <p>追踪不同写作项目的进度，支持自定义图标和背景。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="20" x2="12" y2="10"></line>
+              <line x1="18" y1="20" x2="18" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="16"></line>
+            </svg>
+          </div>
+          <h3>可视化进度</h3>
+          <p>交互式图表，一目了然地展示实际进度与目标轨迹的对比。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20v-6M6 20V10M18 20V4"></path>
+            </svg>
+          </div>
+          <h3>智能统计</h3>
+          <p>日均字数、写作连续天数、最佳记录日和预计完成日期。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <h3>灵活的单位</h3>
+          <p>追踪字数、页数或章节数——选择最适合您写作风格的方式。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </div>
+          <h3>深色模式</h3>
+          <p>深夜写作时保护眼睛，随时可以切换。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <h3>本地优先 & 隐私保护</h3>
+          <p>数据保存在您自己的设备上。可通过任何云服务进行同步。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screenshot-section" id="screenshots">
+    <div class="container">
+      <h2>专为作家设计</h2>
+      <p>温馨舒适的界面，就像您最爱的写作角落。</p>
+      <div class="screenshot-grid">
+        <div class="screenshot-card">
+          <img src="https://raw.githubusercontent.com/yurug/maplume/master/assets/screenshot-main.png" alt="MaPlume 主界面">
+          <div class="screenshot-label">用精美图表追踪您的进度</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="https://raw.githubusercontent.com/yurug/maplume/master/assets/screenshot-new-project.png" alt="MaPlume 新建项目">
+          <div class="screenshot-label">创建带有自定义图标的项目</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="download" id="download">
+    <div class="container">
+      <h2>开始您的写作之旅</h2>
+      <p>免费开源。支持 Windows、macOS 和 Linux。</p>
+      <div class="download-buttons">
+        <a href="https://github.com/yurug/maplume/releases/download/v1.0.2/MaPlume.Setup.1.0.2.exe" class="download-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
+          </svg>
+          <span>
+            <span class="platform">Windows</span>
+            <span class="label">下载 .exe</span>
+          </span>
+        </a>
+        <button class="download-btn" onclick="showMacModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+          </svg>
+          <span>
+            <span class="platform">macOS</span>
+            <span class="label">下载 .dmg</span>
+          </span>
+        </button>
+        <button class="download-btn" onclick="showLinuxModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 00-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139zm.529 3.405h.013c.213 0 .396.062.584.198.19.135.33.332.438.533.105.259.158.459.166.724 0-.02.006-.04.006-.06v.105a.086.086 0 01-.004-.021l-.004-.024a1.807 1.807 0 01-.15.706.953.953 0 01-.213.335.71.71 0 00-.088-.042c-.104-.045-.198-.064-.284-.133a1.312 1.312 0 00-.22-.066c.05-.06.146-.133.183-.198.053-.128.082-.264.088-.402v-.02a1.21 1.21 0 00-.061-.4c-.045-.134-.101-.2-.183-.333-.084-.066-.167-.132-.267-.132h-.016c-.093 0-.176.03-.262.132a.8.8 0 00-.205.334 1.18 1.18 0 00-.09.4v.019c.002.089.008.179.02.267-.193-.067-.438-.135-.607-.202a1.635 1.635 0 01-.018-.2v-.02a1.772 1.772 0 01.15-.768c.082-.22.232-.406.43-.533a.985.985 0 01.594-.2zm-2.962.059h.036c.142 0 .27.048.399.135.146.129.264.288.344.465.09.199.14.4.153.667v.004c.007.134.006.2-.002.266v.08c-.03.007-.056.018-.083.024-.152.055-.274.135-.393.2.012-.09.013-.18.003-.267v-.015c-.012-.133-.04-.2-.082-.333a.613.613 0 00-.166-.267.248.248 0 00-.183-.064h-.021c-.071.006-.13.04-.186.132a.552.552 0 00-.12.27.944.944 0 00-.023.33v.015c.012.135.037.2.08.334.046.134.098.2.166.268.01.009.02.018.034.024-.07.057-.117.07-.176.136a.304.304 0 01-.131.068 2.62 2.62 0 01-.275-.402 1.772 1.772 0 01-.155-.667 1.759 1.759 0 01.08-.668 1.43 1.43 0 01.283-.535c.128-.133.26-.2.418-.2zm1.37 1.706c.332 0 .733.065 1.216.399.293.2.523.269 1.052.468h.003c.255.136.405.266.478.399v-.131a.571.571 0 01.016.47c-.123.31-.516.643-1.063.842v.002c-.268.135-.501.333-.775.465-.276.135-.588.292-1.012.267a1.139 1.139 0 01-.448-.067 3.566 3.566 0 01-.322-.198c-.195-.135-.363-.332-.612-.465v-.005h-.005c-.4-.246-.616-.512-.686-.71-.07-.268-.005-.47.193-.6.224-.135.38-.271.483-.336.104-.074.143-.102.176-.131h.002v-.003c.169-.202.436-.47.839-.601.139-.036.294-.065.466-.065zm2.8 2.142c.358 1.417 1.196 3.475 1.735 4.473.286.534.855 1.659 1.102 3.024.156-.005.33.018.513.064.646-1.671-.546-3.467-1.089-3.966-.22-.2-.232-.335-.123-.335.59.534 1.365 1.572 1.646 2.757.13.535.16 1.104.021 1.67.067.028.135.06.205.067 1.032.534 1.413.938 1.23 1.537v-.002c-.06.135-.19.334-.553.4-.713.2-1.488-.134-1.823-.467-.39-.268-.676-.669-.962-.933-.32-.334-.663-.468-.931-.535-.31-.065-.542-.4-.726-.867-.06-.135-.124-.333-.129-.468-.016-.135-.064-.47-.141-.4-.076.135-.057.333-.076.465-.02.135-.043.2-.088.4v.003c-.117.534-.275.933-.613 1.2-.085.066-.19.135-.02.2.24.065.48.265.66.602.184.268.297.668.386.867.086.2.166.467.466.467.396 0 .663-.334.862-.534.32-.268.663-.535 1.043-.668.38-.135.852-.2 1.203.2.265.268.349.6.349.867 0 .466-.149.867-.467 1.2a.498.498 0 01-.16.123 1.89 1.89 0 01-.465.131 2.93 2.93 0 01-1.064-.07c-.164-.044-.378-.068-.522.066-.139.135-.032.268.146.4.18.135.355.2.535.266.18.066.333.066.473.066.334 0 .612-.067.89-.2.276-.135.53-.268.806-.268h.003c.218 0 .393.135.458.4.094.334-.06.668-.264.934-.205.266-.478.4-.752.534a4.606 4.606 0 01-1.88.268 4.693 4.693 0 01-1.792-.534c-.38-.2-.793-.534-1.059-.934-.132-.2-.244-.4-.299-.6a.87.87 0 01-.029-.333c-.106-.068-.2-.135-.32-.202a7.026 7.026 0 00-.748-.4c-.34-.135-.735-.202-1.102-.202-.54 0-1.062.135-1.476.467-.18.135-.336.268-.504.4a6.769 6.769 0 01-.532.4c-.18.135-.4.2-.623.267-.24.065-.49.065-.75.065-.262 0-.552-.065-.804-.2-.258-.135-.496-.333-.696-.6-.2-.265-.352-.6-.438-.932-.085-.334-.106-.668-.066-1.002.05-.332.155-.666.32-.932.066-.135.126-.2.189-.334a.86.86 0 00.066-.2c.01-.067.016-.2 0-.268 0-.066-.016-.2-.016-.2-.28.066-.574.133-.79.2-.218.066-.392.066-.64.066l-.014-.002a6.97 6.97 0 00-.726-.4c-.293-.135-.627-.2-1.022-.2-.395 0-.82.135-1.152.4-.336.265-.568.6-.702 1-.13.4-.166.866-.06 1.265.106.467.32.868.626 1.2.285.334.633.535.978.735l.015.008c.308.17.62.303.905.535.285.198.535.465.677.8.143.332.143.668 0 1-.12.334-.406.6-.682.8-.26.2-.553.334-.821.468a7.2 7.2 0 01-.86.334c-.28.065-.59.134-.856.134-.29 0-.543-.066-.806-.2a1.766 1.766 0 01-.655-.532 1.95 1.95 0 01-.373-.8 2.578 2.578 0 01-.053-.8c.032-.134.053-.268.106-.4.053-.135.123-.268.206-.4.166-.266.392-.466.67-.6.276-.135.572-.2.87-.2.146 0 .296.018.44.066.142.035.268.1.35.198.09.1.13.202.136.334-.007.066-.035.135-.056.2-.03.065-.068.13-.09.2a.778.778 0 01-.046.133c-.01.02-.013.037-.013.068.003.03.013.04.046.066.033.03.057.03.096.03.063-.03.157-.066.223-.2.067-.134.087-.266.073-.4-.014-.134-.077-.265-.163-.4-.097-.13-.203-.198-.34-.265a.98.98 0 00-.47-.065c-.353 0-.654.135-.922.4-.27.268-.454.6-.523 1-.07.4-.024.8.12 1.132.142.334.37.6.66.8.286.2.612.268.938.268.2 0 .388-.034.563-.1.18-.065.336-.134.47-.2.27-.135.516-.268.75-.268.09 0 .17.01.236.065.136.068.19.135.216.334.032.196-.1.4-.323.532a1.5 1.5 0 01-.676.2c-.12 0-.243-.017-.366-.065a3.138 3.138 0 01-.29-.135c-.086-.066-.15-.066-.2-.066-.05 0-.082.018-.106.066a.196.196 0 00-.02.134c.006.066.02.134.05.2.03.068.073.135.13.2.114.133.284.2.487.265.196.066.403.067.62.067.217 0 .444-.034.683-.134.237-.1.474-.267.653-.467.182-.2.293-.468.293-.734 0-.268-.132-.535-.393-.668-.247-.133-.567-.134-.87-.067a6.78 6.78 0 00-.79.268c-.24.1-.464.2-.682.2-.12 0-.227-.032-.31-.1-.09-.066-.132-.133-.16-.265a1.268 1.268 0 01-.013-.268v-.066l.003-.01c.03-.134.07-.2.11-.334.04-.134.07-.2.123-.334.063-.132.143-.266.25-.4.113-.134.256-.268.45-.4a2.26 2.26 0 01.686-.267c.273-.068.573-.1.89-.1.203 0 .416.033.62.1a2.7 2.7 0 01.566.265c.18.1.336.234.473.4.137.135.246.335.3.535.026.1.037.2.037.334 0 .132-.02.266-.08.4-.06.132-.14.265-.26.332-.12.067-.27.134-.45.134-.176 0-.375-.034-.562-.134a1.846 1.846 0 01-.496-.4c-.14-.135-.26-.333-.34-.535-.073-.198-.092-.398-.076-.6.008-.132.038-.265.077-.4.04-.132.09-.265.17-.4.08-.132.185-.265.34-.4.152-.13.35-.265.613-.33.263-.067.573-.1.903-.067.334.033.65.134.926.333.276.2.51.467.66.8.15.332.21.666.185 1 0 .2-.044.4-.106.6-.066.198-.166.398-.303.598-.14.2-.314.4-.526.533-.213.135-.466.2-.752.2-.178 0-.36-.032-.533-.1a2.6 2.6 0 01-.486-.265 3.8 3.8 0 01-.84-.8c-.22-.267-.4-.6-.52-.932-.12-.335-.18-.67-.17-1.002 0-.33.06-.665.19-.932.128-.267.296-.467.505-.667.21-.2.45-.334.71-.4.264-.068.54-.068.81-.068.397 0 .77.067 1.11.2.343.135.646.334.906.6.26.268.466.6.606 1 .14.4.2.8.17 1.2-.03.4-.137.8-.32 1.132-.187.335-.45.6-.763.867-.316.2-.686.335-1.076.4-.397.066-.814.066-1.216-.067-.41-.135-.79-.335-1.1-.6a3.1 3.1 0 01-.756-1c-.183-.4-.286-.8-.303-1.2-.016-.4.04-.8.18-1.134.136-.332.346-.6.596-.866.253-.268.54-.467.863-.6.323-.135.663-.2 1.01-.2.264 0 .52.032.756.1.24.066.463.2.643.333.18.133.316.335.406.535.09.2.14.4.14.6v.134c0 .2-.05.4-.17.6-.12.2-.303.4-.536.534-.23.132-.52.2-.846.2a2.26 2.26 0 01-.853-.2c-.26-.135-.483-.335-.65-.6-.17-.268-.26-.602-.26-1.002 0-.2.03-.4.11-.6.083-.2.206-.4.37-.534.16-.132.35-.265.58-.332.226-.068.47-.1.74-.1.26 0 .523.033.78.134.26.1.5.268.693.468.198.2.356.467.465.732.11.268.17.534.16.8 0 .2-.04.4-.13.6-.08.2-.2.4-.37.534-.17.133-.393.267-.653.333-.264.067-.574.1-.924.067a3.15 3.15 0 01-.88-.2c-.29-.1-.56-.265-.79-.468a2.5 2.5 0 01-.56-.8c-.13-.333-.18-.667-.15-1 .03-.333.14-.667.31-.933.18-.267.41-.467.69-.6.28-.135.6-.2.95-.2.37 0 .72.067 1.05.2.33.135.62.334.87.6.25.268.43.602.54 1 .12.4.15.8.09 1.2-.06.4-.2.8-.43 1.133-.22.334-.52.6-.87.8-.35.198-.75.332-1.17.4-.42.066-.86.066-1.3-.067z"/>
+          </svg>
+          <span>
+            <span class="platform">Linux</span>
+            <span class="label">下载 .AppImage</span>
+          </span>
+        </button>
+      </div>
+      <p class="download-note">
+        版本 1.0.2 • <a href="https://github.com/yurug/maplume/releases">所有版本</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- macOS Modal -->
+  <div class="modal-overlay" id="macModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>在 macOS 上安装</h3>
+        <button class="modal-close" onclick="closeMacModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="warning">
+          <div class="warning-title">未签名应用</div>
+          <p>MaPlume 没有使用 Apple 开发者证书签名（年费 $99）。macOS 默认会阻止该应用运行。</p>
+        </div>
+
+        <p><strong>安装后启动 MaPlume：</strong></p>
+        <ol>
+          <li>打开下载的 <strong>.dmg</strong> 文件</li>
+          <li>将 MaPlume 拖到应用程序文件夹</li>
+          <li>打开 <strong>终端</strong>（应用程序 → 实用工具 → 终端）</li>
+          <li>运行以下命令：</li>
+        </ol>
+        <code>xattr -cr /Applications/MaPlume.app</code>
+        <p>现在可以正常启动 MaPlume 了。</p>
+
+        <div class="support-note">
+          <p><strong>想要帮助我们？</strong>如果有足够的用户<a href="https://github.com/sponsors/yurug">支持该项目</a>，我们就能获得 Apple 证书，省去这个步骤。</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeMacModal()">取消</button>
+        <a href="https://github.com/yurug/maplume/releases/download/v1.0.2/MaPlume-1.0.2-universal.dmg" class="btn btn-primary" onclick="closeMacModal()">下载</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Linux Modal -->
+  <div class="modal-overlay" id="linuxModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>在 Linux 上安装</h3>
+        <button class="modal-close" onclick="closeLinuxModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>MaPlume 以 <strong>AppImage</strong> 格式分发，这是一种可在大多数 Linux 发行版上运行的便携格式。</p>
+
+        <p><strong>安装步骤：</strong></p>
+        <ol>
+          <li>下载 <strong>.AppImage</strong> 文件</li>
+          <li>添加可执行权限：</li>
+        </ol>
+        <code>chmod +x MaPlume-1.0.2.AppImage</code>
+        <ol start="3">
+          <li>双击文件或从终端运行：</li>
+        </ol>
+        <code>./MaPlume-1.0.2.AppImage</code>
+
+        <p style="margin-top: 16px; color: var(--warm-500); font-size: 0.875rem;">
+          提示：您可以将 AppImage 移动到 <code>~/.local/bin/</code> 以便在任何地方访问。
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeLinuxModal()">取消</button>
+        <a href="https://github.com/yurug/maplume/releases/download/v1.0.2/MaPlume-1.0.2.AppImage" class="btn btn-primary" onclick="closeLinuxModal()">下载</a>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <a href="#" class="logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path>
+          <line x1="16" y1="8" x2="2" y2="22"></line>
+          <line x1="17.5" y1="15" x2="9" y2="15"></line>
+        </svg>
+        <span>MaPlume</span>
+      </a>
+      <p>为全世界的作家用心打造。</p>
+      <a href="https://github.com/sponsors/yurug" class="sponsor-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        支持 MaPlume
+      </a>
+      <p style="margin-top: 24px; font-size: 0.875rem;">
+        <a href="https://github.com/yurug/maplume">GitHub</a> •
+        <a href="https://github.com/yurug/maplume/issues">报告问题</a> •
+        MIT 许可证
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    function showMacModal() {
+      document.getElementById('macModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMacModal() {
+      document.getElementById('macModal').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    function showLinuxModal() {
+      document.getElementById('linuxModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLinuxModal() {
+      document.getElementById('linuxModal').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+          modal.classList.remove('active');
+        });
+        document.body.style.overflow = '';
+      }
+    });
+  </script>
+</body>
+</html>
