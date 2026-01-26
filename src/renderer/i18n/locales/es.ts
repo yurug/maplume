@@ -1,0 +1,202 @@
+export default {
+  // App
+  appName: 'MaPlume',
+  loading: 'Cargando...',
+
+  // Setup
+  welcome: 'Bienvenido a MaPlume',
+  welcomeSubtitle: 'Tu compañero para el seguimiento de palabras en la escritura de novelas.',
+  chooseDataFolder: 'Elige dónde guardar tus datos',
+  chooseDataFolderDesc: 'Selecciona una carpeta donde MaPlume guardará tus proyectos y progreso. Puede ser una carpeta local o sincronizada con la nube (como Google Drive o OneDrive).',
+  selectFolder: 'Seleccionar carpeta',
+  selecting: 'Seleccionando...',
+  featureTrackProjects: 'Sigue tus proyectos de escritura',
+  featureSetGoals: 'Establece y alcanza metas de palabras',
+  featureVisualizeProgress: 'Visualiza tu progreso',
+
+  // Projects
+  projects: 'Proyectos',
+  new: 'Nuevo',
+  newProject: '+ Nuevo',
+  noProjects: 'Aún no hay proyectos. ¡Crea uno para empezar!',
+  showArchived: 'Mostrar archivados',
+  archived: 'Archivado',
+  noProjectSelected: 'Sin proyecto seleccionado',
+  noProjectSelectedDesc: 'Crea un nuevo proyecto o selecciona uno existente para comenzar.',
+  createFirstProject: 'Crea tu primer proyecto',
+  editProject: 'Editar proyecto',
+
+  // Project Form
+  newProjectTitle: 'Nuevo proyecto',
+  editProjectTitle: 'Editar proyecto',
+  projectTitle: 'Título',
+  projectTitlePlaceholder: 'Mi novela',
+  projectIcon: 'Icono',
+  projectNotes: 'Notas',
+  projectNotesPlaceholder: 'Notas opcionales sobre tu proyecto...',
+  startDate: 'Fecha de inicio',
+  endDate: 'Fecha de fin',
+  targetWords: 'Palabras objetivo',
+  targetPages: 'Páginas objetivo',
+  targetChapters: 'Capítulos objetivo',
+  unitType: 'Tipo de unidad',
+  unitTypeHelp: 'No se puede cambiar después de crear',
+  archive: 'Archivar',
+  cancel: 'Cancelar',
+  save: 'Guardar',
+  create: 'Crear',
+
+  // Unit types
+  unitWords: 'Palabras',
+  unitPages: 'Páginas',
+  unitChapters: 'Capítulos',
+
+  // Word Entry
+  date: 'Fecha',
+  words: 'Palabras',
+  wordsWrittenToday: 'Palabras escritas hoy',
+  totalWordCount: 'Total de palabras',
+  pagesWrittenToday: 'Páginas escritas hoy',
+  totalPageCount: 'Total de páginas',
+  chaptersWrittenToday: 'Capítulos escritos hoy',
+  totalChapterCount: 'Total de capítulos',
+  type: 'Tipo',
+  add: '+ Añadir',
+  total: '= Total',
+  log: 'Registrar',
+  unitsLogged: '¡{unit} registrado!',
+
+  // Chart
+  actual: 'Real',
+  target: 'Objetivo',
+  today: 'Hoy',
+  wordsUnit: 'palabras',
+
+  // Statistics
+  statistics: 'Estadísticas',
+  progress: 'Progreso',
+  wordsRemaining: 'Palabras restantes',
+  pagesRemaining: 'Páginas restantes',
+  chaptersRemaining: 'Capítulos restantes',
+  dailyAverage: 'Promedio diario',
+  weeklyAverage: 'Promedio semanal',
+  bestDay: 'Mejor día',
+  currentStreak: 'Racha actual',
+  projectedFinish: 'Fin previsto',
+  wordsPerDay: 'palabras/día',
+  pagesPerDay: 'páginas/día',
+  chaptersPerDay: 'capítulos/día',
+  day: 'día',
+  days: 'días',
+  ofTargetWords: 'de {target} palabras',
+  ofTargetPages: 'de {target} páginas',
+  ofTargetChapters: 'de {target} capítulos',
+  showMore: 'Mostrar más',
+  showLess: 'Mostrar menos',
+  wordsLogged: '¡Palabras registradas!',
+  wordsPerDayNeeded: 'Eso es aproximadamente {count} palabras por día',
+  pagesPerDayNeeded: 'Eso es aproximadamente {count} páginas por día',
+  chaptersPerDayNeeded: 'Eso es aproximadamente {count} capítulos por día',
+
+  // Entries
+  showEntryHistory: 'Mostrar historial',
+  hideEntryHistory: 'Ocultar historial',
+  entries: 'entradas',
+  noEntries: 'Sin entradas aún. ¡Empieza a registrar tu progreso!',
+  deleteEntryConfirm: '¿Eliminar esta entrada?',
+  actions: 'Acciones',
+
+  // Settings
+  settings: 'Ajustes',
+  appearance: 'Apariencia',
+  darkMode: 'Modo oscuro',
+  lightTheme: 'Usando tema claro',
+  darkTheme: 'Usando tema oscuro',
+  dataStorage: 'Almacenamiento de datos',
+  currentFolder: 'Carpeta actual:',
+  notSet: 'No establecida',
+  changeFolder: 'Cambiar carpeta',
+  exportData: 'Exportar datos',
+  exportAll: 'Exportar todos los proyectos',
+  exportCurrent: 'Exportar proyecto actual',
+  importData: 'Importar datos',
+  importFromFile: 'Importar desde archivo',
+  importConfirm: 'Esto reemplazará tus datos actuales. ¿Estás seguro?',
+  importError: 'Error al leer el archivo. Por favor, selecciona un archivo JSON válido.',
+  importInvalidFormat: 'Formato de archivo inválido. Por favor, selecciona un archivo de exportación MaPlume válido.',
+  importMergeWarning: 'La importación se fusionará con los datos existentes',
+  folderChanged: 'Carpeta de datos cambiada. Tus datos se guardarán en la nueva ubicación.',
+  help: 'Ayuda',
+  reportBug: 'Reportar un error',
+  language: 'Idioma',
+  close: 'Cerrar',
+  version: 'Versión',
+  about: 'Acerca de',
+  buyMeCoffee: '¡Invítame a un café!',
+  supportMaPlume: 'Apoya MaPlume',
+  supportDescription: 'Si MaPlume te ayuda en tu viaje de escritura, considera apoyar su desarrollo con una pequeña donación.',
+
+  // Messages
+  newMessage: 'Nuevo mensaje',
+
+  // What's New Dialog
+  whatsNew: 'Novedades',
+  getStarted: 'Comenzar',
+
+  // What's New - v0.2.0
+  whatsNew_unitTypes_title: 'Sigue páginas y capítulos',
+  whatsNew_unitTypes_desc: 'Ahora puedes crear proyectos que sigan páginas o capítulos en lugar de palabras. Elige tu unidad preferida al crear un nuevo proyecto.',
+
+  // What's New - v0.4.0
+  whatsNew_projectIcons_title: 'Iconos de proyecto',
+  whatsNew_projectIcons_desc: 'Elige un icono único para cada proyecto y encuéntralos fácilmente en la barra lateral.',
+
+  // What's New - v0.3.0
+  whatsNew_backgrounds_title: 'Fondos personalizados',
+  whatsNew_backgrounds_desc: 'Personaliza cada proyecto con un color de fondo o imagen. ¡Haz tuyo tu espacio de escritura!',
+
+  // Background Picker
+  background: 'Fondo',
+  backgroundColor: 'Color',
+  backgroundImage: 'Imagen',
+  selectImage: 'Seleccionar imagen',
+  removeBackground: 'Quitar',
+  opacity: 'Opacidad',
+  customColor: 'Personalizado',
+  noBackground: 'Ninguno',
+
+  // Preset colors
+  colorCream: 'Crema',
+  colorAmber: 'Ámbar',
+  colorOrange: 'Naranja',
+  colorBrown: 'Marrón',
+  colorMint: 'Menta',
+  colorLavender: 'Lavanda',
+  colorPink: 'Rosa',
+  colorGray: 'Gris',
+  colorDark: 'Oscuro',
+
+  // Global Statistics
+  globalStatistics: 'Tu viaje de escritura',
+  allProjectsOverview: 'Estadísticas de todos tus proyectos',
+  totalProjects: 'Total de proyectos',
+  totalEntries: 'Total de entradas',
+  active: 'activos',
+  daysWriting: 'días escribiendo',
+  progressByType: 'Progreso por tipo',
+  noProjectsYet: 'Aún no hay proyectos. ¡Crea uno para empezar!',
+
+  // Updates
+  updates: 'Actualizaciones',
+  checkForUpdates: 'Buscar actualizaciones',
+  checkingForUpdates: 'Buscando...',
+  noUpdatesAvailable: 'Tienes la última versión',
+  updateAvailable: 'Actualización disponible: v{version}',
+  downloadUpdate: 'Descargar actualización',
+  downloading: 'Descargando...',
+  downloadingUpdate: 'Descargando actualización...',
+  updateDownloaded: '¡Actualización descargada! Reinicia para aplicar.',
+  restartNow: 'Reiniciar ahora',
+  updateError: 'Error al buscar actualizaciones',
+  currentVersionLabel: 'Versión actual',
+} as const;

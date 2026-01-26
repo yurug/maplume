@@ -1,0 +1,202 @@
+export default {
+  // App
+  appName: 'MaPlume',
+  loading: '読み込み中...',
+
+  // Setup
+  welcome: 'MaPlume へようこそ',
+  welcomeSubtitle: '小説執筆のためのワードカウント・パートナー',
+  chooseDataFolder: 'データの保存場所を選択',
+  chooseDataFolderDesc: 'MaPlume がプロジェクトと進捗を保存するフォルダを選択してください。ローカルフォルダでも、クラウド同期フォルダ（Google Drive や OneDrive など）でも構いません。',
+  selectFolder: 'フォルダを選択',
+  selecting: '選択中...',
+  featureTrackProjects: '執筆プロジェクトを追跡',
+  featureSetGoals: '文字数目標を設定・達成',
+  featureVisualizeProgress: '進捗を可視化',
+
+  // Projects
+  projects: 'プロジェクト',
+  new: '新規',
+  newProject: '+ 新規',
+  noProjects: 'プロジェクトがありません。作成して始めましょう！',
+  showArchived: 'アーカイブを表示',
+  archived: 'アーカイブ済み',
+  noProjectSelected: 'プロジェクト未選択',
+  noProjectSelectedDesc: '新しいプロジェクトを作成するか、既存のプロジェクトを選択してください。',
+  createFirstProject: '最初のプロジェクトを作成',
+  editProject: 'プロジェクトを編集',
+
+  // Project Form
+  newProjectTitle: '新規プロジェクト',
+  editProjectTitle: 'プロジェクトを編集',
+  projectTitle: 'タイトル',
+  projectTitlePlaceholder: '私の小説',
+  projectIcon: 'アイコン',
+  projectNotes: 'メモ',
+  projectNotesPlaceholder: 'プロジェクトに関するメモ（任意）...',
+  startDate: '開始日',
+  endDate: '終了日',
+  targetWords: '目標文字数',
+  targetPages: '目標ページ数',
+  targetChapters: '目標章数',
+  unitType: '単位',
+  unitTypeHelp: '作成後は変更できません',
+  archive: 'アーカイブ',
+  cancel: 'キャンセル',
+  save: '保存',
+  create: '作成',
+
+  // Unit types
+  unitWords: '文字数',
+  unitPages: 'ページ数',
+  unitChapters: '章',
+
+  // Word Entry
+  date: '日付',
+  words: '文字数',
+  wordsWrittenToday: '今日書いた文字数',
+  totalWordCount: '総文字数',
+  pagesWrittenToday: '今日書いたページ数',
+  totalPageCount: '総ページ数',
+  chaptersWrittenToday: '今日書いた章数',
+  totalChapterCount: '総章数',
+  type: 'タイプ',
+  add: '+ 追加',
+  total: '= 合計',
+  log: '記録',
+  unitsLogged: '{unit}を記録しました！',
+
+  // Chart
+  actual: '実績',
+  target: '目標',
+  today: '今日',
+  wordsUnit: '文字',
+
+  // Statistics
+  statistics: '統計',
+  progress: '進捗',
+  wordsRemaining: '残り文字数',
+  pagesRemaining: '残りページ数',
+  chaptersRemaining: '残り章数',
+  dailyAverage: '日平均',
+  weeklyAverage: '週平均',
+  bestDay: '最高記録日',
+  currentStreak: '連続日数',
+  projectedFinish: '完了予定',
+  wordsPerDay: '文字/日',
+  pagesPerDay: 'ページ/日',
+  chaptersPerDay: '章/日',
+  day: '日',
+  days: '日',
+  ofTargetWords: '目標 {target} 文字',
+  ofTargetPages: '目標 {target} ページ',
+  ofTargetChapters: '目標 {target} 章',
+  showMore: 'もっと見る',
+  showLess: '閉じる',
+  wordsLogged: '文字数を記録しました！',
+  wordsPerDayNeeded: '1日あたり約 {count} 文字',
+  pagesPerDayNeeded: '1日あたり約 {count} ページ',
+  chaptersPerDayNeeded: '1日あたり約 {count} 章',
+
+  // Entries
+  showEntryHistory: '記録履歴を表示',
+  hideEntryHistory: '記録履歴を非表示',
+  entries: '件',
+  noEntries: '記録がありません。進捗の記録を始めましょう！',
+  deleteEntryConfirm: 'この記録を削除しますか？',
+  actions: '操作',
+
+  // Settings
+  settings: '設定',
+  appearance: '外観',
+  darkMode: 'ダークモード',
+  lightTheme: 'ライトテーマ使用中',
+  darkTheme: 'ダークテーマ使用中',
+  dataStorage: 'データ保存',
+  currentFolder: '現在のフォルダ：',
+  notSet: '未設定',
+  changeFolder: 'フォルダを変更',
+  exportData: 'データをエクスポート',
+  exportAll: 'すべてのプロジェクトをエクスポート',
+  exportCurrent: '現在のプロジェクトをエクスポート',
+  importData: 'データをインポート',
+  importFromFile: 'ファイルからインポート',
+  importConfirm: '現在のデータが置き換えられます。よろしいですか？',
+  importError: 'ファイルを読み込めませんでした。有効なJSONファイルを選択してください。',
+  importInvalidFormat: 'ファイル形式が無効です。有効なMaPlumeエクスポートファイルを選択してください。',
+  importMergeWarning: 'インポートは既存のデータとマージされます',
+  folderChanged: 'データフォルダが変更されました。データは新しい場所に保存されます。',
+  help: 'ヘルプ',
+  reportBug: 'バグを報告',
+  language: '言語',
+  close: '閉じる',
+  version: 'バージョン',
+  about: 'について',
+  buyMeCoffee: 'コーヒーをおごってください！',
+  supportMaPlume: 'MaPlume を応援',
+  supportDescription: 'MaPlume が執筆の助けになっていれば、開発を支援していただけると嬉しいです。',
+
+  // Messages
+  newMessage: '新しいメッセージ',
+
+  // What's New Dialog
+  whatsNew: '新機能',
+  getStarted: '始める',
+
+  // What's New - v0.2.0
+  whatsNew_unitTypes_title: 'ページ数・章数の追跡',
+  whatsNew_unitTypes_desc: '文字数の代わりにページ数や章数を追跡するプロジェクトを作成できるようになりました。新規プロジェクト作成時にお好みの単位を選択してください。',
+
+  // What's New - v0.4.0
+  whatsNew_projectIcons_title: 'プロジェクトアイコン',
+  whatsNew_projectIcons_desc: '各プロジェクトに固有のアイコンを設定して、サイドバーで一目で識別できます。',
+
+  // What's New - v0.3.0
+  whatsNew_backgrounds_title: 'カスタム背景',
+  whatsNew_backgrounds_desc: '各プロジェクトに背景色や画像を設定して、あなただけの執筆空間を作りましょう！',
+
+  // Background Picker
+  background: '背景',
+  backgroundColor: '色',
+  backgroundImage: '画像',
+  selectImage: '画像を選択',
+  removeBackground: '削除',
+  opacity: '透明度',
+  customColor: 'カスタム',
+  noBackground: 'なし',
+
+  // Preset colors
+  colorCream: 'クリーム',
+  colorAmber: 'アンバー',
+  colorOrange: 'オレンジ',
+  colorBrown: 'ブラウン',
+  colorMint: 'ミント',
+  colorLavender: 'ラベンダー',
+  colorPink: 'ピンク',
+  colorGray: 'グレー',
+  colorDark: 'ダーク',
+
+  // Global Statistics
+  globalStatistics: 'あなたの執筆の旅',
+  allProjectsOverview: 'すべてのプロジェクトの統計',
+  totalProjects: '総プロジェクト数',
+  totalEntries: '総記録数',
+  active: 'アクティブ',
+  daysWriting: '日間執筆',
+  progressByType: '種類別進捗',
+  noProjectsYet: 'プロジェクトがありません。作成して始めましょう！',
+
+  // Updates
+  updates: 'アップデート',
+  checkForUpdates: 'アップデートを確認',
+  checkingForUpdates: '確認中...',
+  noUpdatesAvailable: '最新バージョンです',
+  updateAvailable: 'アップデート利用可能: v{version}',
+  downloadUpdate: 'アップデートをダウンロード',
+  downloading: 'ダウンロード中...',
+  downloadingUpdate: 'アップデートをダウンロード中...',
+  updateDownloaded: 'アップデートをダウンロードしました！再起動して適用してください。',
+  restartNow: '今すぐ再起動',
+  updateError: 'アップデートの確認に失敗しました',
+  currentVersionLabel: '現在のバージョン',
+} as const;
