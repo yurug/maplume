@@ -46,16 +46,21 @@ class ApiClient {
   async initialize(): Promise<void> {
     // Load server URL from config
     const storedUrl = await window.electronAPI.getConfigValue(SERVER_URL_KEY);
+    console.log('[API] Stored URL:', storedUrl, 'Default URL:', DEFAULT_SERVER_URL);
+
     if (storedUrl && typeof storedUrl === 'string') {
       // Migrate from old localhost URL to new Scaleway URL
       if (storedUrl.includes('localhost') || storedUrl.includes('127.0.0.1')) {
         // Clear old localhost URL, use default
+        console.log('[API] Migrating from localhost to:', DEFAULT_SERVER_URL);
         await window.electronAPI.setConfigValue(SERVER_URL_KEY, DEFAULT_SERVER_URL);
         this.baseUrl = DEFAULT_SERVER_URL;
       } else {
         this.baseUrl = storedUrl;
       }
     }
+
+    console.log('[API] Using server URL:', this.baseUrl);
 
     // Load tokens from secure storage
     await this.loadTokens();
@@ -220,6 +225,7 @@ class ApiClient {
       publicKey: bytesToBase64(publicKey),
     };
 
+    console.log('[API] Registering user at:', this.baseUrl);
     return this.request<RegisterResponse>('POST', '/api/auth/register', request, false);
   }
 
