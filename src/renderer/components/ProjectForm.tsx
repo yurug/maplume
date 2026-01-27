@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import * as LucideIcons from 'lucide-react';
-import { X, BookOpen, Calendar, Target, FileText, Archive, Ruler, Lock, Smile } from 'lucide-react';
-import type { Project, UnitType, ProjectBackground, ProjectIcon } from '@shared/types';
+import { X, BookOpen, Calendar, Target, FileText, Archive, Ruler, Lock, Smile, Share2 } from 'lucide-react';
+import type { Project, UnitType, ProjectBackground, ProjectIcon, WordEntry } from '@shared/types';
 import { PROJECT_ICONS } from '@shared/types';
 import { useI18n } from '../i18n';
+import { useSocial } from '../context/SocialContext';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { BackgroundPicker } from './BackgroundPicker';
+import { ShareProjectModal } from './social/ShareProjectModal';
 import { cn } from '../lib/utils';
 
 // Helper to get icon component by name
@@ -17,14 +19,16 @@ function getIconComponent(name: string): React.ComponentType<{ className?: strin
 
 interface ProjectFormProps {
   project?: Project;
+  entries?: WordEntry[];
   onSave: (data: Omit<Project, 'id' | 'archived' | 'createdAt' | 'updatedAt'>) => void;
   onCancel: () => void;
   onArchive?: () => void;
   dataPath: string;
 }
 
-export function ProjectForm({ project, onSave, onCancel, onArchive, dataPath }: ProjectFormProps) {
+export function ProjectForm({ project, entries = [], onSave, onCancel, onArchive, dataPath }: ProjectFormProps) {
   const { t } = useI18n();
+  const { state: socialState } = useSocial();
   const today = new Date().toISOString().split('T')[0];
   const defaultEnd = new Date();
   defaultEnd.setMonth(defaultEnd.getMonth() + 1);
@@ -37,8 +41,10 @@ export function ProjectForm({ project, onSave, onCancel, onArchive, dataPath }: 
   const [unitType, setUnitType] = useState<UnitType>(project?.unitType || 'words');
   const [icon, setIcon] = useState<ProjectIcon>(project?.icon || 'BookOpen');
   const [background, setBackground] = useState<ProjectBackground | undefined>(project?.background);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const isEditing = !!project;
+  const isLoggedIn = socialState.user !== null;
   // Use existing project ID or generate a temporary one for new projects
   const projectId = project?.id || `temp-${Date.now()}`;
 
@@ -315,14 +321,25 @@ export function ProjectForm({ project, onSave, onCancel, onArchive, dataPath }: 
 
           {/* Actions */}
           <div className="flex items-center justify-between border-t border-warm-200 pt-5 dark:border-warm-700">
-            {project && onArchive && !project.archived ? (
-              <Button type="button" variant="danger" onClick={onArchive} className="gap-2">
-                <Archive className="h-4 w-4" />
-                {t.archive}
-              </Button>
-            ) : (
-              <div />
-            )}
+            <div className="flex gap-2">
+              {project && onArchive && !project.archived && (
+                <Button type="button" variant="danger" onClick={onArchive} className="gap-2">
+                  <Archive className="h-4 w-4" />
+                  {t.archive}
+                </Button>
+              )}
+              {project && isLoggedIn && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowShareModal(true)}
+                  className="gap-2"
+                >
+                  <Share2 className="h-4 w-4" />
+                  {t.shareProject || 'Share'}
+                </Button>
+              )}
+            </div>
 
             <div className="flex gap-3">
               <Button type="button" variant="secondary" onClick={onCancel}>
@@ -334,6 +351,17 @@ export function ProjectForm({ project, onSave, onCancel, onArchive, dataPath }: 
             </div>
           </div>
         </form>
+
+        {/* Share Modal */}
+        <AnimatePresence>
+          {showShareModal && project && (
+            <ShareProjectModal
+              project={project}
+              entries={entries}
+              onClose={() => setShowShareModal(false)}
+            />
+          )}
+        </AnimatePresence>
       </motion.div>
     </motion.div>
   );

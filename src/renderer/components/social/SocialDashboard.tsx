@@ -1,16 +1,21 @@
 /**
  * SocialDashboard - Main view when logged in
  *
- * Shows user info and social features (placeholder for Phase 2)
+ * Shows user info and social features
  */
 
-import React, { useState } from 'react';
-import { User, LogOut, Users, Share2, PartyPopper, Cloud, RefreshCw, Download, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, LogOut, Users, Share2, PartyPopper, Cloud, RefreshCw, Download, Check, ChevronRight } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { useApp } from '../../context/AppContext';
 import { useI18n } from '../../i18n';
 import { Button } from '../ui/button';
 import { ConnectionStatus } from './ConnectionStatus';
+import { FriendsPanel } from './FriendsPanel';
+import { SharedProjectsList } from './SharedProjectsList';
+import { SharedProjectView } from './SharedProjectView';
+
+type View = 'dashboard' | 'friends' | 'sharedProjects' | 'viewSharedProject';
 
 export function SocialDashboard() {
   const { state, actions } = useSocial();
@@ -18,6 +23,15 @@ export function SocialDashboard() {
   const { t } = useI18n();
   const [restoring, setRestoring] = useState(false);
   const [restoreResult, setRestoreResult] = useState<'success' | 'error' | 'empty' | null>(null);
+  const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [selectedShareId, setSelectedShareId] = useState<string | null>(null);
+
+  // Load shares on mount
+  useEffect(() => {
+    if (state.user && state.isOnline) {
+      actions.refreshShares();
+    }
+  }, [state.user, state.isOnline, actions]);
 
   const handleLogout = async () => {
     await actions.logout();
@@ -62,6 +76,37 @@ export function SocialDashboard() {
     return null;
   }
 
+  // Show FriendsPanel if that view is active
+  if (currentView === 'friends') {
+    return <FriendsPanel onBack={() => setCurrentView('dashboard')} />;
+  }
+
+  // Show SharedProjectsList if that view is active
+  if (currentView === 'sharedProjects') {
+    return (
+      <SharedProjectsList
+        onBack={() => setCurrentView('dashboard')}
+        onViewProject={(shareId) => {
+          setSelectedShareId(shareId);
+          setCurrentView('viewSharedProject');
+        }}
+      />
+    );
+  }
+
+  // Show SharedProjectView if that view is active
+  if (currentView === 'viewSharedProject' && selectedShareId) {
+    return (
+      <SharedProjectView
+        shareId={selectedShareId}
+        onBack={() => {
+          setSelectedShareId(null);
+          setCurrentView('sharedProjects');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="flex-1 overflow-auto">
       {/* Header with user info */}
@@ -99,34 +144,53 @@ export function SocialDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Friends */}
-          <div className="p-6 rounded-lg border border-warm-200 dark:border-warm-700 bg-warm-50/50 dark:bg-warm-800/50">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900">
-                <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <button
+            onClick={() => setCurrentView('friends')}
+            className="p-6 rounded-lg border border-warm-200 dark:border-warm-700 bg-warm-50/50 dark:bg-warm-800/50 text-left hover:border-primary-300 dark:hover:border-primary-700 hover:bg-warm-100/50 dark:hover:bg-warm-700/50 transition-colors group"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900">
+                  <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h4 className="font-medium text-warm-900 dark:text-warm-100">
+                  {t.friends || 'Friends'}
+                </h4>
               </div>
-              <h4 className="font-medium text-warm-900 dark:text-warm-100">
-                {t.friends || 'Friends'}
-              </h4>
+              <ChevronRight className="w-4 h-4 text-warm-400 group-hover:text-primary-500 transition-colors" />
             </div>
             <p className="text-sm text-warm-600 dark:text-warm-400">
               {t.friendsDescription || 'Connect with other writers and see their progress.'}
             </p>
-          </div>
+          </button>
 
           {/* Project Sharing */}
-          <div className="p-6 rounded-lg border border-warm-200 dark:border-warm-700 bg-warm-50/50 dark:bg-warm-800/50">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900">
-                <Share2 className="w-5 h-5 text-green-600 dark:text-green-400" />
+          <button
+            onClick={() => setCurrentView('sharedProjects')}
+            className="p-6 rounded-lg border border-warm-200 dark:border-warm-700 bg-warm-50/50 dark:bg-warm-800/50 text-left hover:border-primary-300 dark:hover:border-primary-700 hover:bg-warm-100/50 dark:hover:bg-warm-700/50 transition-colors group"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900">
+                  <Share2 className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-warm-900 dark:text-warm-100">
+                    {t.sharedProjects || 'Shared Projects'}
+                  </h4>
+                  {state.receivedShares.length > 0 && (
+                    <span className="text-xs text-warm-500">
+                      {state.receivedShares.length} {t.sharedWithYou || 'shared with you'}
+                    </span>
+                  )}
+                </div>
               </div>
-              <h4 className="font-medium text-warm-900 dark:text-warm-100">
-                {t.shareProjects || 'Share Projects'}
-              </h4>
+              <ChevronRight className="w-4 h-4 text-warm-400 group-hover:text-primary-500 transition-colors" />
             </div>
             <p className="text-sm text-warm-600 dark:text-warm-400">
               {t.shareProjectsDescription || 'Share your writing progress with friends.'}
             </p>
-          </div>
+          </button>
 
           {/* Writing Parties */}
           <div className="p-6 rounded-lg border border-warm-200 dark:border-warm-700 bg-warm-50/50 dark:bg-warm-800/50">

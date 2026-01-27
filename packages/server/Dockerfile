@@ -14,6 +14,12 @@ COPY packages/server/package.json ./packages/server/
 # Install all dependencies
 RUN npm ci
 
+# Copy shared package source first (server depends on it)
+COPY packages/shared ./packages/shared
+
+# Build shared package
+RUN npm run build --workspace=@maplume/shared
+
 # Copy server source files
 COPY packages/server ./packages/server
 

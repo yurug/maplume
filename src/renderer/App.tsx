@@ -393,6 +393,7 @@ function AppContent() {
           {showProjectForm && dataPath && (
             <ProjectForm
               project={editingProject}
+              entries={editingProject ? state.entries.filter(e => e.projectId === editingProject.id) : []}
               onSave={handleSaveProject}
               onCancel={() => {
                 setShowProjectForm(false);
