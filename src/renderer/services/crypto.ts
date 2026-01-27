@@ -56,17 +56,17 @@ export function deriveKeys(seedPhrase: string[]): KeyBundle {
   const masterSeed = mnemonicToSeedSync(mnemonic);
 
   // Derive identity key (Ed25519 for signing)
-  const identityMaterial = hkdf(sha256, masterSeed, undefined, IDENTITY_KEY_INFO, 32);
+  const identityMaterial = hkdf(sha256, masterSeed, undefined, utf8ToBytes(IDENTITY_KEY_INFO), 32);
   const identityPrivateKey = identityMaterial;
   const identityPublicKey = ed25519.getPublicKey(identityPrivateKey);
 
   // Derive encryption key (X25519 for key exchange)
-  const encryptionMaterial = hkdf(sha256, masterSeed, undefined, ENCRYPTION_KEY_INFO, 32);
+  const encryptionMaterial = hkdf(sha256, masterSeed, undefined, utf8ToBytes(ENCRYPTION_KEY_INFO), 32);
   const encryptionPrivateKey = encryptionMaterial;
   const encryptionPublicKey = x25519.getPublicKey(encryptionPrivateKey);
 
   // Derive local encryption key (AES-256 for local data)
-  const localKey = hkdf(sha256, masterSeed, undefined, LOCAL_KEY_INFO, 32);
+  const localKey = hkdf(sha256, masterSeed, undefined, utf8ToBytes(LOCAL_KEY_INFO), 32);
 
   return {
     identityKeyPair: {
@@ -182,7 +182,7 @@ export function encryptForRecipient(
   const sharedSecret = x25519.getSharedSecret(ephemeralPrivateKey, recipientPublicKey);
 
   // Derive encryption key from shared secret
-  const encryptionKey = hkdf(sha256, sharedSecret, undefined, 'maplume-shared-v1', 32);
+  const encryptionKey = hkdf(sha256, sharedSecret, undefined, utf8ToBytes('maplume-shared-v1'), 32);
 
   // Encrypt the data
   const encrypted = encrypt(data, encryptionKey);
@@ -207,7 +207,7 @@ export function decryptFromSender(
   const sharedSecret = x25519.getSharedSecret(recipientPrivateKey, ephemeralPublicKey);
 
   // Derive encryption key
-  const encryptionKey = hkdf(sha256, sharedSecret, undefined, 'maplume-shared-v1', 32);
+  const encryptionKey = hkdf(sha256, sharedSecret, undefined, utf8ToBytes('maplume-shared-v1'), 32);
 
   // Decrypt
   return decrypt(encrypted, encryptionKey);
