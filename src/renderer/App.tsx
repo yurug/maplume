@@ -4,6 +4,7 @@ import { Settings, Feather } from 'lucide-react';
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { SocialProvider } from './context/SocialContext';
+import { SyncBridge } from './components/SyncBridge';
 import { I18nProvider } from './i18n/I18nProvider';
 import { useI18n } from './i18n';
 import { SetupScreen } from './components/SetupScreen';
@@ -441,6 +442,7 @@ function App() {
       <I18nProvider>
         <AppProvider>
           <SocialProvider>
+            <SyncBridge />
             <AppContent />
           </SocialProvider>
         </AppProvider>

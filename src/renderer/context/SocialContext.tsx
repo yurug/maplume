@@ -9,7 +9,7 @@
  */
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
-import type { LocalUser, SyncStatus, KeyBundle } from '@maplume/shared';
+import type { LocalUser, SyncStatus, KeyBundle, AppData } from '@maplume/shared';
 import { apiClient } from '../services/api';
 import { syncService } from '../services/sync';
 import {
@@ -120,6 +120,9 @@ interface SocialContextValue {
     setServerUrl: (url: string) => Promise<void>;
     getServerUrl: () => string;
     forceSync: () => Promise<void>;
+    syncAppData: (data: AppData) => Promise<void>;
+    restoreFromCloud: () => Promise<AppData | null>;
+    isLoggedIn: () => boolean;
   };
 }
 
@@ -377,6 +380,35 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
     await syncService.forceSync();
   }, []);
 
+  const syncAppData = useCallback(async (data: AppData): Promise<void> => {
+    if (!state.user) {
+      // Not logged in, skip sync
+      return;
+    }
+    try {
+      await syncService.syncProjectData(data);
+    } catch (error) {
+      console.error('Failed to sync app data:', error);
+      // Don't throw - local save already succeeded
+    }
+  }, [state.user]);
+
+  const restoreFromCloud = useCallback(async (): Promise<AppData | null> => {
+    if (!state.user) {
+      throw new Error('Not logged in');
+    }
+    try {
+      return await syncService.getProjectDataFromServer();
+    } catch (error) {
+      console.error('Failed to restore from cloud:', error);
+      throw error;
+    }
+  }, [state.user]);
+
+  const isLoggedIn = useCallback((): boolean => {
+    return state.user !== null;
+  }, [state.user]);
+
   const value: SocialContextValue = {
     state,
     actions: {
@@ -387,6 +419,9 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
       setServerUrl,
       getServerUrl,
       forceSync,
+      syncAppData,
+      restoreFromCloud,
+      isLoggedIn,
     },
   };
 

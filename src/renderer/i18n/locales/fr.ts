@@ -246,8 +246,17 @@ export default {
   shareProjectsDescription: 'Partagez vos progrès d\'écriture avec vos amis.',
   writingParties: 'Sessions d\'écriture',
   writingPartiesDescription: 'Rejoignez des sessions d\'écriture chronométrées avec vos amis.',
-  serverSettings: 'Paramètres du serveur',
-  connectedTo: 'Connecté à',
+
+  // Cloud Backup
+  cloudBackup: 'Sauvegarde cloud',
+  automaticBackup: 'Sauvegarde automatique',
+  restoreFromCloud: 'Restaurer depuis le cloud',
+  cloudBackupDescription: 'Vos projets sont automatiquement sauvegardés dans le cloud. Vous pouvez les restaurer sur n\'importe quel appareil en vous connectant avec votre phrase de récupération.',
+  synced: 'Synchronisé',
+  pendingChanges: 'modifications en attente',
+  restoreSuccess: 'Projets restaurés avec succès !',
+  restoreEmpty: 'Aucune sauvegarde trouvée dans le cloud.',
+  restoreError: 'Échec de la restauration depuis le cloud. Veuillez réessayer.',
 
   // Common
   back: 'Retour',
