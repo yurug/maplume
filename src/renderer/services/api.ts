@@ -17,6 +17,18 @@ import type {
   SyncProjectsRequest,
   SyncProjectsResponse,
   GetProjectsResponse,
+  GetFriendsResponse,
+  GetFriendRequestsResponse,
+  SendFriendRequestRequest,
+  SendFriendRequestResponse,
+  AcceptFriendRequestRequest,
+  RejectFriendRequestRequest,
+  CancelFriendRequestRequest,
+  CreateShareRequest,
+  CreateShareResponse,
+  GetOwnedSharesResponse,
+  GetReceivedSharesResponse,
+  GetShareDataResponse,
   ApiError,
 } from '@maplume/shared';
 import { sign, bytesToBase64 } from './crypto';
@@ -318,6 +330,98 @@ class ApiClient {
    */
   async getProjects(): Promise<GetProjectsResponse> {
     return this.request<GetProjectsResponse>('GET', '/api/projects/sync');
+  }
+
+  // ============ Friends ============
+
+  /**
+   * Get list of friends
+   */
+  async getFriends(): Promise<GetFriendsResponse> {
+    return this.request<GetFriendsResponse>('GET', '/api/friends');
+  }
+
+  /**
+   * Get friend requests (received and sent)
+   */
+  async getFriendRequests(): Promise<GetFriendRequestsResponse> {
+    return this.request<GetFriendRequestsResponse>('GET', '/api/friends/requests');
+  }
+
+  /**
+   * Send a friend request
+   */
+  async sendFriendRequest(username: string, message?: string): Promise<SendFriendRequestResponse> {
+    const request: SendFriendRequestRequest = { username, message };
+    return this.request<SendFriendRequestResponse>('POST', '/api/friends/request', request);
+  }
+
+  /**
+   * Accept a friend request
+   */
+  async acceptFriendRequest(requestId: string): Promise<{ success: boolean }> {
+    const request: AcceptFriendRequestRequest = { requestId };
+    return this.request('POST', '/api/friends/accept', request);
+  }
+
+  /**
+   * Reject a friend request
+   */
+  async rejectFriendRequest(requestId: string): Promise<{ success: boolean }> {
+    const request: RejectFriendRequestRequest = { requestId };
+    return this.request('POST', '/api/friends/reject', request);
+  }
+
+  /**
+   * Cancel a sent friend request
+   */
+  async cancelFriendRequest(requestId: string): Promise<{ success: boolean }> {
+    const request: CancelFriendRequestRequest = { requestId };
+    return this.request('POST', '/api/friends/cancel', request);
+  }
+
+  /**
+   * Remove a friend
+   */
+  async removeFriend(friendId: string): Promise<{ success: boolean }> {
+    return this.request('DELETE', `/api/friends/${friendId}`);
+  }
+
+  // ============ Project Shares ============
+
+  /**
+   * Create or update a project share
+   */
+  async createShare(request: CreateShareRequest): Promise<CreateShareResponse> {
+    return this.request<CreateShareResponse>('POST', '/api/shares', request);
+  }
+
+  /**
+   * Get list of projects I'm sharing
+   */
+  async getOwnedShares(): Promise<GetOwnedSharesResponse> {
+    return this.request<GetOwnedSharesResponse>('GET', '/api/shares/owned');
+  }
+
+  /**
+   * Get list of projects shared with me
+   */
+  async getReceivedShares(): Promise<GetReceivedSharesResponse> {
+    return this.request<GetReceivedSharesResponse>('GET', '/api/shares/received');
+  }
+
+  /**
+   * Get specific share data
+   */
+  async getShareData(shareId: string): Promise<GetShareDataResponse> {
+    return this.request<GetShareDataResponse>('GET', `/api/shares/${shareId}`);
+  }
+
+  /**
+   * Revoke a share
+   */
+  async revokeShare(shareId: string): Promise<{ success: boolean }> {
+    return this.request('DELETE', `/api/shares/${shareId}`);
   }
 
   // ============ Health Check ============

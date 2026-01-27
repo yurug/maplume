@@ -230,6 +230,8 @@ export default {
   usernameDescription: 'Your username is how other writers will find you.',
   usernamePlaceholder: 'your_username',
   usernameHint: '3-30 characters, letters, numbers, and underscores only.',
+  usernameRequiredForRecovery: 'Enter your username to recover your account on this device.',
+  username: 'Username',
 
   // Connection Status
   online: 'Online',
@@ -246,6 +248,24 @@ export default {
   shareProjectsDescription: 'Share your writing progress with friends.',
   writingParties: 'Writing Parties',
   writingPartiesDescription: 'Join timed writing sessions with friends.',
+
+  // Friends
+  friendsList: 'Friends',
+  friendRequests: 'Requests',
+  addFriend: 'Add',
+  noFriendsYet: 'No friends yet. Add some friends to see their progress!',
+  noFriendRequests: 'No pending friend requests.',
+  receivedRequests: 'Received',
+  sentRequests: 'Sent',
+  pendingRequest: 'Pending...',
+  addFriendDescription: 'Enter a username to send a friend request.',
+  messageOptional: 'Message (optional)',
+  friendRequestMessagePlaceholder: 'Hi! I would like to connect with you on MaPlume.',
+  sendFriendRequest: 'Send Friend Request',
+  friendRequestSent: 'Friend request sent!',
+  friendRequestAutoAccepted: 'You are now friends!',
+  removeFriendConfirm: 'Remove this friend?',
+  offlineMessage: 'You are offline. Friend features require an internet connection.',
 
   // Cloud Backup
   cloudBackup: 'Cloud Backup',
@@ -264,4 +284,28 @@ export default {
   important: 'Important',
   copied: 'Copied!',
   copyToClipboard: 'Copy to Clipboard',
+
+  // Project Sharing
+  shareProject: 'Share Project',
+  shareProjectDescription: 'Share your progress with a friend.',
+  shareType: 'Share Type',
+  shareTypeFull: 'Full access (progress + entries)',
+  shareTypeStats: 'Stats only (no entries)',
+  shareTypeFullDesc: 'Friend can see your complete writing history',
+  shareTypeStatsDesc: 'Friend can only see overall progress',
+  sharedProjects: 'Shared Projects',
+  sharedWithYou: 'Shared with you',
+  youAreSharing: 'You are sharing',
+  noSharedProjects: 'No projects have been shared with you yet.',
+  noProjectsShared: 'You are not sharing any projects.',
+  selectFriend: 'Select friend',
+  shareWith: 'Share with',
+  alreadyShared: 'Already shared',
+  revokeShare: 'Revoke access',
+  revokeShareConfirm: 'Remove access to this project?',
+  sharedBy: 'Shared by',
+  lastUpdated: 'Last updated',
+  viewSharedProject: 'View project',
+  projectShared: 'Project shared successfully!',
+  noProjectData: 'No project data available.',
 } as const;

@@ -18,6 +18,7 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
   const { t } = useI18n();
 
   const [seedInput, setSeedInput] = useState('');
+  const [usernameInput, setUsernameInput] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -33,7 +34,8 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
 
     setLoading(true);
     try {
-      await actions.login(words);
+      // Pass username if provided (for recovery on new device)
+      await actions.login(words, usernameInput.trim() || undefined);
       // Success - context will update and show dashboard
     } catch (error) {
       console.error('Failed to login:', error);
@@ -89,6 +91,24 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
                 </span>
               )}
             </div>
+          </div>
+
+          {/* Username input (for recovery on new device) */}
+          <div>
+            <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-1">
+              {t.username || 'Username'}
+            </label>
+            <input
+              type="text"
+              value={usernameInput}
+              onChange={(e) => setUsernameInput(e.target.value)}
+              placeholder={t.usernamePlaceholder || 'your_username'}
+              className="w-full px-4 py-2 rounded-lg border border-warm-200 dark:border-warm-700 bg-white dark:bg-warm-800 text-warm-900 dark:text-warm-100 placeholder-warm-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              autoComplete="off"
+            />
+            <p className="mt-1 text-sm text-warm-500">
+              {t.usernameRequiredForRecovery || 'Enter your username to recover your account on this device.'}
+            </p>
           </div>
 
           {/* Error message */}

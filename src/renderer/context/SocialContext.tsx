@@ -9,7 +9,8 @@
  */
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
-import type { LocalUser, SyncStatus, KeyBundle, AppData } from '@maplume/shared';
+import type { LocalUser, SyncStatus, KeyBundle, AppData, Project, WordEntry } from '@maplume/shared';
+import type { SharedProjectInfo, FriendUser } from '@maplume/shared';
 import { apiClient } from '../services/api';
 import { syncService } from '../services/sync';
 import {
@@ -17,11 +18,22 @@ import {
   validateSeedPhrase,
   deriveKeys,
   bytesToBase64,
+  encryptForRecipient,
+  decryptFromSender,
+  hashString,
+  utf8ToBytes,
+  bytesToUtf8,
 } from '../services/crypto';
+import pako from 'pako';
 
 // Storage keys
 const ENCRYPTED_KEYS_KEY = 'maplume-encrypted-keys';
 const USERNAME_KEY = 'maplume-username';
+
+// Extended friend user with public key for encryption
+interface FriendWithKey extends FriendUser {
+  publicKey?: string;
+}
 
 // State interface
 interface SocialState {
@@ -32,6 +44,9 @@ interface SocialState {
   syncStatus: SyncStatus;
   pendingOperations: number;
   error: string | null;
+  ownedShares: SharedProjectInfo[];
+  receivedShares: SharedProjectInfo[];
+  friends: FriendWithKey[];
 }
 
 // Action types
@@ -42,7 +57,9 @@ type SocialAction =
   | { type: 'SET_SYNC_STATUS'; status: SyncStatus }
   | { type: 'SET_PENDING_COUNT'; count: number }
   | { type: 'SET_ERROR'; error: string | null }
-  | { type: 'LOGOUT' };
+  | { type: 'LOGOUT' }
+  | { type: 'SET_SHARES'; owned: SharedProjectInfo[]; received: SharedProjectInfo[] }
+  | { type: 'SET_FRIENDS'; friends: FriendWithKey[] };
 
 // Initial state
 const initialState: SocialState = {
@@ -53,6 +70,9 @@ const initialState: SocialState = {
   syncStatus: 'idle',
   pendingOperations: 0,
   error: null,
+  ownedShares: [],
+  receivedShares: [],
+  friends: [],
 };
 
 // Reducer
@@ -104,9 +124,28 @@ function socialReducer(state: SocialState, action: SocialAction): SocialState {
         initialized: true,
       };
 
+    case 'SET_SHARES':
+      return {
+        ...state,
+        ownedShares: action.owned,
+        receivedShares: action.received,
+      };
+
+    case 'SET_FRIENDS':
+      return {
+        ...state,
+        friends: action.friends,
+      };
+
     default:
       return state;
   }
+}
+
+// Shared project data that gets encrypted
+interface SharedProjectData {
+  project: Project;
+  entries: WordEntry[];
 }
 
 // Context interface
@@ -115,7 +154,7 @@ interface SocialContextValue {
   actions: {
     generateNewSeedPhrase: () => string[];
     createAccount: (username: string, seedPhrase: string[]) => Promise<void>;
-    login: (seedPhrase: string[]) => Promise<void>;
+    login: (seedPhrase: string[], username?: string) => Promise<void>;
     logout: () => Promise<void>;
     setServerUrl: (url: string) => Promise<void>;
     getServerUrl: () => string;
@@ -123,6 +162,22 @@ interface SocialContextValue {
     syncAppData: (data: AppData) => Promise<void>;
     restoreFromCloud: () => Promise<AppData | null>;
     isLoggedIn: () => boolean;
+    refreshShares: () => Promise<void>;
+    refreshFriends: () => Promise<void>;
+    shareProject: (
+      project: Project,
+      entries: WordEntry[],
+      friendId: string,
+      shareType: 'full' | 'stats_only'
+    ) => Promise<string>;
+    updateSharedProject: (
+      shareId: string,
+      project: Project,
+      entries: WordEntry[],
+      friendId: string
+    ) => Promise<void>;
+    revokeShare: (shareId: string) => Promise<void>;
+    decryptSharedProject: (shareId: string) => Promise<SharedProjectData | null>;
   };
 }
 
@@ -283,7 +338,7 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = useCallback(async (seedPhrase: string[]): Promise<void> => {
+  const login = useCallback(async (seedPhrase: string[], providedUsername?: string): Promise<void> => {
     try {
       dispatch({ type: 'SET_ERROR', error: null });
 
@@ -295,13 +350,12 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
       // Derive keys
       const keyBundle = deriveKeys(seedPhrase);
 
-      // Try to get stored username or ask server
-      let username = await window.electronAPI.secureStorage.get(USERNAME_KEY);
+      // Try to get stored username, use provided one, or ask for it
+      let username = providedUsername || await window.electronAPI.secureStorage.get(USERNAME_KEY);
 
       if (!username) {
-        // This is a recovery - we need to search for the user by public key
-        // For now, we'll require the username to be entered separately
-        throw new Error('Please create a new account or provide your username');
+        // This is a recovery - we need the username
+        throw new Error('Please provide your username to recover your account');
       }
 
       // Get challenge and login
@@ -322,6 +376,7 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
       };
 
       await window.electronAPI.secureStorage.set(ENCRYPTED_KEYS_KEY, JSON.stringify(keysToStore));
+      await window.electronAPI.secureStorage.set(USERNAME_KEY, username);
 
       // Get full profile
       const profile = await apiClient.getProfile();
@@ -409,6 +464,203 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
     return state.user !== null;
   }, [state.user]);
 
+  // Refresh shares from server
+  const refreshShares = useCallback(async (): Promise<void> => {
+    if (!state.user) return;
+
+    try {
+      const [ownedResponse, receivedResponse] = await Promise.all([
+        apiClient.getOwnedShares(),
+        apiClient.getReceivedShares(),
+      ]);
+
+      dispatch({
+        type: 'SET_SHARES',
+        owned: ownedResponse.shares,
+        received: receivedResponse.shares,
+      });
+    } catch (error) {
+      console.error('Failed to refresh shares:', error);
+    }
+  }, [state.user]);
+
+  // Refresh friends list with public keys
+  const refreshFriends = useCallback(async (): Promise<void> => {
+    if (!state.user) return;
+
+    try {
+      const response = await apiClient.getFriends();
+      // Friends from API include publicKey if available
+      dispatch({
+        type: 'SET_FRIENDS',
+        friends: response.friends as FriendWithKey[],
+      });
+    } catch (error) {
+      console.error('Failed to refresh friends:', error);
+    }
+  }, [state.user]);
+
+  // Share a project with a friend
+  const shareProject = useCallback(async (
+    project: Project,
+    entries: WordEntry[],
+    friendId: string,
+    shareType: 'full' | 'stats_only'
+  ): Promise<string> => {
+    if (!state.keyBundle) {
+      throw new Error('Not logged in');
+    }
+
+    // Find friend's public key
+    const friend = state.friends.find(f => f.id === friendId);
+    if (!friend || !friend.publicKey) {
+      throw new Error('Friend public key not available');
+    }
+
+    // Prepare data to share
+    const dataToShare: SharedProjectData = shareType === 'full'
+      ? { project, entries }
+      : { project: { ...project }, entries: [] }; // Stats only - no entries
+
+    // Serialize and compress
+    const json = JSON.stringify(dataToShare);
+    const compressed = pako.gzip(json);
+
+    // Get friend's X25519 public key
+    const friendPublicKey = base64ToUint8Array(friend.publicKey);
+
+    // Encrypt for recipient
+    const { ephemeralPublicKey, encrypted } = encryptForRecipient(
+      compressed,
+      friendPublicKey,
+      state.keyBundle.encryptionKeyPair.privateKey
+    );
+
+    // Create hash of unencrypted data for change detection
+    const dataHash = hashString(json);
+
+    // Serialize encrypted blob
+    const encryptedData = bytesToBase64(utf8ToBytes(JSON.stringify(encrypted)));
+
+    // Send to server
+    const response = await apiClient.createShare({
+      sharedWithId: friendId,
+      projectLocalId: project.id,
+      shareType,
+      encryptedData,
+      ephemeralPublicKey,
+      dataHash,
+    });
+
+    // Refresh shares
+    await refreshShares();
+
+    return response.shareId;
+  }, [state.keyBundle, state.friends, refreshShares]);
+
+  // Update a shared project
+  const updateSharedProject = useCallback(async (
+    shareId: string,
+    project: Project,
+    entries: WordEntry[],
+    friendId: string
+  ): Promise<void> => {
+    if (!state.keyBundle) {
+      throw new Error('Not logged in');
+    }
+
+    // Find friend's public key
+    const friend = state.friends.find(f => f.id === friendId);
+    if (!friend || !friend.publicKey) {
+      throw new Error('Friend public key not available');
+    }
+
+    // Find existing share to get share type
+    const existingShare = state.ownedShares.find(s => s.id === shareId);
+    const shareType = existingShare?.shareType || 'full';
+
+    // Prepare data to share
+    const dataToShare: SharedProjectData = shareType === 'full'
+      ? { project, entries }
+      : { project: { ...project }, entries: [] };
+
+    // Serialize and compress
+    const json = JSON.stringify(dataToShare);
+    const compressed = pako.gzip(json);
+
+    // Get friend's X25519 public key
+    const friendPublicKey = base64ToUint8Array(friend.publicKey);
+
+    // Encrypt for recipient
+    const { ephemeralPublicKey, encrypted } = encryptForRecipient(
+      compressed,
+      friendPublicKey,
+      state.keyBundle.encryptionKeyPair.privateKey
+    );
+
+    // Create hash of unencrypted data for change detection
+    const dataHash = hashString(json);
+
+    // Serialize encrypted blob
+    const encryptedData = bytesToBase64(utf8ToBytes(JSON.stringify(encrypted)));
+
+    // Update share on server (using create which handles upsert)
+    await apiClient.createShare({
+      sharedWithId: friendId,
+      projectLocalId: project.id,
+      shareType,
+      encryptedData,
+      ephemeralPublicKey,
+      dataHash,
+    });
+
+    // Refresh shares
+    await refreshShares();
+  }, [state.keyBundle, state.friends, state.ownedShares, refreshShares]);
+
+  // Revoke a share
+  const revokeShare = useCallback(async (shareId: string): Promise<void> => {
+    await apiClient.revokeShare(shareId);
+    await refreshShares();
+  }, [refreshShares]);
+
+  // Decrypt a shared project
+  const decryptSharedProject = useCallback(async (
+    shareId: string
+  ): Promise<SharedProjectData | null> => {
+    if (!state.keyBundle) {
+      throw new Error('Not logged in');
+    }
+
+    try {
+      // Get share data from server
+      const response = await apiClient.getShareData(shareId);
+
+      if (!response.encryptedData || !response.ephemeralPublicKey) {
+        return null;
+      }
+
+      // Parse encrypted blob
+      const encryptedBlob = JSON.parse(bytesToUtf8(base64ToUint8Array(response.encryptedData)));
+
+      // Decrypt using our private key
+      const decrypted = decryptFromSender(
+        response.ephemeralPublicKey,
+        encryptedBlob,
+        state.keyBundle.encryptionKeyPair.privateKey
+      );
+
+      // Decompress
+      const json = pako.ungzip(decrypted, { to: 'string' });
+
+      // Parse
+      return JSON.parse(json) as SharedProjectData;
+    } catch (error) {
+      console.error('Failed to decrypt shared project:', error);
+      throw error;
+    }
+  }, [state.keyBundle]);
+
   const value: SocialContextValue = {
     state,
     actions: {
@@ -422,6 +674,12 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
       syncAppData,
       restoreFromCloud,
       isLoggedIn,
+      refreshShares,
+      refreshFriends,
+      shareProject,
+      updateSharedProject,
+      revokeShare,
+      decryptSharedProject,
     },
   };
 

@@ -230,6 +230,8 @@ export default {
   usernameDescription: 'Votre nom d\'utilisateur est la façon dont les autres auteurs vous trouveront.',
   usernamePlaceholder: 'votre_pseudo',
   usernameHint: '3-30 caractères, lettres, chiffres et underscores uniquement.',
+  usernameRequiredForRecovery: 'Entrez votre nom d\'utilisateur pour récupérer votre compte sur cet appareil.',
+  username: 'Nom d\'utilisateur',
 
   // Connection Status
   online: 'En ligne',
@@ -246,6 +248,24 @@ export default {
   shareProjectsDescription: 'Partagez vos progrès d\'écriture avec vos amis.',
   writingParties: 'Sessions d\'écriture',
   writingPartiesDescription: 'Rejoignez des sessions d\'écriture chronométrées avec vos amis.',
+
+  // Friends
+  friendsList: 'Amis',
+  friendRequests: 'Demandes',
+  addFriend: 'Ajouter',
+  noFriendsYet: 'Pas encore d\'amis. Ajoutez des amis pour voir leurs progrès !',
+  noFriendRequests: 'Aucune demande d\'ami en attente.',
+  receivedRequests: 'Reçues',
+  sentRequests: 'Envoyées',
+  pendingRequest: 'En attente...',
+  addFriendDescription: 'Entrez un nom d\'utilisateur pour envoyer une demande d\'ami.',
+  messageOptional: 'Message (optionnel)',
+  friendRequestMessagePlaceholder: 'Salut ! J\'aimerais me connecter avec toi sur MaPlume.',
+  sendFriendRequest: 'Envoyer une demande d\'ami',
+  friendRequestSent: 'Demande d\'ami envoyée !',
+  friendRequestAutoAccepted: 'Vous êtes maintenant amis !',
+  removeFriendConfirm: 'Supprimer cet ami ?',
+  offlineMessage: 'Vous êtes hors ligne. Les fonctionnalités d\'amis nécessitent une connexion internet.',
 
   // Cloud Backup
   cloudBackup: 'Sauvegarde cloud',
@@ -264,4 +284,28 @@ export default {
   important: 'Important',
   copied: 'Copié !',
   copyToClipboard: 'Copier dans le presse-papiers',
+
+  // Project Sharing
+  shareProject: 'Partager le projet',
+  shareProjectDescription: 'Partagez vos progrès avec un ami.',
+  shareType: 'Type de partage',
+  shareTypeFull: 'Accès complet (progrès + entrées)',
+  shareTypeStats: 'Statistiques seulement (sans entrées)',
+  shareTypeFullDesc: 'L\'ami peut voir tout votre historique d\'écriture',
+  shareTypeStatsDesc: 'L\'ami ne voit que les progrès globaux',
+  sharedProjects: 'Projets partagés',
+  sharedWithYou: 'Partagés avec vous',
+  youAreSharing: 'Vous partagez',
+  noSharedProjects: 'Aucun projet n\'a encore été partagé avec vous.',
+  noProjectsShared: 'Vous ne partagez aucun projet.',
+  selectFriend: 'Sélectionner un ami',
+  shareWith: 'Partager avec',
+  alreadyShared: 'Déjà partagé',
+  revokeShare: 'Révoquer l\'accès',
+  revokeShareConfirm: 'Supprimer l\'accès à ce projet ?',
+  sharedBy: 'Partagé par',
+  lastUpdated: 'Dernière mise à jour',
+  viewSharedProject: 'Voir le projet',
+  projectShared: 'Projet partagé avec succès !',
+  noProjectData: 'Aucune donnée de projet disponible.',
 } as const;
