@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { User, LogOut, Settings, Users, Share2, PartyPopper } from 'lucide-react';
+import { User, LogOut, Users, Share2, PartyPopper } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { useI18n } from '../../i18n';
 import { Button } from '../ui/button';
@@ -105,18 +105,6 @@ export function SocialDashboard() {
           </div>
         </div>
 
-        {/* Server configuration */}
-        <div className="mt-8 p-4 rounded-lg border border-warm-200 dark:border-warm-700">
-          <div className="flex items-center gap-3 mb-2">
-            <Settings className="w-4 h-4 text-warm-500" />
-            <h4 className="text-sm font-medium text-warm-700 dark:text-warm-300">
-              {t.serverSettings || 'Server Settings'}
-            </h4>
-          </div>
-          <p className="text-sm text-warm-500">
-            {t.connectedTo || 'Connected to'}: {actions.getServerUrl()}
-          </p>
-        </div>
       </div>
     </div>
   );
