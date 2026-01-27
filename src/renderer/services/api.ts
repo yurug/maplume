@@ -22,7 +22,7 @@ import type {
 import { sign, bytesToBase64 } from './crypto';
 
 // Default server URL (can be configured)
-const DEFAULT_SERVER_URL = 'http://localhost:8443';
+const DEFAULT_SERVER_URL = 'https://maplumes3tyzv8f-maplume-server.functions.fnc.fr-par.scw.cloud';
 
 // Storage keys
 const ACCESS_TOKEN_KEY = 'maplume-access-token';
