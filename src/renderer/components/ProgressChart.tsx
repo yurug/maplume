@@ -62,8 +62,8 @@ function CustomTooltip({ active, payload, label, t, unitType }: any) {
     <div className="chart-tooltip">
       <p className="mb-2 font-medium text-warm-900 dark:text-warm-100">{formatDate(label)}</p>
       <div className="space-y-1.5">
-        {payload.map((entry: any) => (
-          <div key={entry.dataKey} className="flex items-center gap-2">
+        {payload.map((entry: any, index: number) => (
+          <div key={`${entry.dataKey}-${index}`} className="flex items-center gap-2">
             <div
               className="h-2.5 w-2.5 rounded-full"
               style={{ backgroundColor: entry.color }}
