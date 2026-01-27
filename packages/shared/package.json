@@ -1,0 +1,12 @@
+{
+  "name": "@maplume/shared",
+  "version": "1.0.0",
+  "description": "Shared types for MaPlume",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "MIT"
+}

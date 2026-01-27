@@ -199,4 +199,60 @@ export default {
   restartNow: 'Restart Now',
   updateError: 'Update check failed',
   currentVersionLabel: 'Current version',
+
+  // Social Features
+  social: 'Social',
+  socialFeatures: 'Social Features',
+  socialDescription: 'Connect with other writers, share your progress, and join writing parties.',
+  socialOptional: 'Social features are optional. You can always use MaPlume offline.',
+
+  // Account
+  createAccount: 'Create Account',
+  login: 'Log In',
+  logout: 'Log Out',
+  loginWithSeedPhrase: 'Log In with Recovery Phrase',
+  loginWithRecoveryPhrase: 'Log In with Recovery Phrase',
+  loggingIn: 'Logging in...',
+  creating: 'Creating...',
+
+  // Seed Phrase
+  yourRecoveryPhrase: 'Your Recovery Phrase',
+  seedPhraseWarning: 'Write down these 24 words and store them safely. This is the only way to recover your account.',
+  seedPhraseNeverShare: 'Never share your recovery phrase with anyone. MaPlume will never ask for it.',
+  seedPhraseConfirm: 'I have written down my recovery phrase and stored it safely.',
+  enterRecoveryPhrase: 'Enter your 24-word recovery phrase to access your account.',
+  seedPhrasePlaceholder: 'Enter your 24 words separated by spaces...',
+  invalidSeedPhrase: 'Invalid recovery phrase',
+  backToRecoveryPhrase: 'Back to recovery phrase',
+
+  // Username
+  chooseUsername: 'Choose a Username',
+  usernameDescription: 'Your username is how other writers will find you.',
+  usernamePlaceholder: 'your_username',
+  usernameHint: '3-30 characters, letters, numbers, and underscores only.',
+
+  // Connection Status
+  online: 'Online',
+  offline: 'Offline',
+  syncing: 'Syncing...',
+  syncError: 'Sync error',
+  pendingSync: 'pending',
+
+  // Social Dashboard
+  comingSoon: 'Coming Soon',
+  friends: 'Friends',
+  friendsDescription: 'Connect with other writers and see their progress.',
+  shareProjects: 'Share Projects',
+  shareProjectsDescription: 'Share your writing progress with friends.',
+  writingParties: 'Writing Parties',
+  writingPartiesDescription: 'Join timed writing sessions with friends.',
+  serverSettings: 'Server Settings',
+  connectedTo: 'Connected to',
+
+  // Common
+  back: 'Back',
+  continue: 'Continue',
+  important: 'Important',
+  copied: 'Copied!',
+  copyToClipboard: 'Copy to Clipboard',
 } as const;

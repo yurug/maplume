@@ -315,3 +315,71 @@ ipcMain.handle('restart-app', () => {
   app.relaunch();
   app.exit(0);
 });
+
+// Secure storage handlers for social features
+// These store sensitive data (encrypted keys, tokens) in the app's config
+function getSecureStoragePath(): string {
+  return path.join(app.getPath('userData'), 'secure-storage.json');
+}
+
+function readSecureStorage(): Record<string, string> {
+  try {
+    const storagePath = getSecureStoragePath();
+    if (fs.existsSync(storagePath)) {
+      const data = fs.readFileSync(storagePath, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch {
+    // Storage doesn't exist or is invalid
+  }
+  return {};
+}
+
+function writeSecureStorage(storage: Record<string, string>): void {
+  try {
+    const storagePath = getSecureStoragePath();
+    fs.writeFileSync(storagePath, JSON.stringify(storage, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('Failed to write secure storage:', error);
+  }
+}
+
+ipcMain.handle('secure-storage:set', (_event, key: string, value: string) => {
+  try {
+    const storage = readSecureStorage();
+    storage[key] = value;
+    writeSecureStorage(storage);
+    return true;
+  } catch {
+    return false;
+  }
+});
+
+ipcMain.handle('secure-storage:get', (_event, key: string) => {
+  try {
+    const storage = readSecureStorage();
+    return storage[key] ?? null;
+  } catch {
+    return null;
+  }
+});
+
+ipcMain.handle('secure-storage:delete', (_event, key: string) => {
+  try {
+    const storage = readSecureStorage();
+    delete storage[key];
+    writeSecureStorage(storage);
+    return true;
+  } catch {
+    return false;
+  }
+});
+
+ipcMain.handle('secure-storage:clear', () => {
+  try {
+    writeSecureStorage({});
+    return true;
+  } catch {
+    return false;
+  }
+});

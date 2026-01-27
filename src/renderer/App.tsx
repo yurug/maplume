@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, Feather } from 'lucide-react';
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { SocialProvider } from './context/SocialContext';
 import { I18nProvider } from './i18n/I18nProvider';
 import { useI18n } from './i18n';
 import { SetupScreen } from './components/SetupScreen';
@@ -18,6 +19,8 @@ import { EmptyState } from './components/EmptyState';
 import { WhatsNewDialog } from './components/WhatsNewDialog';
 import { GlobalStatistics } from './components/GlobalStatistics';
 import { SponsorDialog } from './components/SponsorDialog';
+import { SocialTab } from './components/social/SocialTab';
+import { ConnectionStatus } from './components/social/ConnectionStatus';
 import { calculateStatistics } from './services/statistics';
 import { getNewFeaturesSince, getLatestWhatsNewVersion, type VersionChanges } from './data/whatsNew';
 import { Button } from './components/ui/button';
@@ -35,6 +38,7 @@ function AppContent() {
   const [showEntries, setShowEntries] = useState(false);
   const [showGlobalStats, setShowGlobalStats] = useState(false);
   const [showSponsor, setShowSponsor] = useState(false);
+  const [showSocial, setShowSocial] = useState(false);
   const [dataPath, setDataPath] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [whatsNewChanges, setWhatsNewChanges] = useState<VersionChanges[]>([]);
@@ -234,20 +238,34 @@ function AppContent() {
               onOpenSettings={() => setShowSettings(true)}
               onOpenGlobalStats={() => setShowGlobalStats(true)}
               onOpenSponsor={() => setShowSponsor(true)}
+              onOpenSocial={() => setShowSocial(true)}
+              onProjectSelect={() => setShowSocial(false)}
+              showSocial={showSocial}
             />
           </aside>
 
           {/* Main Content */}
-          <main className="main-content relative" style={getBackgroundStyles()}>
+          <main className="main-content relative" style={showSocial ? {} : getBackgroundStyles()}>
             {/* Overlay for readability when using background images */}
-            {activeProject?.background?.type === 'image' && backgroundImageUrl && (
+            {!showSocial && activeProject?.background?.type === 'image' && backgroundImageUrl && (
               <div
                 className="pointer-events-none absolute inset-0 bg-white dark:bg-warm-900"
                 style={{ opacity: getOverlayOpacity() }}
               />
             )}
             <AnimatePresence mode="wait">
-              {activeProject ? (
+              {showSocial ? (
+                <motion.div
+                  key="social"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="relative z-10 h-full"
+                >
+                  <SocialTab />
+                </motion.div>
+              ) : activeProject ? (
                 <motion.div
                   key={activeProject.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -422,7 +440,9 @@ function App() {
     <ThemeProvider>
       <I18nProvider>
         <AppProvider>
-          <AppContent />
+          <SocialProvider>
+            <AppContent />
+          </SocialProvider>
         </AppProvider>
       </I18nProvider>
     </ThemeProvider>
