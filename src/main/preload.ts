@@ -22,4 +22,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   downloadUpdate: (updateInfo: unknown) => ipcRenderer.invoke('download-update', updateInfo),
   getUpdateInfo: () => ipcRenderer.invoke('get-update-info'),
   restartApp: () => ipcRenderer.invoke('restart-app'),
+  // Secure storage for social features (encrypted keys, tokens)
+  secureStorage: {
+    set: (key: string, value: string) => ipcRenderer.invoke('secure-storage:set', key, value),
+    get: (key: string) => ipcRenderer.invoke('secure-storage:get', key),
+    delete: (key: string) => ipcRenderer.invoke('secure-storage:delete', key),
+    clear: () => ipcRenderer.invoke('secure-storage:clear'),
+  },
 });

@@ -22,6 +22,13 @@ export interface AppUpdateInfo {
   hasUserRenderer: boolean;
 }
 
+export interface SecureStorage {
+  set: (key: string, value: string) => Promise<boolean>;
+  get: (key: string) => Promise<string | null>;
+  delete: (key: string) => Promise<boolean>;
+  clear: () => Promise<boolean>;
+}
+
 export interface ElectronAPI {
   selectDataFolder: () => Promise<string | null>;
   readData: (filePath: string) => Promise<unknown | null>;
@@ -41,6 +48,8 @@ export interface ElectronAPI {
   downloadUpdate: (updateInfo: UpdateInfo) => Promise<DownloadUpdateResult>;
   getUpdateInfo: () => Promise<AppUpdateInfo>;
   restartApp: () => Promise<void>;
+  // Secure storage for social features
+  secureStorage: SecureStorage;
 }
 
 declare global {

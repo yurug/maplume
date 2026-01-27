@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+
+# Development files
+*.log
+*.md
+.env
+.env.*
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Test files
+__tests__
+*.test.ts
+coverage
+
+# Data files
+data/
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db

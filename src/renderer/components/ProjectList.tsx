@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import * as LucideIcons from 'lucide-react';
-import { Plus, Archive, BookOpen, ChevronRight, Settings, Feather, Languages, Coffee } from 'lucide-react';
+import { Plus, Archive, BookOpen, ChevronRight, Settings, Feather, Languages, Coffee, Users } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { ConnectionStatus } from './social/ConnectionStatus';
 
 // Helper to get icon component by name
 function getIconComponent(name: string): React.ComponentType<{ className?: string }> {
@@ -19,9 +20,12 @@ interface ProjectListProps {
   onOpenSettings?: () => void;
   onOpenGlobalStats?: () => void;
   onOpenSponsor?: () => void;
+  onOpenSocial?: () => void;
+  onProjectSelect?: () => void;
+  showSocial?: boolean;
 }
 
-export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats, onOpenSponsor }: ProjectListProps) {
+export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats, onOpenSponsor, onOpenSocial, onProjectSelect, showSocial }: ProjectListProps) {
   const { state, actions } = useApp();
   const { t, language, setLanguage } = useI18n();
 
@@ -73,6 +77,9 @@ export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats, o
           </Tooltip>
         </div>
         <div className="flex items-center gap-1">
+          {/* Connection Status */}
+          <ConnectionStatus />
+
           {/* Language Toggle */}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -146,7 +153,10 @@ export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats, o
                   state.activeProjectId === project.id && 'active',
                   project.archived && 'opacity-60'
                 )}
-                onClick={() => actions.setActiveProject(project.id)}
+                onClick={() => {
+                  actions.setActiveProject(project.id);
+                  onProjectSelect?.();
+                }}
               >
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   {/* Project indicator */}
@@ -202,6 +212,24 @@ export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats, o
           )}
         </AnimatePresence>
       </div>
+
+      {/* Social Tab Button */}
+      {onOpenSocial && (
+        <div className="border-t border-warm-200/60 px-3 py-2 dark:border-warm-700/60">
+          <button
+            onClick={onOpenSocial}
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
+              showSocial
+                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
+                : 'text-warm-600 hover:bg-warm-100 dark:text-warm-400 dark:hover:bg-warm-800'
+            )}
+          >
+            <Users className="h-4 w-4" />
+            <span className="text-sm font-medium">{t.social || 'Social'}</span>
+          </button>
+        </div>
+      )}
 
       {/* Footer - Show Archived Toggle */}
       <div className="border-t border-warm-200/60 px-4 py-3 dark:border-warm-700/60">

@@ -2,6 +2,9 @@
   "name": "maplume",
   "version": "1.0.2",
   "description": "A word tracker for novel writers",
+  "workspaces": [
+    "packages/*"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/yurug/maplume.git"
@@ -12,10 +15,14 @@
     "dev:renderer": "vite",
     "dev:main": "tsc -p tsconfig.main.json --watch",
     "dev:electron": "sleep 3 && NODE_ENV=development electron .",
+    "dev:server": "npm run dev -w @maplume/server",
+    "dev:all": "concurrently -k \"npm run dev\" \"npm run dev:server\"",
     "build": "npm run build:renderer && npm run build:main",
     "build:renderer": "vite build",
     "build:main": "tsc -p tsconfig.main.json",
+    "build:server": "npm run build -w @maplume/server",
     "start": "electron .",
+    "start:server": "npm run start -w @maplume/server",
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win",
     "dist:mac": "npm run build && electron-builder --mac",
@@ -27,6 +34,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^20.11.0",
+    "@types/pako": "^2.0.4",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
     "@vitejs/plugin-react": "^4.2.1",
@@ -40,17 +48,22 @@
     "vite": "^5.0.12"
   },
   "dependencies": {
+    "@noble/ciphers": "^2.1.1",
+    "@noble/curves": "^2.0.1",
+    "@noble/hashes": "^2.0.1",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-progress": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@scure/bip39": "^2.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "electron-updater": "^6.1.7",
     "framer-motion": "^12.29.0",
     "lucide-react": "^0.563.0",
+    "pako": "^2.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "recharts": "^2.10.4",
@@ -81,11 +94,15 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["universal"]
+          "arch": [
+            "universal"
+          ]
         },
         {
           "target": "zip",
-          "arch": ["universal"]
+          "arch": [
+            "universal"
+          ]
         }
       ],
       "icon": "build/icon.png",

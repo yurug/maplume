@@ -199,4 +199,60 @@ export default {
   restartNow: 'Redémarrer',
   updateError: 'Échec de la vérification',
   currentVersionLabel: 'Version actuelle',
+
+  // Social Features
+  social: 'Social',
+  socialFeatures: 'Fonctionnalités sociales',
+  socialDescription: 'Connectez-vous avec d\'autres auteurs, partagez vos progrès et participez à des sessions d\'écriture.',
+  socialOptional: 'Les fonctionnalités sociales sont optionnelles. Vous pouvez toujours utiliser MaPlume hors ligne.',
+
+  // Account
+  createAccount: 'Créer un compte',
+  login: 'Connexion',
+  logout: 'Déconnexion',
+  loginWithSeedPhrase: 'Connexion avec phrase de récupération',
+  loginWithRecoveryPhrase: 'Connexion avec phrase de récupération',
+  loggingIn: 'Connexion en cours...',
+  creating: 'Création...',
+
+  // Seed Phrase
+  yourRecoveryPhrase: 'Votre phrase de récupération',
+  seedPhraseWarning: 'Notez ces 24 mots et conservez-les en lieu sûr. C\'est le seul moyen de récupérer votre compte.',
+  seedPhraseNeverShare: 'Ne partagez jamais votre phrase de récupération. MaPlume ne vous la demandera jamais.',
+  seedPhraseConfirm: 'J\'ai noté ma phrase de récupération et je l\'ai conservée en lieu sûr.',
+  enterRecoveryPhrase: 'Entrez votre phrase de récupération de 24 mots pour accéder à votre compte.',
+  seedPhrasePlaceholder: 'Entrez vos 24 mots séparés par des espaces...',
+  invalidSeedPhrase: 'Phrase de récupération invalide',
+  backToRecoveryPhrase: 'Retour à la phrase de récupération',
+
+  // Username
+  chooseUsername: 'Choisissez un nom d\'utilisateur',
+  usernameDescription: 'Votre nom d\'utilisateur est la façon dont les autres auteurs vous trouveront.',
+  usernamePlaceholder: 'votre_pseudo',
+  usernameHint: '3-30 caractères, lettres, chiffres et underscores uniquement.',
+
+  // Connection Status
+  online: 'En ligne',
+  offline: 'Hors ligne',
+  syncing: 'Synchronisation...',
+  syncError: 'Erreur de synchronisation',
+  pendingSync: 'en attente',
+
+  // Social Dashboard
+  comingSoon: 'Bientôt disponible',
+  friends: 'Amis',
+  friendsDescription: 'Connectez-vous avec d\'autres auteurs et suivez leurs progrès.',
+  shareProjects: 'Partager des projets',
+  shareProjectsDescription: 'Partagez vos progrès d\'écriture avec vos amis.',
+  writingParties: 'Sessions d\'écriture',
+  writingPartiesDescription: 'Rejoignez des sessions d\'écriture chronométrées avec vos amis.',
+  serverSettings: 'Paramètres du serveur',
+  connectedTo: 'Connecté à',
+
+  // Common
+  back: 'Retour',
+  continue: 'Continuer',
+  important: 'Important',
+  copied: 'Copié !',
+  copyToClipboard: 'Copier dans le presse-papiers',
 } as const;
