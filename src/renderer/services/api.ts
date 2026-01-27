@@ -47,7 +47,14 @@ class ApiClient {
     // Load server URL from config
     const storedUrl = await window.electronAPI.getConfigValue(SERVER_URL_KEY);
     if (storedUrl && typeof storedUrl === 'string') {
-      this.baseUrl = storedUrl;
+      // Migrate from old localhost URL to new Scaleway URL
+      if (storedUrl.includes('localhost') || storedUrl.includes('127.0.0.1')) {
+        // Clear old localhost URL, use default
+        await window.electronAPI.setConfigValue(SERVER_URL_KEY, DEFAULT_SERVER_URL);
+        this.baseUrl = DEFAULT_SERVER_URL;
+      } else {
+        this.baseUrl = storedUrl;
+      }
     }
 
     // Load tokens from secure storage
