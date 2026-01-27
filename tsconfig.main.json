@@ -3,8 +3,8 @@
   "compilerOptions": {
     "module": "CommonJS",
     "moduleResolution": "node",
-    "rootDir": ".",
-    "outDir": "dist",
+    "rootDir": "src/main",
+    "outDir": "dist/main",
     "noEmit": false,
     "baseUrl": ".",
     "paths": {
@@ -13,5 +13,5 @@
       "@maplume/shared/*": ["packages/shared/src/*"]
     }
   },
-  "include": ["src/main/**/*", "packages/shared/src/**/*"]
+  "include": ["src/main/**/*"]
 }
