@@ -246,8 +246,17 @@ export default {
   shareProjectsDescription: 'Share your writing progress with friends.',
   writingParties: 'Writing Parties',
   writingPartiesDescription: 'Join timed writing sessions with friends.',
-  serverSettings: 'Server Settings',
-  connectedTo: 'Connected to',
+
+  // Cloud Backup
+  cloudBackup: 'Cloud Backup',
+  automaticBackup: 'Automatic Backup',
+  restoreFromCloud: 'Restore from Cloud',
+  cloudBackupDescription: 'Your projects are automatically backed up to the cloud. You can restore them on any device by logging in with your recovery phrase.',
+  synced: 'Synced',
+  pendingChanges: 'pending changes',
+  restoreSuccess: 'Projects restored successfully!',
+  restoreEmpty: 'No backup found in the cloud.',
+  restoreError: 'Failed to restore from cloud. Please try again.',
 
   // Common
   back: 'Back',
