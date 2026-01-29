@@ -10,7 +10,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import type { LocalUser, SyncStatus, KeyBundle, AppData, Project, WordEntry } from '@maplume/shared';
-import type { SharedProjectInfo, FriendUser } from '@maplume/shared';
+import type { SharedProjectInfo, FriendUser, Party, PartyInvite } from '@maplume/shared';
 import { apiClient } from '../services/api';
 import { syncService } from '../services/sync';
 import {
@@ -35,6 +35,12 @@ interface FriendWithKey extends FriendUser {
   publicKey?: string;
 }
 
+// Progress snapshot for party charts
+interface PartyProgressSnapshot {
+  timestamp: number;
+  participants: { [participantId: string]: number }; // participantId -> wordsWritten
+}
+
 // State interface
 interface SocialState {
   initialized: boolean;
@@ -47,19 +53,29 @@ interface SocialState {
   ownedShares: SharedProjectInfo[];
   receivedShares: SharedProjectInfo[];
   friends: FriendWithKey[];
+  // Writing parties
+  activeParties: Party[];
+  upcomingParties: Party[];
+  partyInvites: PartyInvite[];
+  // Progress history for party charts (keyed by partyId)
+  partyProgressHistory: { [partyId: string]: PartyProgressSnapshot[] };
 }
 
 // Action types
 type SocialAction =
   | { type: 'INITIALIZE'; user: LocalUser | null; keyBundle: KeyBundle | null }
   | { type: 'SET_USER'; user: LocalUser; keyBundle: KeyBundle }
+  | { type: 'UPDATE_USER_AVATAR'; avatarPreset: string }
   | { type: 'SET_ONLINE'; online: boolean }
   | { type: 'SET_SYNC_STATUS'; status: SyncStatus }
   | { type: 'SET_PENDING_COUNT'; count: number }
   | { type: 'SET_ERROR'; error: string | null }
   | { type: 'LOGOUT' }
   | { type: 'SET_SHARES'; owned: SharedProjectInfo[]; received: SharedProjectInfo[] }
-  | { type: 'SET_FRIENDS'; friends: FriendWithKey[] };
+  | { type: 'SET_FRIENDS'; friends: FriendWithKey[] }
+  | { type: 'SET_PARTIES'; active: Party[]; upcoming: Party[]; invites: PartyInvite[] }
+  | { type: 'UPDATE_ACTIVE_PARTY'; party: Party }
+  | { type: 'ADD_PARTY_PROGRESS_SNAPSHOT'; partyId: string; snapshot: PartyProgressSnapshot };
 
 // Initial state
 const initialState: SocialState = {
@@ -73,6 +89,10 @@ const initialState: SocialState = {
   ownedShares: [],
   receivedShares: [],
   friends: [],
+  activeParties: [],
+  upcomingParties: [],
+  partyInvites: [],
+  partyProgressHistory: {},
 };
 
 // Reducer
@@ -92,6 +112,12 @@ function socialReducer(state: SocialState, action: SocialAction): SocialState {
         user: action.user,
         keyBundle: action.keyBundle,
         error: null,
+      };
+
+    case 'UPDATE_USER_AVATAR':
+      return {
+        ...state,
+        user: state.user ? { ...state.user, avatarPreset: action.avatarPreset } : null,
       };
 
     case 'SET_ONLINE':
@@ -137,6 +163,36 @@ function socialReducer(state: SocialState, action: SocialAction): SocialState {
         friends: action.friends,
       };
 
+    case 'SET_PARTIES':
+      return {
+        ...state,
+        activeParties: action.active,
+        upcomingParties: action.upcoming,
+        partyInvites: action.invites,
+      };
+
+    case 'UPDATE_ACTIVE_PARTY':
+      return {
+        ...state,
+        activeParties: state.activeParties.map((p) =>
+          p.id === action.party.id ? action.party : p
+        ),
+      };
+
+    case 'ADD_PARTY_PROGRESS_SNAPSHOT': {
+      const existingHistory = state.partyProgressHistory[action.partyId] || [];
+      const newHistory = [...existingHistory, action.snapshot];
+      // Keep last 100 snapshots per party
+      const trimmedHistory = newHistory.length > 100 ? newHistory.slice(-100) : newHistory;
+      return {
+        ...state,
+        partyProgressHistory: {
+          ...state.partyProgressHistory,
+          [action.partyId]: trimmedHistory,
+        },
+      };
+    }
+
     default:
       return state;
   }
@@ -178,6 +234,21 @@ interface SocialContextValue {
     ) => Promise<void>;
     revokeShare: (shareId: string) => Promise<void>;
     decryptSharedProject: (shareId: string) => Promise<SharedProjectData | null>;
+    // Party actions
+    refreshParties: () => Promise<void>;
+    createParty: (title: string, durationMinutes: number, scheduledStart?: number | null, rankingEnabled?: boolean, inviteFriendIds?: string[]) => Promise<Party>;
+    joinPartyByCode: (code: string, startWordCount?: number) => Promise<Party>;
+    joinPartyByInvite: (partyId: string, inviteId: string, startWordCount?: number) => Promise<Party>;
+    leaveParty: (partyId: string) => Promise<void>;
+    updatePartyProgress: (partyId: string, currentWordCount: number) => Promise<number>;
+    endParty: (partyId: string) => Promise<Party>;
+    startParty: (partyId: string) => Promise<Party>;
+    inviteToParty: (partyId: string, friendIds: string[]) => Promise<void>;
+    declinePartyInvite: (inviteId: string) => Promise<void>;
+    getPartyHistory: () => Promise<Party[]>;
+    getPartyDetails: (partyId: string) => Promise<Party | null>;
+    // Profile actions
+    updateAvatar: (avatarPreset: string) => Promise<void>;
   };
 }
 
@@ -290,8 +361,12 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
       // Derive keys
       const keyBundle = deriveKeys(seedPhrase);
 
-      // Register with server
-      await apiClient.register(username, keyBundle.identityKeyPair.publicKey);
+      // Register with server (send both identity and encryption public keys)
+      await apiClient.register(
+        username,
+        keyBundle.identityKeyPair.publicKey,
+        keyBundle.encryptionKeyPair.publicKey
+      );
 
       // Get challenge and login
       const { challenge } = await apiClient.getChallenge(username);
@@ -391,6 +466,11 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
         createdAt: profile.createdAt,
         publicKey: bytesToBase64(keyBundle.identityKeyPair.publicKey),
       };
+
+      // Update encryption public key for existing users who registered before this feature
+      await apiClient.updateProfile({
+        encryptionPublicKey: bytesToBase64(keyBundle.encryptionKeyPair.publicKey),
+      });
 
       // Initialize sync service
       await syncService.initialize(keyBundle.localKey);
@@ -624,6 +704,154 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
     await refreshShares();
   }, [refreshShares]);
 
+  // ============ Party Actions ============
+
+  // Refresh parties state
+  const refreshParties = useCallback(async (): Promise<void> => {
+    if (!state.user || !state.isOnline) return;
+
+    try {
+      const response = await apiClient.getParties();
+      // Filter to only include active parties (not ended)
+      const activeParties = response.active.filter((p: Party) => p.status === 'active');
+      dispatch({ type: 'SET_PARTIES', active: activeParties, upcoming: response.upcoming, invites: response.invites });
+    } catch (error) {
+      console.error('Failed to refresh parties:', error);
+    }
+  }, [state.user, state.isOnline]);
+
+  // Create a new party
+  const createParty = useCallback(async (
+    title: string,
+    durationMinutes: number,
+    scheduledStart?: number | null,
+    rankingEnabled = true,
+    inviteFriendIds?: string[]
+  ): Promise<Party> => {
+    const response = await apiClient.createParty({
+      title,
+      durationMinutes,
+      scheduledStart,
+      rankingEnabled,
+      inviteFriendIds,
+    });
+    await refreshParties();
+    return response.party;
+  }, [refreshParties]);
+
+  // Join party by code
+  const joinPartyByCode = useCallback(async (code: string, startWordCount = 0): Promise<Party> => {
+    const response = await apiClient.joinPartyByCode(code, startWordCount);
+    await refreshParties();
+    return response.party;
+  }, [refreshParties]);
+
+  // Join party by invite
+  const joinPartyByInvite = useCallback(async (
+    partyId: string,
+    inviteId: string,
+    startWordCount = 0
+  ): Promise<Party> => {
+    const response = await apiClient.joinPartyByInvite(partyId, inviteId, startWordCount);
+    await refreshParties();
+    return response.party;
+  }, [refreshParties]);
+
+  // Leave party
+  const leaveParty = useCallback(async (partyId: string): Promise<void> => {
+    await apiClient.leaveParty(partyId);
+    await refreshParties();
+  }, [refreshParties]);
+
+  // Update party progress
+  const updatePartyProgress = useCallback(async (partyId: string, currentWordCount: number): Promise<number> => {
+    try {
+      const response = await apiClient.updatePartyProgress(partyId, currentWordCount);
+      // Don't refresh all parties, just update the leaderboard in the active party if needed
+      const isActiveParty = state.activeParties.some((p) => p.id === partyId);
+      if (isActiveParty) {
+        const partyResponse = await apiClient.getParty(partyId);
+        dispatch({ type: 'UPDATE_ACTIVE_PARTY', party: partyResponse.party });
+
+        // Add progress snapshot for the chart
+        if (partyResponse.party.participants) {
+          const snapshot: PartyProgressSnapshot = {
+            timestamp: Date.now(),
+            participants: {},
+          };
+          partyResponse.party.participants.forEach((p: { id: string; wordsWritten: number }) => {
+            snapshot.participants[p.id] = p.wordsWritten;
+          });
+          dispatch({ type: 'ADD_PARTY_PROGRESS_SNAPSHOT', partyId, snapshot });
+        }
+      }
+      return response.wordsWritten;
+    } catch (error) {
+      // If party is no longer active, refresh parties to get updated state
+      if (error instanceof Error && error.message.includes('not active')) {
+        await refreshParties();
+      }
+      throw error;
+    }
+  }, [state.activeParties, refreshParties]);
+
+  // End party
+  const endParty = useCallback(async (partyId: string): Promise<Party> => {
+    const response = await apiClient.endParty(partyId);
+    await refreshParties();
+    return response.party;
+  }, [refreshParties]);
+
+  // Start a scheduled party
+  const startParty = useCallback(async (partyId: string): Promise<Party> => {
+    const response = await apiClient.startParty(partyId);
+    await refreshParties();
+    return response.party;
+  }, [refreshParties]);
+
+  // Invite friends to party
+  const inviteToParty = useCallback(async (partyId: string, friendIds: string[]): Promise<void> => {
+    await apiClient.inviteToParty(partyId, friendIds);
+  }, []);
+
+  // Decline party invite
+  const declinePartyInvite = useCallback(async (inviteId: string): Promise<void> => {
+    await apiClient.declinePartyInvite(inviteId);
+    await refreshParties();
+  }, [refreshParties]);
+
+  // Get party history
+  const getPartyHistory = useCallback(async (): Promise<Party[]> => {
+    const response = await apiClient.getPartyHistory();
+    return response.parties;
+  }, []);
+
+  // Get party details with participants
+  const getPartyDetails = useCallback(async (partyId: string): Promise<Party | null> => {
+    try {
+      const response = await apiClient.getParty(partyId);
+      return response.party;
+    } catch (error) {
+      console.error('Failed to get party details:', error);
+      return null;
+    }
+  }, []);
+
+  // Update user avatar
+  const updateAvatar = useCallback(async (avatarPreset: string): Promise<void> => {
+    if (!state.user) {
+      throw new Error('Not logged in');
+    }
+
+    try {
+      await apiClient.updateProfile({ avatarPreset });
+      dispatch({ type: 'UPDATE_USER_AVATAR', avatarPreset });
+    } catch (error) {
+      console.error('Failed to update avatar:', error);
+      throw error;
+    }
+  }, [state.user]);
+
   // Decrypt a shared project
   const decryptSharedProject = useCallback(async (
     shareId: string
@@ -680,6 +908,21 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
       updateSharedProject,
       revokeShare,
       decryptSharedProject,
+      // Party actions
+      refreshParties,
+      createParty,
+      joinPartyByCode,
+      joinPartyByInvite,
+      leaveParty,
+      updatePartyProgress,
+      endParty,
+      startParty,
+      inviteToParty,
+      declinePartyInvite,
+      getPartyHistory,
+      getPartyDetails,
+      // Profile actions
+      updateAvatar,
     },
   };
 

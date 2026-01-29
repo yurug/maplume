@@ -89,6 +89,23 @@ export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
+/**
+ * Get the user-specific data path for storing user data.
+ * Each logged-in user gets their own subfolder.
+ */
+export function getUserDataPath(basePath: string, username: string): string {
+  // Sanitize username to be safe for filesystem
+  const safeUsername = username.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+  return `${basePath}/users/${safeUsername}`;
+}
+
+/**
+ * Ensure a directory exists, creating it if necessary.
+ */
+export async function ensureDirectory(path: string): Promise<boolean> {
+  return window.electronAPI.ensureDirectory(path);
+}
+
 export function createProject(partial: Omit<Project, 'id' | 'archived' | 'createdAt' | 'updatedAt'>): Project {
   const now = new Date().toISOString();
   return {

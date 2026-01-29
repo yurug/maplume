@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { User, LogOut, Users, Share2, PartyPopper, Cloud, RefreshCw, Download, Check, ChevronRight } from 'lucide-react';
+import { LogOut, Users, Share2, PartyPopper, Cloud, RefreshCw, Download, Check, ChevronRight, Plus, History, Pencil } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { useApp } from '../../context/AppContext';
 import { useI18n } from '../../i18n';
@@ -14,24 +14,48 @@ import { ConnectionStatus } from './ConnectionStatus';
 import { FriendsPanel } from './FriendsPanel';
 import { SharedProjectsList } from './SharedProjectsList';
 import { SharedProjectView } from './SharedProjectView';
+import { CreatePartyModal } from './CreatePartyModal';
+import { JoinPartyModal } from './JoinPartyModal';
+import { ActivePartyPanel } from './ActivePartyPanel';
+import { PartyHistory } from './PartyHistory';
+import { Avatar } from './Avatar';
+import { AvatarPicker } from './AvatarPicker';
 
-type View = 'dashboard' | 'friends' | 'sharedProjects' | 'viewSharedProject';
+type View = 'dashboard' | 'friends' | 'sharedProjects' | 'viewSharedProject' | 'activeParty' | 'partyHistory';
 
-export function SocialDashboard() {
+interface SocialDashboardProps {
+  selectedPartyId?: string | null;
+}
+
+export function SocialDashboard({ selectedPartyId }: SocialDashboardProps) {
   const { state, actions } = useSocial();
   const { state: appState, actions: appActions } = useApp();
   const { t } = useI18n();
   const [restoring, setRestoring] = useState(false);
   const [restoreResult, setRestoreResult] = useState<'success' | 'error' | 'empty' | null>(null);
-  const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [currentView, setCurrentView] = useState<View>(selectedPartyId ? 'activeParty' : 'dashboard');
   const [selectedShareId, setSelectedShareId] = useState<string | null>(null);
+  const [viewingPartyId, setViewingPartyId] = useState<string | null>(selectedPartyId || null);
+  const [showCreateParty, setShowCreateParty] = useState(false);
+  const [showJoinParty, setShowJoinParty] = useState(false);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
-  // Load shares on mount
+  // Load shares and parties on mount (only once when user is available and online)
   useEffect(() => {
     if (state.user && state.isOnline) {
       actions.refreshShares();
+      actions.refreshParties();
     }
-  }, [state.user, state.isOnline, actions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.user?.id, state.isOnline]);
+
+  // Navigate to party when selectedPartyId prop changes
+  useEffect(() => {
+    if (selectedPartyId) {
+      setViewingPartyId(selectedPartyId);
+      setCurrentView('activeParty');
+    }
+  }, [selectedPartyId]);
 
   const handleLogout = async () => {
     await actions.logout();
@@ -107,15 +131,40 @@ export function SocialDashboard() {
     );
   }
 
+  // Show ActivePartyPanel if that view is active
+  if (currentView === 'activeParty' && viewingPartyId) {
+    return (
+      <ActivePartyPanel
+        partyId={viewingPartyId}
+        onBack={() => {
+          setViewingPartyId(null);
+          setCurrentView('dashboard');
+        }}
+      />
+    );
+  }
+
+  // Show PartyHistory if that view is active
+  if (currentView === 'partyHistory') {
+    return <PartyHistory onBack={() => setCurrentView('dashboard')} />;
+  }
+
   return (
     <div className="flex-1 overflow-auto">
       {/* Header with user info */}
       <div className="p-6 border-b border-warm-200 dark:border-warm-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
-              <User className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-            </div>
+            <button
+              onClick={() => setShowAvatarPicker(true)}
+              className="relative group"
+              title={t.changeAvatar || 'Change avatar'}
+            >
+              <Avatar preset={state.user.avatarPreset} username={state.user.username} size="lg" />
+              <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Pencil className="w-4 h-4 text-white" />
+              </div>
+            </button>
             <div>
               <h2 className="text-lg font-semibold text-warm-900 dark:text-warm-100">
                 {state.user.username}
@@ -194,17 +243,124 @@ export function SocialDashboard() {
 
           {/* Writing Parties */}
           <div className="p-6 rounded-lg border border-warm-200 dark:border-warm-700 bg-warm-50/50 dark:bg-warm-800/50">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900">
-                <PartyPopper className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900">
+                  <PartyPopper className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-warm-900 dark:text-warm-100">
+                    {t.writingParties || 'Writing Parties'}
+                  </h4>
+                  {state.activeParties.length > 0 && (
+                    <span className="text-xs text-purple-600 dark:text-purple-400">
+                      {state.activeParties.length} {state.activeParties.length === 1 ? (t.activeParty || 'party in progress') : 'parties in progress'}
+                    </span>
+                  )}
+                </div>
               </div>
-              <h4 className="font-medium text-warm-900 dark:text-warm-100">
-                {t.writingParties || 'Writing Parties'}
-              </h4>
             </div>
-            <p className="text-sm text-warm-600 dark:text-warm-400">
+            <p className="text-sm text-warm-600 dark:text-warm-400 mb-4">
               {t.writingPartiesDescription || 'Join timed writing sessions with friends.'}
             </p>
+
+            {/* Active parties list */}
+            {state.activeParties.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {state.activeParties.map((party) => (
+                  <button
+                    key={party.id}
+                    onClick={() => {
+                      setViewingPartyId(party.id);
+                      setCurrentView('activeParty');
+                    }}
+                    className="w-full p-3 rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 border border-purple-200 dark:border-purple-800 text-left hover:from-purple-200 hover:to-pink-200 dark:hover:from-purple-900/50 dark:hover:to-pink-900/50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-purple-900 dark:text-purple-100">
+                          {party.title}
+                        </p>
+                        <p className="text-xs text-purple-600 dark:text-purple-400">
+                          {party.participantCount} {t.participants || 'participants'}
+                        </p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-purple-500" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Party invites */}
+            {state.partyInvites.length > 0 && (
+              <div className="mb-3 space-y-2">
+                {state.partyInvites.slice(0, 2).map((invite) => (
+                  <div
+                    key={invite.id}
+                    className="p-3 rounded-lg bg-warm-100 dark:bg-warm-700 border border-warm-200 dark:border-warm-600"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-warm-900 dark:text-warm-100">
+                          {invite.party.title}
+                        </p>
+                        <p className="text-xs text-warm-500">
+                          {t.invitedBy || 'Invited by'} {invite.invitedBy.username}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => actions.declinePartyInvite(invite.id)}
+                        >
+                          {t.decline || 'Decline'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            await actions.joinPartyByInvite(invite.party.id, invite.id, 0);
+                            setCurrentView('activeParty');
+                          }}
+                        >
+                          {t.join || 'Join'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowJoinParty(true)}
+                className="flex-1"
+              >
+                {t.joinWithCode || 'Join with Code'}
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setShowCreateParty(true)}
+                className="flex-1"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                {t.createParty || 'Create'}
+              </Button>
+            </div>
+
+            {/* History link */}
+            <button
+              onClick={() => setCurrentView('partyHistory')}
+              className="w-full mt-3 flex items-center justify-center gap-2 text-sm text-warm-500 hover:text-warm-700 dark:hover:text-warm-300 transition-colors"
+            >
+              <History className="w-4 h-4" />
+              {t.viewHistory || 'View History'}
+            </button>
           </div>
         </div>
 
@@ -274,6 +430,32 @@ export function SocialDashboard() {
         </div>
 
       </div>
+
+      {/* Create Party Modal */}
+      {showCreateParty && (
+        <CreatePartyModal
+          onClose={() => setShowCreateParty(false)}
+          onCreated={() => setCurrentView('activeParty')}
+        />
+      )}
+
+      {/* Join Party Modal */}
+      {showJoinParty && (
+        <JoinPartyModal
+          onClose={() => setShowJoinParty(false)}
+          onJoined={() => setCurrentView('activeParty')}
+        />
+      )}
+
+      {/* Avatar Picker Modal */}
+      {showAvatarPicker && state.user && (
+        <AvatarPicker
+          currentPreset={state.user.avatarPreset}
+          username={state.user.username}
+          onSelect={actions.updateAvatar}
+          onClose={() => setShowAvatarPicker(false)}
+        />
+      )}
     </div>
   );
 }

@@ -27,7 +27,7 @@ const registerLimiter = rateLimit({
 // POST /api/auth/register
 router.post('/register', registerLimiter, async (req: Request, res: Response, next) => {
   try {
-    const { username, publicKey } = req.body;
+    const { username, publicKey, encryptionPublicKey } = req.body;
 
     if (!username || typeof username !== 'string') {
       throw createError('Username is required', 400, 'INVALID_USERNAME');
@@ -52,8 +52,8 @@ router.post('/register', registerLimiter, async (req: Request, res: Response, ne
       throw createError('Username already taken', 409, 'USERNAME_EXISTS');
     }
 
-    // Create user
-    const userId = await db.createUser(username, publicKey);
+    // Create user (encryptionPublicKey is optional for backward compatibility)
+    const userId = await db.createUser(username, publicKey, encryptionPublicKey);
 
     res.status(201).json({ userId });
   } catch (err) {

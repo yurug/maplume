@@ -30,6 +30,15 @@ import type {
   GetReceivedSharesResponse,
   GetShareDataResponse,
   ApiError,
+  CreatePartyRequest,
+  CreatePartyResponse,
+  GetPartiesResponse,
+  GetPartyHistoryResponse,
+  JoinPartyByCodeResponse,
+  UpdatePartyProgressRequest,
+  UpdatePartyProgressResponse,
+  InviteToPartyRequest,
+  Party,
 } from '@maplume/shared';
 import { sign, bytesToBase64 } from './crypto';
 
@@ -231,10 +240,15 @@ class ApiClient {
   /**
    * Register a new user
    */
-  async register(username: string, publicKey: Uint8Array): Promise<RegisterResponse> {
+  async register(
+    username: string,
+    publicKey: Uint8Array,
+    encryptionPublicKey?: Uint8Array
+  ): Promise<RegisterResponse> {
     const request: RegisterRequest = {
       username,
       publicKey: bytesToBase64(publicKey),
+      encryptionPublicKey: encryptionPublicKey ? bytesToBase64(encryptionPublicKey) : undefined,
     };
 
     console.log('[API] Registering user at:', this.baseUrl);
@@ -422,6 +436,101 @@ class ApiClient {
    */
   async revokeShare(shareId: string): Promise<{ success: boolean }> {
     return this.request('DELETE', `/api/shares/${shareId}`);
+  }
+
+  // ============ Writing Parties ============
+
+  /**
+   * Create a new writing party
+   */
+  async createParty(request: CreatePartyRequest): Promise<CreatePartyResponse> {
+    return this.request<CreatePartyResponse>('POST', '/api/parties', request);
+  }
+
+  /**
+   * Get active, upcoming parties and invites
+   */
+  async getParties(): Promise<GetPartiesResponse> {
+    return this.request<GetPartiesResponse>('GET', '/api/parties');
+  }
+
+  /**
+   * Get party history
+   */
+  async getPartyHistory(): Promise<GetPartyHistoryResponse> {
+    return this.request<GetPartyHistoryResponse>('GET', '/api/parties/history');
+  }
+
+  /**
+   * Preview party by join code
+   */
+  async previewPartyByCode(code: string): Promise<{ party: Party }> {
+    return this.request<{ party: Party }>('GET', `/api/parties/join/${code}`);
+  }
+
+  /**
+   * Join party by code
+   */
+  async joinPartyByCode(code: string, startWordCount = 0): Promise<JoinPartyByCodeResponse> {
+    return this.request<JoinPartyByCodeResponse>('POST', `/api/parties/join/${code}`, { startWordCount });
+  }
+
+  /**
+   * Get party details
+   */
+  async getParty(partyId: string): Promise<{ party: Party }> {
+    return this.request<{ party: Party }>('GET', `/api/parties/${partyId}`);
+  }
+
+  /**
+   * Join party by invite
+   */
+  async joinPartyByInvite(partyId: string, inviteId: string, startWordCount = 0): Promise<{ party: Party }> {
+    return this.request<{ party: Party }>('POST', `/api/parties/${partyId}/join`, { inviteId, startWordCount });
+  }
+
+  /**
+   * Leave party
+   */
+  async leaveParty(partyId: string): Promise<{ success: boolean }> {
+    return this.request('POST', `/api/parties/${partyId}/leave`);
+  }
+
+  /**
+   * Update word count progress
+   */
+  async updatePartyProgress(partyId: string, currentWordCount: number): Promise<UpdatePartyProgressResponse> {
+    const request: UpdatePartyProgressRequest = { currentWordCount };
+    return this.request<UpdatePartyProgressResponse>('POST', `/api/parties/${partyId}/progress`, request);
+  }
+
+  /**
+   * Invite friends to party
+   */
+  async inviteToParty(partyId: string, friendIds: string[]): Promise<{ success: boolean; invited: string[] }> {
+    const request: InviteToPartyRequest = { friendIds };
+    return this.request('POST', `/api/parties/${partyId}/invite`, request);
+  }
+
+  /**
+   * End party (creator only)
+   */
+  async endParty(partyId: string): Promise<{ party: Party }> {
+    return this.request<{ party: Party }>('POST', `/api/parties/${partyId}/end`);
+  }
+
+  /**
+   * Start a scheduled party (creator only)
+   */
+  async startParty(partyId: string): Promise<{ party: Party }> {
+    return this.request<{ party: Party }>('POST', `/api/parties/${partyId}/start`);
+  }
+
+  /**
+   * Decline party invite
+   */
+  async declinePartyInvite(inviteId: string): Promise<{ success: boolean }> {
+    return this.request('POST', `/api/parties/invites/${inviteId}/decline`);
   }
 
   // ============ Health Check ============

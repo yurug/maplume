@@ -32,7 +32,8 @@ export function ShareProjectModal({ project, entries, onClose }: ShareProjectMod
   useEffect(() => {
     actions.refreshFriends();
     actions.refreshShares();
-  }, [actions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Get shares for this project
   const projectShares = state.ownedShares.filter(s => s.projectLocalId === project.id);

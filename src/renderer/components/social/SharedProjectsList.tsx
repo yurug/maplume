@@ -28,7 +28,8 @@ export function SharedProjectsList({ onBack, onViewProject }: SharedProjectsList
       setLoading(false);
     };
     loadShares();
-  }, [actions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const formatDate = (timestamp: number): string => {
     return new Date(timestamp).toLocaleDateString(undefined, {

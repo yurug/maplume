@@ -25,7 +25,8 @@ type AppAction =
   | { type: 'DELETE_ENTRY'; entryId: string }
   | { type: 'UPDATE_SETTINGS'; settings: Partial<AppSettings> }
   | { type: 'TOGGLE_SHOW_ARCHIVED' }
-  | { type: 'IMPORT_DATA'; data: AppData };
+  | { type: 'IMPORT_DATA'; data: AppData }
+  | { type: 'RESET_FOR_USER_SWITCH' };
 
 const initialState: AppState = {
   initialized: false,
@@ -122,6 +123,11 @@ function appReducer(state: AppState, action: AppAction): AppState {
         activeProjectId: action.data.projects.find((p) => !p.archived)?.id || null,
       };
 
+    case 'RESET_FOR_USER_SWITCH':
+      return {
+        ...initialState,
+      };
+
     default:
       return state;
   }
@@ -132,6 +138,8 @@ interface AppContextValue {
   dispatch: React.Dispatch<AppAction>;
   actions: {
     initialize: (dataPath: string) => Promise<void>;
+    reinitialize: (dataPath: string) => Promise<void>;
+    resetForUserSwitch: () => void;
     addProject: (project: Omit<Project, 'id' | 'archived' | 'createdAt' | 'updatedAt'>) => void;
     updateProject: (project: Project) => void;
     archiveProject: (projectId: string) => void;
@@ -168,6 +176,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     initialize: async (dataPath: string) => {
       const data = await loadData(dataPath);
       dispatch({ type: 'INIT', data, dataPath });
+    },
+
+    reinitialize: async (dataPath: string) => {
+      // Reset state first, then load from new path
+      dispatch({ type: 'RESET_FOR_USER_SWITCH' });
+      const data = await loadData(dataPath);
+      dispatch({ type: 'INIT', data, dataPath });
+    },
+
+    resetForUserSwitch: () => {
+      dispatch({ type: 'RESET_FOR_USER_SWITCH' });
     },
 
     addProject: (partial) => {

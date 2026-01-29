@@ -15,7 +15,11 @@ import { SocialDashboard } from './SocialDashboard';
 
 type View = 'initial' | 'create' | 'login' | 'dashboard';
 
-export function SocialTab() {
+interface SocialTabProps {
+  selectedPartyId?: string | null;
+}
+
+export function SocialTab({ selectedPartyId }: SocialTabProps) {
   const { state } = useSocial();
   const { t } = useI18n();
   const [view, setView] = useState<View>('initial');
@@ -31,7 +35,7 @@ export function SocialTab() {
 
   // If logged in, show dashboard
   if (state.user) {
-    return <SocialDashboard />;
+    return <SocialDashboard selectedPartyId={selectedPartyId} />;
   }
 
   // Not logged in - show appropriate view

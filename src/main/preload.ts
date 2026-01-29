@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectDataFolder: () => ipcRenderer.invoke('select-data-folder'),
   readData: (filePath: string) => ipcRenderer.invoke('read-data', filePath),
   writeData: (filePath: string, data: unknown) => ipcRenderer.invoke('write-data', filePath, data),
+  ensureDirectory: (dirPath: string) => ipcRenderer.invoke('ensure-directory', dirPath),
   getSystemLocale: () => ipcRenderer.invoke('get-system-locale'),
   openExternalUrl: (url: string) => ipcRenderer.invoke('open-external-url', url),
   // Config storage (more reliable than localStorage on Windows)
