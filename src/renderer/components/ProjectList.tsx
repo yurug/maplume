@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as LucideIcons from 'lucide-react';
-import { Plus, Archive, BookOpen, ChevronRight, Settings, Feather, Languages, Coffee, Users } from 'lucide-react';
+import { Plus, Archive, BookOpen, ChevronRight, Settings, Feather, Coffee, Users, Share2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useSocial } from '../context/SocialContext';
 import { ConnectionStatus } from './social/ConnectionStatus';
+import { PartySection } from './social/PartySection';
 
 // Helper to get icon component by name
 function getIconComponent(name: string): React.ComponentType<{ className?: string }> {
@@ -22,12 +25,26 @@ interface ProjectListProps {
   onOpenSponsor?: () => void;
   onOpenSocial?: () => void;
   onProjectSelect?: () => void;
+  onViewSharedProject?: (shareId: string) => void;
+  onViewParty?: (partyId: string) => void;
   showSocial?: boolean;
+  selectedSharedProjectId?: string | null;
+  selectedPartyId?: string | null;
 }
 
-export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats, onOpenSponsor, onOpenSocial, onProjectSelect, showSocial }: ProjectListProps) {
+export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats, onOpenSponsor, onOpenSocial, onProjectSelect, onViewSharedProject, onViewParty, showSocial, selectedSharedProjectId, selectedPartyId }: ProjectListProps) {
   const { state, actions } = useApp();
+  const { state: socialState, actions: socialActions } = useSocial();
   const { t, language, setLanguage } = useI18n();
+
+  // Refresh shares and parties when user is logged in and online
+  useEffect(() => {
+    if (socialState.user && socialState.isOnline) {
+      socialActions.refreshShares();
+      socialActions.refreshParties();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socialState.user?.id, socialState.isOnline]);
 
   // Cycle through supported languages
   const toggleLanguage = () => {
@@ -212,6 +229,97 @@ export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats, o
           )}
         </AnimatePresence>
       </div>
+
+      {/* Shared Projects Section */}
+      {socialState.user && socialState.receivedShares.length > 0 && (
+        <div className="border-t border-warm-200/60 dark:border-warm-700/60">
+          <div className="px-4 py-2 flex items-center gap-2">
+            <Share2 className="h-3 w-3 text-warm-400" />
+            <span className="text-xs font-medium text-warm-500 dark:text-warm-400 uppercase tracking-wider">
+              {t.sharedWithYou} ({socialState.receivedShares.length})
+            </span>
+          </div>
+          <div className="pb-2">
+            <AnimatePresence mode="popLayout">
+              {socialState.receivedShares.map((share, index) => (
+                <motion.div
+                  key={share.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ delay: index * 0.05 }}
+                  className={cn(
+                    'project-item group cursor-pointer',
+                    selectedSharedProjectId === share.id && 'active'
+                  )}
+                  onClick={() => {
+                    actions.setActiveProject(null); // Deselect any local project
+                    onViewSharedProject?.(share.id);
+                  }}
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    {/* Shared project indicator - green tinted */}
+                    <div
+                      className={cn(
+                        'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg',
+                        'bg-green-100 text-green-600 transition-colors',
+                        'group-hover:bg-green-200 group-hover:text-green-700',
+                        selectedSharedProjectId === share.id &&
+                          'bg-green-200 text-green-700 dark:bg-green-800 dark:text-green-300',
+                        'dark:bg-green-900/40 dark:text-green-400'
+                      )}
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </div>
+
+                    {/* Shared project title and owner */}
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={cn(
+                          'truncate font-medium text-warm-700',
+                          'transition-colors group-hover:text-warm-900',
+                          selectedSharedProjectId === share.id && 'text-green-800',
+                          'dark:text-warm-200 dark:group-hover:text-warm-50'
+                        )}
+                      >
+                        {share.projectLocalId.split('-')[0]}...
+                      </p>
+                      <p className="text-xs text-warm-500 dark:text-warm-500 truncate">
+                        {share.owner?.username}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right side */}
+                  <div className="flex items-center gap-2">
+                    <ChevronRight
+                      className={cn(
+                        'h-4 w-4 text-warm-300 transition-all',
+                        'opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5',
+                        selectedSharedProjectId === share.id && 'opacity-100 text-green-500'
+                      )}
+                    />
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
+      )}
+
+      {/* Active Parties Section */}
+      {socialState.activeParties.length > 0 && onViewParty && (
+        <div className="border-t border-warm-200/60 px-2 py-2 space-y-1.5 dark:border-warm-700/60">
+          {socialState.activeParties.map((party) => (
+            <PartySection
+              key={party.id}
+              party={party}
+              onClick={() => onViewParty(party.id)}
+              isActive={selectedPartyId === party.id}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Social Tab Button */}
       {onOpenSocial && (

@@ -22,7 +22,10 @@ import { GlobalStatistics } from './components/GlobalStatistics';
 import { SponsorDialog } from './components/SponsorDialog';
 import { SocialTab } from './components/social/SocialTab';
 import { ConnectionStatus } from './components/social/ConnectionStatus';
+import { SharedProjectView } from './components/social/SharedProjectView';
 import { calculateStatistics } from './services/statistics';
+import { getUserDataPath, ensureDirectory } from './services/storage';
+import { useSocial } from './context/SocialContext';
 import { getNewFeaturesSince, getLatestWhatsNewVersion, type VersionChanges } from './data/whatsNew';
 import { Button } from './components/ui/button';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from './components/ui/tooltip';
@@ -31,6 +34,7 @@ import type { Project } from '@shared/types';
 
 function AppContent() {
   const { state, actions } = useApp();
+  const { state: socialState } = useSocial();
   const { t } = useI18n();
   const { theme } = useTheme();
   const [showProjectForm, setShowProjectForm] = useState(false);
@@ -40,11 +44,13 @@ function AppContent() {
   const [showGlobalStats, setShowGlobalStats] = useState(false);
   const [showSponsor, setShowSponsor] = useState(false);
   const [showSocial, setShowSocial] = useState(false);
+  const [selectedPartyId, setSelectedPartyId] = useState<string | null>(null);
   const [dataPath, setDataPath] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [whatsNewChanges, setWhatsNewChanges] = useState<VersionChanges[]>([]);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
+  const [selectedSharedProjectId, setSelectedSharedProjectId] = useState<string | null>(null);
 
   const activeProject = state.projects.find((p) => p.id === state.activeProjectId);
 
@@ -81,12 +87,57 @@ function AppContent() {
     loadDataPath();
   }, []);
 
-  // Initialize app when data path is set
+  // Track which username data was loaded for
+  const [loadedForUser, setLoadedForUser] = useState<string | null | undefined>(undefined);
+
+  // Initialize app when data path is set and social context is ready
   useEffect(() => {
-    if (dataPath && !state.initialized) {
-      actions.initialize(dataPath);
-    }
-  }, [dataPath, state.initialized, actions]);
+    const initializeApp = async () => {
+      if (!dataPath || state.initialized) return;
+
+      // Wait for social context to initialize before deciding which path to use
+      if (!socialState.initialized) return;
+
+      let effectiveDataPath = dataPath;
+
+      // If user is logged in, use their specific folder
+      if (socialState.user?.username) {
+        effectiveDataPath = getUserDataPath(dataPath, socialState.user.username);
+        await ensureDirectory(effectiveDataPath);
+      }
+
+      actions.initialize(effectiveDataPath);
+      setLoadedForUser(socialState.user?.username || null);
+    };
+
+    initializeApp();
+  }, [dataPath, state.initialized, socialState.initialized, socialState.user?.username, actions]);
+
+  // Handle user login/logout after app is initialized - reload data from correct path
+  useEffect(() => {
+    const handleUserChange = async () => {
+      // Only run if app is initialized and we've tracked which user it was loaded for
+      if (!state.initialized || !dataPath || loadedForUser === undefined) return;
+
+      const currentUser = socialState.user?.username || null;
+
+      // If user hasn't changed, nothing to do
+      if (loadedForUser === currentUser) return;
+
+      // User changed - reinitialize with correct data path
+      let effectiveDataPath = dataPath;
+      if (currentUser) {
+        effectiveDataPath = getUserDataPath(dataPath, currentUser);
+        await ensureDirectory(effectiveDataPath);
+      }
+
+      // Use reinitialize to reset state and load new data
+      await actions.reinitialize(effectiveDataPath);
+      setLoadedForUser(currentUser);
+    };
+
+    handleUserChange();
+  }, [state.initialized, dataPath, socialState.user?.username, loadedForUser, actions]);
 
   // Reset selected date when project changes
   useEffect(() => {
@@ -240,8 +291,24 @@ function AppContent() {
               onOpenGlobalStats={() => setShowGlobalStats(true)}
               onOpenSponsor={() => setShowSponsor(true)}
               onOpenSocial={() => setShowSocial(true)}
-              onProjectSelect={() => setShowSocial(false)}
+              onProjectSelect={() => {
+                setShowSocial(false);
+                setSelectedPartyId(null);
+                setSelectedSharedProjectId(null);
+              }}
+              onViewSharedProject={(shareId) => {
+                setShowSocial(false);
+                setSelectedPartyId(null);
+                setSelectedSharedProjectId(shareId);
+              }}
+              onViewParty={(partyId) => {
+                setShowSocial(true);
+                setSelectedPartyId(partyId);
+                setSelectedSharedProjectId(null);
+              }}
               showSocial={showSocial}
+              selectedPartyId={selectedPartyId}
+              selectedSharedProjectId={selectedSharedProjectId}
             />
           </aside>
 
@@ -264,7 +331,21 @@ function AppContent() {
                   transition={{ duration: 0.3 }}
                   className="relative z-10 h-full"
                 >
-                  <SocialTab />
+                  <SocialTab selectedPartyId={selectedPartyId} />
+                </motion.div>
+              ) : selectedSharedProjectId ? (
+                <motion.div
+                  key={`shared-${selectedSharedProjectId}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="relative z-10 h-full"
+                >
+                  <SharedProjectView
+                    shareId={selectedSharedProjectId}
+                    onBack={() => setSelectedSharedProjectId(null)}
+                  />
                 </motion.div>
               ) : activeProject ? (
                 <motion.div

@@ -4,6 +4,7 @@
 export interface RegisterRequest {
   username: string;
   publicKey: string; // Base64 encoded Ed25519 public key
+  encryptionPublicKey?: string; // Base64 encoded X25519 public key for project sharing
 }
 
 export interface RegisterResponse {
@@ -45,6 +46,7 @@ export interface UpdateProfileRequest {
   bio?: string; // Encrypted by client
   statsPublic?: boolean;
   searchable?: boolean;
+  encryptionPublicKey?: string; // X25519 public key for project sharing
 }
 
 export interface UserProfileResponse {
@@ -159,6 +161,90 @@ export interface GetShareDataResponse {
   share: SharedProjectInfo;
   encryptedData: string | null;
   ephemeralPublicKey: string | null;
+}
+
+// Writing Parties
+export type PartyStatus = 'scheduled' | 'active' | 'ended' | 'cancelled';
+
+export interface PartyParticipant {
+  id: string;
+  username: string;
+  avatarPreset: string | null;
+  wordsWritten: number;
+  startWordCount: number;
+  currentWordCount: number;
+  joinedAt: number;
+  lastUpdate: number | null;
+  isCreator: boolean;
+}
+
+export interface Party {
+  id: string;
+  title: string;
+  creator: { id: string; username: string; avatarPreset: string | null };
+  scheduledStart: number | null;
+  actualStart: number | null;
+  durationMinutes: number;
+  endedAt: number | null;
+  joinCode: string | null;
+  rankingEnabled: boolean;
+  status: PartyStatus;
+  participantCount: number;
+  participants?: PartyParticipant[];
+  isParticipating?: boolean;
+}
+
+export interface PartyInvite {
+  id: string;
+  party: {
+    id: string;
+    title: string;
+    creator: { id: string; username: string; avatarPreset: string | null };
+    scheduledStart: number | null;
+    durationMinutes: number;
+    status: PartyStatus;
+  };
+  invitedBy: { id: string; username: string; avatarPreset: string | null };
+  createdAt: number;
+}
+
+export interface CreatePartyRequest {
+  title: string;
+  durationMinutes: number;
+  scheduledStart?: number | null;
+  rankingEnabled?: boolean;
+  inviteFriendIds?: string[];
+}
+
+export interface CreatePartyResponse {
+  party: Party;
+}
+
+export interface GetPartiesResponse {
+  active: Party[];
+  upcoming: Party[];
+  invites: PartyInvite[];
+}
+
+export interface GetPartyHistoryResponse {
+  parties: Party[];
+}
+
+export interface JoinPartyByCodeResponse {
+  party: Party;
+}
+
+export interface UpdatePartyProgressRequest {
+  currentWordCount: number;
+}
+
+export interface UpdatePartyProgressResponse {
+  success: boolean;
+  wordsWritten: number;
+}
+
+export interface InviteToPartyRequest {
+  friendIds: string[];
 }
 
 // Error response

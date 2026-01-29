@@ -189,6 +189,15 @@ ipcMain.handle('write-data', async (_event, filePath: string, data: unknown) => 
   }
 });
 
+ipcMain.handle('ensure-directory', async (_event, dirPath: string) => {
+  try {
+    await fs.promises.mkdir(dirPath, { recursive: true });
+    return true;
+  } catch {
+    return false;
+  }
+});
+
 ipcMain.handle('get-system-locale', () => {
   return app.getLocale();
 });

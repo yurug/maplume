@@ -10,6 +10,7 @@ import { apiClient } from '../../services/api';
 import { useI18n } from '../../i18n';
 import { useSocial } from '../../context/SocialContext';
 import { Button } from '../ui/button';
+import { Avatar } from './Avatar';
 import type { FriendUser, FriendRequest } from '@maplume/shared';
 
 type Tab = 'friends' | 'requests' | 'add';
@@ -276,9 +277,7 @@ function FriendsList({
           className="flex items-center justify-between p-4 rounded-lg border border-warm-200 dark:border-warm-700 bg-warm-50/50 dark:bg-warm-800/50"
         >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-600 dark:text-primary-400 font-medium">
-              {friend.username.charAt(0).toUpperCase()}
-            </div>
+            <Avatar preset={friend.avatarPreset} username={friend.username} size="md" />
             <div>
               <p className="font-medium text-warm-900 dark:text-warm-100">{friend.username}</p>
               {friend.bio && (
@@ -350,9 +349,11 @@ function RequestsList({
                 className="flex items-center justify-between p-4 rounded-lg border border-warm-200 dark:border-warm-700 bg-warm-50/50 dark:bg-warm-800/50"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 font-medium">
-                    {request.fromUser?.username?.charAt(0).toUpperCase() || '?'}
-                  </div>
+                  <Avatar
+                    preset={request.fromUser?.avatarPreset || null}
+                    username={request.fromUser?.username || '?'}
+                    size="md"
+                  />
                   <div>
                     <p className="font-medium text-warm-900 dark:text-warm-100">
                       {request.fromUser?.username || 'Unknown'}
@@ -399,9 +400,11 @@ function RequestsList({
                 className="flex items-center justify-between p-4 rounded-lg border border-warm-200 dark:border-warm-700 bg-warm-50/50 dark:bg-warm-800/50"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-warm-200 dark:bg-warm-700 flex items-center justify-center text-warm-500 font-medium">
-                    {request.toUser?.username?.charAt(0).toUpperCase() || '?'}
-                  </div>
+                  <Avatar
+                    preset={request.toUser?.avatarPreset || null}
+                    username={request.toUser?.username || '?'}
+                    size="md"
+                  />
                   <div>
                     <p className="font-medium text-warm-900 dark:text-warm-100">
                       {request.toUser?.username || 'Unknown'}

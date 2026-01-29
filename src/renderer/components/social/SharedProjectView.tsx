@@ -109,8 +109,20 @@ export function SharedProjectView({ shareId, onBack }: SharedProjectViewProps) {
   }
 
   const { project, entries } = data;
-  const stats = calculateStatistics(project, entries);
-  const chartData = getChartData(project, entries);
+  const stats = calculateStatistics(project, entries) || {
+    currentWords: 0,
+    percentage: 0,
+    dailyAverage: 0,
+    weeklyAverage: 0,
+    bestDay: { date: null, count: 0 },
+    currentStreak: 0,
+    longestStreak: 0,
+    wordsRemaining: project.targetWords || 0,
+    daysRemaining: 0,
+    projectedCompletion: null,
+    onTrack: false,
+  };
+  const chartData = getChartData(project, entries) || [];
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString(undefined, {
@@ -186,8 +198,8 @@ export function SharedProjectView({ shareId, onBack }: SharedProjectViewProps) {
                     borderRadius: '8px',
                   }}
                   labelFormatter={(label) => formatDate(label as string)}
-                  formatter={(value: number, name: string) => [
-                    value.toLocaleString(),
+                  formatter={(value: number | undefined, name: string) => [
+                    (value ?? 0).toLocaleString(),
                     name === 'actual' ? (t.actual || 'Actual') : (t.target || 'Target'),
                   ]}
                 />
@@ -232,29 +244,29 @@ export function SharedProjectView({ shareId, onBack }: SharedProjectViewProps) {
             <StatCard
               icon={Target}
               label={t.progress || 'Progress'}
-              value={`${stats.percentage.toFixed(1)}%`}
-              detail={`${stats.currentWords.toLocaleString()} / ${project.targetWords.toLocaleString()} ${getUnitLabel().toLowerCase()}`}
+              value={`${(stats.percentage ?? 0).toFixed(1)}%`}
+              detail={`${(stats.currentWords ?? 0).toLocaleString()} / ${(project.targetWords ?? 0).toLocaleString()} ${getUnitLabel().toLowerCase()}`}
               color="blue"
             />
             <StatCard
               icon={TrendingUp}
               label={t.dailyAverage || 'Daily Average'}
-              value={stats.dailyAverage.toLocaleString()}
+              value={(stats.dailyAverage ?? 0).toLocaleString()}
               detail={getUnitLabel().toLowerCase() + '/' + (t.day || 'day')}
               color="green"
             />
             <StatCard
               icon={Award}
               label={t.bestDay || 'Best Day'}
-              value={stats.bestDay.count.toLocaleString()}
-              detail={stats.bestDay.date ? formatDate(stats.bestDay.date) : '-'}
+              value={(stats.bestDay?.count ?? 0).toLocaleString()}
+              detail={stats.bestDay?.date ? formatDate(stats.bestDay.date) : '-'}
               color="purple"
             />
             <StatCard
               icon={Calendar}
               label={t.currentStreak || 'Current Streak'}
-              value={stats.currentStreak.toString()}
-              detail={stats.currentStreak === 1 ? (t.day || 'day') : (t.days || 'days')}
+              value={(stats.currentStreak ?? 0).toString()}
+              detail={(stats.currentStreak ?? 0) === 1 ? (t.day || 'day') : (t.days || 'days')}
               color="orange"
             />
           </div>
@@ -291,10 +303,10 @@ export function SharedProjectView({ shareId, onBack }: SharedProjectViewProps) {
                         {formatDate(entry.date)}
                       </td>
                       <td className="py-2 px-3 text-right text-warm-900 dark:text-warm-100 font-mono">
-                        {entry.count.toLocaleString()}
+                        {entry.wordCount.toLocaleString()}
                       </td>
                       <td className="py-2 px-3 text-warm-500">
-                        {entry.type === 'increment' ? '+' : '='}
+                        {entry.isIncrement ? '+' : '='}
                       </td>
                     </tr>
                   ))}

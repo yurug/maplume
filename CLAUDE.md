@@ -113,13 +113,144 @@ src/
 - **Charts**: Recharts with responsive container, shows actual progress vs linear target line
 - **i18n**: Custom implementation using React Context. Auto-detects system locale, falls back to English. Add new languages by creating a file in `src/renderer/i18n/locales/` and registering in `src/renderer/i18n/index.ts`
 
+## Server (Social Features Backend)
+
+The social features (accounts, friends, writing parties, project sharing) are powered by a Node.js/Express server in `packages/server/`.
+
+### Server Stack
+- **Runtime**: Node.js + Express
+- **Database**: PostgreSQL (Scaleway Serverless SQL Database)
+- **Hosting**: Scaleway Serverless Containers
+- **Authentication**: Ed25519 signatures + JWT
+
+### Server Structure
+```
+packages/server/
+├── src/
+│   ├── index.ts           # Entry point
+│   ├── app.ts             # Express app setup
+│   ├── config.ts          # Environment config
+│   ├── routes/            # API endpoints (auth, users, friends, parties, shares)
+│   ├── services/          # Database queries, auth logic
+│   └── middleware/        # Auth, error handling
+└── Dockerfile             # Container image
+```
+
+## Scaleway Deployment
+
+### Infrastructure
+- **Container**: `maplume-server` (Serverless Container)
+- **Database**: `maplume` (Serverless SQL Database, PostgreSQL 16)
+- **Registry**: `rg.fr-par.scw.cloud/maplume/server:latest`
+- **Public URL**: `https://maplumes3tyzv8f-maplume-server.functions.fnc.fr-par.scw.cloud`
+
+### Prerequisites
+- Scaleway CLI (`scw`) installed and configured
+- Docker for building images
+
+### Useful Scaleway CLI Commands
+
+```bash
+# List containers
+scw container container list
+
+# Get container details
+scw container container get <container-id>
+
+# List databases
+scw sdb-sql database list
+
+# Get database details
+scw sdb-sql database get <database-id>
+
+# Check server health
+curl https://maplumes3tyzv8f-maplume-server.functions.fnc.fr-par.scw.cloud/health
+```
+
+### Deploying a New Server Version
+
+```bash
+# 1. Build and push the Docker image
+cd packages/server
+docker build -t rg.fr-par.scw.cloud/maplume/server:latest -f Dockerfile ../..
+docker push rg.fr-par.scw.cloud/maplume/server:latest
+
+# 2. Redeploy the container (pulls latest image)
+scw container container redeploy <container-id>
+```
+
+### Updating Environment Variables
+
+```bash
+# Update a secret environment variable (e.g., DATABASE_URL)
+scw container container update <container-id> \
+  secret-environment-variables.0.key=DATABASE_URL \
+  "secret-environment-variables.0.value=<new-connection-string>" \
+  --wait
+```
+
+### Resetting the Database (Full Wipe)
+
+```bash
+# 1. Get current database ID
+scw sdb-sql database list
+
+# 2. Delete the database
+scw sdb-sql database delete <database-id>
+
+# 3. Create a fresh database
+scw sdb-sql database create name=maplume cpu-min=0 cpu-max=4
+
+# 4. Get new database endpoint (ID changes!)
+scw sdb-sql database get <new-database-id>
+
+# 5. Update container with new DATABASE_URL
+# Format: postgresql://<ACCESS_KEY>:<SECRET_KEY>@<new-db-id>.pg.sdb.fr-par.scw.cloud:5432/maplume?sslmode=require
+scw container container update <container-id> \
+  secret-environment-variables.0.key=DATABASE_URL \
+  "secret-environment-variables.0.value=<new-connection-string>" \
+  --wait
+
+# Migrations run automatically on server startup
+```
+
+### Current Resource IDs (as of Jan 2026)
+- Container ID: `86cdd28e-7483-40a7-b48e-8543a7ca22a2`
+- Database ID: `5eb67483-e3be-437e-98d9-52d0b512a19a`
+- Namespace ID: `31b0702f-cc87-4f00-ae29-7d991fe42192`
+
 ## Website & Releases
 
 - **Website**: https://yurug.github.io/maplume/ (served from `docs/` folder)
 - **Landing pages**: `docs/index.html` (EN) and `docs/fr/index.html` (FR)
 
-### When releasing a new version:
-1. Update download links in `docs/index.html` and `docs/fr/index.html` to the new version
-2. Update the version badge in `README.md`
-3. Create and push the git tag
-4. Create the GitHub release
+### Releasing a New Version
+
+**Important:** Use GitHub Actions for building releases - do NOT build locally (requires Wine for Windows, macOS for Mac builds).
+
+1. **Update version number:**
+   ```bash
+   npm version <major|minor|patch> --no-git-tag-version
+   # Or manually edit package.json
+   ```
+
+2. **Update download links** in `docs/index.html` and `docs/fr/index.html` to the new version
+
+3. **Commit all changes:**
+   ```bash
+   git add -A
+   git commit -m "Release v1.x.x"
+   ```
+
+4. **Create and push the git tag:**
+   ```bash
+   git tag v1.x.x
+   git push origin master --tags
+   ```
+
+5. **GitHub Actions automatically:**
+   - Builds for Linux, Windows, and macOS (see `.github/workflows/release.yml`)
+   - Creates a GitHub Release with all artifacts
+   - Generates release notes
+
+6. **After release:** Verify downloads work on the website

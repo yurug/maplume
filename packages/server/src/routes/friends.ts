@@ -21,7 +21,7 @@ router.get('/', async (req: Request, res: Response, next) => {
         avatarPreset: f.avatarPreset,
         bio: f.bio,
         lastSeenAt: f.lastSeenAt,
-        publicKey: f.publicKey, // Include public key for encryption
+        publicKey: f.encryptionPublicKey, // X25519 encryption public key for sharing
       })),
     });
   } catch (err) {

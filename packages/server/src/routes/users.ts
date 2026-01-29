@@ -33,7 +33,7 @@ router.get('/me', authMiddleware, async (req: Request, res: Response, next) => {
 router.put('/me', authMiddleware, async (req: Request, res: Response, next) => {
   try {
     const userId = req.userId!;
-    const { avatarPreset, bio, statsPublic, searchable } = req.body;
+    const { avatarPreset, bio, statsPublic, searchable, encryptionPublicKey } = req.body;
 
     const updates: Record<string, unknown> = {};
 
@@ -51,6 +51,11 @@ router.put('/me', authMiddleware, async (req: Request, res: Response, next) => {
     }
 
     await db.updateUser(userId, updates);
+
+    // Update encryption public key separately (for existing users who didn't have one)
+    if (encryptionPublicKey && typeof encryptionPublicKey === 'string') {
+      await db.updateEncryptionPublicKey(userId, encryptionPublicKey);
+    }
 
     res.json({ success: true });
   } catch (err) {
