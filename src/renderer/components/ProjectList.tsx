@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as LucideIcons from 'lucide-react';
-import { Plus, Archive, BookOpen, ChevronRight, Settings, Feather, Coffee, Users, Share2, LayoutDashboard } from 'lucide-react';
+import { Plus, Archive, BookOpen, ChevronRight, Settings, Feather, Coffee, Users, Share2, LayoutDashboard, UserPlus, Check, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useSocial } from '../context/SocialContext';
 import { ConnectionStatus } from './social/ConnectionStatus';
@@ -40,11 +40,12 @@ export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats, o
   const { state: socialState, actions: socialActions } = useSocial();
   const { t, language, setLanguage } = useI18n();
 
-  // Refresh shares and parties when user is logged in and online
+  // Refresh shares, parties, and friend requests when user is logged in and online
   useEffect(() => {
     if (socialState.user && socialState.isOnline) {
       socialActions.refreshShares();
       socialActions.refreshParties();
+      socialActions.refreshFriendRequests();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socialState.user?.id, socialState.isOnline]);
@@ -394,6 +395,59 @@ export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats, o
               <Users className="h-4 w-4" />
               <span className="text-sm font-medium">{t.social || 'Social'}</span>
             </button>
+          </div>
+        )}
+
+        {/* Friend Requests Section */}
+        {socialState.user && socialState.friendRequests.length > 0 && (
+          <div className="border-t border-warm-200/60 px-3 py-2 dark:border-warm-700/60">
+            <div className="flex items-center gap-2 px-1 mb-2">
+              <UserPlus className="h-3 w-3 text-amber-500" />
+              <span className="text-xs font-medium text-warm-500 dark:text-warm-400 uppercase tracking-wider">
+                {t.friendRequests || 'Friend Requests'} ({socialState.friendRequests.length})
+              </span>
+            </div>
+            <div className="space-y-1">
+              {socialState.friendRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20"
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="h-6 w-6 rounded-full bg-amber-200 dark:bg-amber-800 flex items-center justify-center text-xs font-medium text-amber-700 dark:text-amber-300">
+                      {request.fromUser?.username?.charAt(0).toUpperCase() || '?'}
+                    </div>
+                    <span className="text-sm text-warm-700 dark:text-warm-300 truncate">
+                      {request.fromUser?.username}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => socialActions.acceptFriendRequest(request.id)}
+                          className="p-1 rounded hover:bg-green-100 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400"
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t.accept || 'Accept'}</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => socialActions.rejectFriendRequest(request.id)}
+                          className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t.reject || 'Reject'}</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

@@ -241,6 +241,8 @@ export default {
   receivedRequests: 'Ricevute',
   sentRequests: 'Inviate',
   pendingRequest: 'In attesa...',
+  accept: 'Accetta',
+  reject: 'Rifiuta',
   addFriendDescription: 'Inserisci un nome utente per inviare una richiesta di amicizia.',
   messageOptional: 'Messaggio (opzionale)',
   friendRequestMessagePlaceholder: 'Ciao! Mi piacerebbe connettermi con te su MaPlume.',

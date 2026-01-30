@@ -241,6 +241,8 @@ export default {
   receivedRequests: '收到的',
   sentRequests: '已发送',
   pendingRequest: '待处理...',
+  accept: '接受',
+  reject: '拒绝',
   addFriendDescription: '输入用户名以发送好友请求。',
   messageOptional: '消息（可选）',
   friendRequestMessagePlaceholder: '你好！我想在MaPlume上与你联系。',
