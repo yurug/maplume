@@ -16,18 +16,52 @@ export interface TestApp {
 }
 
 /**
+ * Get the Electron userData path where config is stored
+ */
+function getElectronConfigPath(): string {
+  // On Linux: ~/.config/{appName}/config.json
+  // On macOS: ~/Library/Application Support/{appName}/config.json
+  // On Windows: %APPDATA%/{appName}/config.json
+  const platform = process.platform;
+  const appName = 'maplume'; // lowercase
+
+  if (platform === 'linux') {
+    return path.join(os.homedir(), '.config', appName, 'config.json');
+  } else if (platform === 'darwin') {
+    return path.join(os.homedir(), 'Library', 'Application Support', appName, 'config.json');
+  } else {
+    // Windows
+    return path.join(process.env.APPDATA || '', appName, 'config.json');
+  }
+}
+
+/**
  * Launch the MaPlume Electron app for testing
  */
 export async function launchApp(): Promise<TestApp> {
   // Create a temporary data directory for this test
   const dataPath = fs.mkdtempSync(path.join(os.tmpdir(), 'maplume-test-'));
 
+  // Write config BEFORE launching the app so it reads the correct path
+  const configPath = getElectronConfigPath();
+  const configDir = path.dirname(configPath);
+
+  // Ensure config directory exists
+  if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
+  }
+
+  // Write config with our test data path
+  const config = {
+    dataPath: dataPath,
+  };
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
   const app = await electron.launch({
     args: ['.'],
     env: {
       ...process.env,
       NODE_ENV: 'test',
-      MAPLUME_TEST_DATA_PATH: dataPath,
     },
   });
 
@@ -35,6 +69,11 @@ export async function launchApp(): Promise<TestApp> {
 
   // Wait for the app to be ready
   await window.waitForLoadState('domcontentloaded');
+
+  // Also set localStorage for consistency
+  await window.evaluate((testDataPath) => {
+    localStorage.setItem('maplume-data-path', testDataPath);
+  }, dataPath);
 
   return { app, window, dataPath };
 }
@@ -54,19 +93,22 @@ export async function closeApp(testApp: TestApp): Promise<void> {
 }
 
 /**
- * Set up the app with a data folder (skip setup screen)
+ * Seed test data and reload the app to pick it up
  */
-export async function setupDataFolder(window: Page, dataPath: string): Promise<void> {
-  // If we're on the setup screen, select the folder
-  const setupScreen = window.locator('text=Welcome to MaPlume');
-  if (await setupScreen.isVisible({ timeout: 2000 }).catch(() => false)) {
-    // The app should auto-select the test data path via env var
-    // If not, we need to interact with the folder selection
-    await window.click('text=Select Folder');
+export async function seedAndReload(testApp: TestApp, data: {
+  projects?: any[];
+  entries?: any[];
+  settings?: any;
+}): Promise<void> {
+  // Write the data file
+  seedTestData(testApp.dataPath, data);
 
-    // Wait for the main app to load
-    await window.waitForSelector('text=Projects', { timeout: 10000 });
-  }
+  // Reload the page to pick up the new data
+  await testApp.window.reload();
+  await testApp.window.waitForLoadState('domcontentloaded');
+
+  // Wait for the app to initialize and load data
+  await testApp.window.waitForTimeout(2000);
 }
 
 /**
@@ -77,13 +119,21 @@ export function seedTestData(dataPath: string, data: {
   entries?: any[];
   settings?: any;
 }): void {
+  // Ensure the directory exists
+  if (!fs.existsSync(dataPath)) {
+    fs.mkdirSync(dataPath, { recursive: true });
+  }
+
   const filePath = path.join(dataPath, 'maplume-data.json');
   const fullData = {
+    version: 3, // Current STORAGE_VERSION
     projects: data.projects || [],
     entries: data.entries || [],
     settings: data.settings || {
-      theme: 'light',
+      dataPath: dataPath,
       language: 'en',
+      lastMotivationalDate: null,
+      cloudSync: null,
     },
   };
   fs.writeFileSync(filePath, JSON.stringify(fullData, null, 2));

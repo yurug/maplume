@@ -6,7 +6,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { launchApp, closeApp, seedTestData, type TestApp } from '../electron';
+import { launchApp, closeApp, seedTestData, seedAndReload, type TestApp } from '../electron';
 
 let testApp: TestApp;
 
@@ -30,9 +30,11 @@ const testProject = {
 
 test.beforeEach(async () => {
   testApp = await launchApp();
-  seedTestData(testApp.dataPath, { projects: [testProject] });
-  await testApp.window.reload();
-  await testApp.window.waitForSelector('text=Test Novel');
+  await seedAndReload(testApp, { projects: [testProject] });
+  // Wait for the project to appear in sidebar
+  await testApp.window.waitForSelector('text=Test Novel', { timeout: 15000 });
+  // Click on it to select it
+  await testApp.window.click('text=Test Novel');
 });
 
 test.afterEach(async () => {
