@@ -99,13 +99,21 @@ export function calculateStatistics(project: Project, entries: WordEntry[]): Sta
   };
 }
 
-export function getChartData(project: Project, entries: WordEntry[]) {
+export interface ChartDataPoint {
+  date: string;
+  actual: number | null;
+  target: number;
+  notes?: string[]; // Notes for entries on this date
+}
+
+export function getChartData(project: Project, entries: WordEntry[]): ChartDataPoint[] {
   const projectEntries = entries
     .filter((e) => e.projectId === project.id)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  // Build cumulative word count by date
+  // Build cumulative word count by date and collect notes
   const dateMap: Record<string, number> = {};
+  const notesMap: Record<string, string[]> = {};
   let cumulative = 0;
 
   for (const entry of projectEntries) {
@@ -115,6 +123,14 @@ export function getChartData(project: Project, entries: WordEntry[]) {
       cumulative = entry.wordCount;
     }
     dateMap[entry.date] = cumulative;
+
+    // Collect notes for this date
+    if (entry.note) {
+      if (!notesMap[entry.date]) {
+        notesMap[entry.date] = [];
+      }
+      notesMap[entry.date].push(entry.note);
+    }
   }
 
   // Generate all dates from start to end (full range)
@@ -123,7 +139,7 @@ export function getChartData(project: Project, entries: WordEntry[]) {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
-  const data: Array<{ date: string; actual: number | null; target: number }> = [];
+  const data: ChartDataPoint[] = [];
   const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
   const current = new Date(startDate);
@@ -137,6 +153,7 @@ export function getChartData(project: Project, entries: WordEntry[]) {
       date: dateStr,
       actual: isFuture ? null : (dateMap[dateStr] ?? null),
       target,
+      notes: notesMap[dateStr],
     });
 
     current.setDate(current.getDate() + 1);

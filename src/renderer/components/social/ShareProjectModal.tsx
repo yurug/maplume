@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Share2, Users, Eye, Lock, RefreshCw, Check, UserX } from 'lucide-react';
+import { X, Share2, Users, Eye, Lock, RefreshCw, Check, UserX, MessageSquare } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { useI18n } from '../../i18n';
 import { Button } from '../ui/button';
@@ -24,9 +24,13 @@ export function ShareProjectModal({ project, entries, onClose }: ShareProjectMod
   const { state, actions } = useSocial();
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
   const [shareType, setShareType] = useState<'full' | 'stats_only'>('full');
+  const [includeNotes, setIncludeNotes] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Check if any entries have notes
+  const hasNotes = entries.some(e => e.note);
 
   // Load friends when modal opens
   useEffect(() => {
@@ -46,7 +50,12 @@ export function ShareProjectModal({ project, entries, onClose }: ShareProjectMod
     setError(null);
 
     try {
-      await actions.shareProject(project, entries, selectedFriendId, shareType);
+      // Strip notes if not including them
+      const entriesToShare = includeNotes
+        ? entries
+        : entries.map(e => ({ ...e, note: undefined }));
+
+      await actions.shareProject(project, entriesToShare, selectedFriendId, shareType);
       setSuccess(true);
       setTimeout(() => {
         onClose();
@@ -270,6 +279,29 @@ export function ShareProjectModal({ project, entries, onClose }: ShareProjectMod
                     </div>
                   </button>
                 </div>
+
+                {/* Include notes toggle (only for full access) */}
+                {shareType === 'full' && hasNotes && (
+                  <label className="mt-4 flex items-center gap-3 p-3 rounded-lg border border-warm-200 dark:border-warm-700 cursor-pointer hover:bg-warm-50 dark:hover:bg-warm-800">
+                    <input
+                      type="checkbox"
+                      checked={includeNotes}
+                      onChange={(e) => setIncludeNotes(e.target.checked)}
+                      className="w-4 h-4 rounded border-warm-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-warm-500" />
+                      <div>
+                        <p className="font-medium text-warm-900 dark:text-warm-100 text-sm">
+                          {t.includeNotes || 'Include entry notes'}
+                        </p>
+                        <p className="text-xs text-warm-500">
+                          {t.includeNotesDesc || 'Share your comments and notes with this friend'}
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+                )}
               </div>
             )}
 

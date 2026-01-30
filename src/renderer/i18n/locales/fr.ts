@@ -65,6 +65,11 @@ export default {
   total: '= Total',
   log: 'Enregistrer',
   unitsLogged: '{unit} enregistrés !',
+  addNote: 'Ajouter une note',
+  noteAdded: 'note ajoutée',
+  notePlaceholder: 'Qu\'avez-vous écrit aujourd\'hui ?',
+  note: 'Note',
+  notes: 'Notes',
 
   // Chart
   actual: 'Réel',
@@ -295,6 +300,8 @@ export default {
   shareTypeStats: 'Statistiques seulement (sans entrées)',
   shareTypeFullDesc: 'L\'ami peut voir tout votre historique d\'écriture',
   shareTypeStatsDesc: 'L\'ami ne voit que les progrès globaux',
+  includeNotes: 'Inclure les notes',
+  includeNotesDesc: 'Partager vos commentaires et notes avec cet ami',
   sharedProjects: 'Projets partagés',
   sharedWithYou: 'Partagés avec vous',
   youAreSharing: 'Vous partagez',

@@ -39,6 +39,7 @@ export interface WordEntry {
   date: string; // ISO date string
   wordCount: number;
   isIncrement: boolean; // true if this was entered as an increment, false if total
+  note?: string; // Optional comment/note for this entry
   createdAt: string;
   updatedAt: string;
 }

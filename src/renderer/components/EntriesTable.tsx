@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Pencil, Trash2, Check, X, Plus, Equal, FileText } from 'lucide-react';
+import { Calendar, Pencil, Trash2, Check, X, Plus, Equal, FileText, MessageSquare } from 'lucide-react';
 import type { WordEntry } from '@shared/types';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
@@ -19,6 +19,7 @@ export function EntriesTable({ entries }: EntriesTableProps) {
   const { t } = useI18n();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editWordCount, setEditWordCount] = useState('');
+  const [editNote, setEditNote] = useState('');
 
   const sortedEntries = [...entries].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -27,12 +28,17 @@ export function EntriesTable({ entries }: EntriesTableProps) {
   const handleEdit = (entry: WordEntry) => {
     setEditingId(entry.id);
     setEditWordCount(entry.wordCount.toString());
+    setEditNote(entry.note || '');
   };
 
   const handleSave = (entry: WordEntry) => {
     const newCount = parseInt(editWordCount, 10);
     if (!isNaN(newCount) && newCount >= 0) {
-      actions.updateEntry({ ...entry, wordCount: newCount });
+      actions.updateEntry({
+        ...entry,
+        wordCount: newCount,
+        note: editNote.trim() || undefined,
+      });
     }
     setEditingId(null);
   };
@@ -79,6 +85,12 @@ export function EntriesTable({ entries }: EntriesTableProps) {
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-warm-500 dark:text-warm-400">
                 {t.type}
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-warm-500 dark:text-warm-400">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  {t.note || 'Note'}
+                </div>
               </th>
               <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-warm-500 dark:text-warm-400">
                 {t.actions}
@@ -141,6 +153,26 @@ export function EntriesTable({ entries }: EntriesTableProps) {
                         </>
                       )}
                     </Badge>
+                  </td>
+                  <td className="px-4 py-3">
+                    {editingId === entry.id ? (
+                      <Input
+                        type="text"
+                        value={editNote}
+                        onChange={(e) => setEditNote(e.target.value)}
+                        placeholder={t.notePlaceholder || 'Add a note...'}
+                        className="h-8 w-full min-w-[150px] text-sm"
+                        maxLength={200}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSave(entry);
+                          if (e.key === 'Escape') setEditingId(null);
+                        }}
+                      />
+                    ) : (
+                      <span className="text-sm text-warm-600 dark:text-warm-400 italic">
+                        {entry.note || '—'}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
