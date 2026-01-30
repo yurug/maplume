@@ -1,0 +1,63 @@
+{
+  "projects": [
+    {
+      "id": "fixture-project-1",
+      "title": "NaNoWriMo 2024",
+      "startDate": "2024-11-01",
+      "endDate": "2024-11-30",
+      "targetWords": 50000,
+      "unitType": "words",
+      "notes": "My NaNoWriMo project",
+      "archived": false,
+      "createdAt": "2024-11-01T00:00:00Z",
+      "updatedAt": "2024-11-01T00:00:00Z"
+    },
+    {
+      "id": "fixture-project-2",
+      "title": "Short Story Collection",
+      "startDate": "2024-01-01",
+      "endDate": "2024-06-30",
+      "targetWords": 30000,
+      "unitType": "words",
+      "notes": "",
+      "archived": true,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-06-30T00:00:00Z"
+    }
+  ],
+  "entries": [
+    {
+      "id": "fixture-entry-1",
+      "projectId": "fixture-project-1",
+      "date": "2024-11-01",
+      "wordCount": 1667,
+      "isIncrement": true,
+      "note": "Day 1 - Introduction chapter",
+      "createdAt": "2024-11-01T20:00:00Z",
+      "updatedAt": "2024-11-01T20:00:00Z"
+    },
+    {
+      "id": "fixture-entry-2",
+      "projectId": "fixture-project-1",
+      "date": "2024-11-02",
+      "wordCount": 2100,
+      "isIncrement": true,
+      "note": "Day 2 - Good momentum!",
+      "createdAt": "2024-11-02T21:00:00Z",
+      "updatedAt": "2024-11-02T21:00:00Z"
+    },
+    {
+      "id": "fixture-entry-3",
+      "projectId": "fixture-project-1",
+      "date": "2024-11-03",
+      "wordCount": 1200,
+      "isIncrement": true,
+      "createdAt": "2024-11-03T22:00:00Z",
+      "updatedAt": "2024-11-03T22:00:00Z"
+    }
+  ],
+  "settings": {
+    "theme": "light",
+    "language": "en"
+  }
+}
