@@ -243,6 +243,7 @@ export default {
   pendingRequest: 'Ausstehend...',
   accept: 'Annehmen',
   reject: 'Ablehnen',
+  cancel: 'Abbrechen',
   addFriendDescription: 'Geben Sie einen Benutzernamen ein, um eine Freundschaftsanfrage zu senden.',
   messageOptional: 'Nachricht (optional)',
   friendRequestMessagePlaceholder: 'Hallo! Ich möchte mich mit dir auf MaPlume verbinden.',

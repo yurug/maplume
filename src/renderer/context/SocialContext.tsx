@@ -54,6 +54,7 @@ interface SocialState {
   receivedShares: SharedProjectInfo[];
   friends: FriendWithKey[];
   friendRequests: FriendRequest[]; // Received friend requests
+  sentFriendRequests: FriendRequest[]; // Sent friend requests
   // Writing parties
   activeParties: Party[];
   upcomingParties: Party[];
@@ -75,7 +76,7 @@ type SocialAction =
   | { type: 'LOGOUT' }
   | { type: 'SET_SHARES'; owned: SharedProjectInfo[]; received: SharedProjectInfo[] }
   | { type: 'SET_FRIENDS'; friends: FriendWithKey[] }
-  | { type: 'SET_FRIEND_REQUESTS'; requests: FriendRequest[] }
+  | { type: 'SET_FRIEND_REQUESTS'; received: FriendRequest[]; sent: FriendRequest[] }
   | { type: 'SET_PARTIES'; active: Party[]; upcoming: Party[]; invites: PartyInvite[] }
   | { type: 'UPDATE_ACTIVE_PARTY'; party: Party }
   | { type: 'ADD_PARTY_PROGRESS_SNAPSHOT'; partyId: string; snapshot: PartyProgressSnapshot };
@@ -93,6 +94,7 @@ const initialState: SocialState = {
   receivedShares: [],
   friends: [],
   friendRequests: [],
+  sentFriendRequests: [],
   activeParties: [],
   upcomingParties: [],
   partyInvites: [],
@@ -184,7 +186,8 @@ function socialReducer(state: SocialState, action: SocialAction): SocialState {
     case 'SET_FRIEND_REQUESTS':
       return {
         ...state,
-        friendRequests: action.requests,
+        friendRequests: action.received,
+        sentFriendRequests: action.sent,
       };
 
     case 'SET_PARTIES':
@@ -247,6 +250,7 @@ interface SocialContextValue {
     refreshFriendRequests: () => Promise<void>;
     acceptFriendRequest: (requestId: string) => Promise<void>;
     rejectFriendRequest: (requestId: string) => Promise<void>;
+    cancelFriendRequest: (requestId: string) => Promise<void>;
     shareProject: (
       project: Project,
       entries: WordEntry[],
@@ -626,7 +630,8 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
       const response = await apiClient.getFriendRequests();
       dispatch({
         type: 'SET_FRIEND_REQUESTS',
-        requests: response.received,
+        received: response.received,
+        sent: response.sent,
       });
     } catch (error) {
       console.error('Failed to refresh friend requests:', error);
@@ -643,6 +648,12 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
   // Reject a friend request
   const rejectFriendRequest = useCallback(async (requestId: string): Promise<void> => {
     await apiClient.rejectFriendRequest(requestId);
+    await refreshFriendRequests();
+  }, [refreshFriendRequests]);
+
+  // Cancel a sent friend request
+  const cancelFriendRequest = useCallback(async (requestId: string): Promise<void> => {
+    await apiClient.cancelFriendRequest(requestId);
     await refreshFriendRequests();
   }, [refreshFriendRequests]);
 
@@ -1003,6 +1014,7 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
       refreshFriendRequests,
       acceptFriendRequest,
       rejectFriendRequest,
+      cancelFriendRequest,
       shareProject,
       updateSharedProject,
       revokeShare,

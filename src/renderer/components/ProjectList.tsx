@@ -450,6 +450,46 @@ export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats, o
             </div>
           </div>
         )}
+
+        {/* Sent Friend Requests Section */}
+        {socialState.user && socialState.sentFriendRequests.length > 0 && (
+          <div className="border-t border-warm-200/60 px-3 py-2 dark:border-warm-700/60">
+            <div className="flex items-center gap-2 px-1 mb-2">
+              <UserPlus className="h-3 w-3 text-warm-400" />
+              <span className="text-xs font-medium text-warm-500 dark:text-warm-400 uppercase tracking-wider">
+                {t.sentRequests || 'Sent'} ({socialState.sentFriendRequests.length})
+              </span>
+            </div>
+            <div className="space-y-1">
+              {socialState.sentFriendRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-warm-50 dark:bg-warm-800/30"
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="h-6 w-6 rounded-full bg-warm-200 dark:bg-warm-700 flex items-center justify-center text-xs font-medium text-warm-600 dark:text-warm-400">
+                      {request.toUser?.username?.charAt(0).toUpperCase() || '?'}
+                    </div>
+                    <span className="text-sm text-warm-700 dark:text-warm-300 truncate">
+                      {request.toUser?.username}
+                    </span>
+                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => socialActions.cancelFriendRequest(request.id)}
+                        className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-warm-400 hover:text-red-600 dark:hover:text-red-400"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t.cancel || 'Cancel'}</TooltipContent>
+                  </Tooltip>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
