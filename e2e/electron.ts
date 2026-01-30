@@ -51,9 +51,10 @@ export async function launchApp(): Promise<TestApp> {
     fs.mkdirSync(configDir, { recursive: true });
   }
 
-  // Write config with our test data path
+  // Write config with our test data path and skip What's New modal
   const config = {
     dataPath: dataPath,
+    lastSeenWhatsNewVersion: '0.4.0', // Skip What's New modal in tests
   };
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 
@@ -70,10 +71,15 @@ export async function launchApp(): Promise<TestApp> {
   // Wait for the app to be ready
   await window.waitForLoadState('domcontentloaded');
 
-  // Also set localStorage for consistency
+  // Set localStorage flags for tests
   await window.evaluate((testDataPath) => {
     localStorage.setItem('maplume-data-path', testDataPath);
+    localStorage.setItem('maplume-test-mode', 'true');
   }, dataPath);
+
+  // Reload so the app picks up the test mode flag
+  await window.reload();
+  await window.waitForLoadState('domcontentloaded');
 
   return { app, window, dataPath };
 }
