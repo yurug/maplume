@@ -205,6 +205,7 @@ export default {
   socialFeatures: '社交功能',
   socialDescription: '与其他作家联系，分享您的进度，参加写作派对。',
   socialOptional: '社交功能是可选的。您可以随时离线使用MaPlume。',
+  socialEncryption: '您的数据采用端到端加密。只有您和您分享的人可以阅读。',
   createAccount: '创建账户',
   login: '登录',
   logout: '退出',
@@ -295,4 +296,11 @@ export default {
   viewSharedProject: '查看项目',
   projectShared: '项目分享成功！',
   noProjectData: '没有可用的项目数据。',
+
+  // Stat Trends
+  statTrendTitle: '{stat}趋势',
+  timeRange7Days: '7天',
+  timeRange30Days: '30天',
+  timeRangeAll: '全部',
+  noTrendData: '数据不足',
 } as const;

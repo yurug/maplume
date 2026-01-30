@@ -112,17 +112,80 @@
       color: var(--primary-600);
     }
 
-    .lang-switch {
+    .lang-selector {
+      position: relative;
+    }
+
+    .lang-current {
       padding: 6px 12px;
       border-radius: 8px;
       background: var(--warm-100);
       color: var(--warm-600);
       font-weight: 500;
       font-size: 0.875rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      text-decoration: none;
     }
 
-    .lang-switch:hover {
+    .lang-current:hover {
       background: var(--primary-100);
+    }
+
+    .lang-current svg {
+      width: 12px;
+      height: 12px;
+      transition: transform 0.2s;
+    }
+
+    .lang-selector:hover .lang-current svg {
+      transform: rotate(180deg);
+    }
+
+    .lang-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 8px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      padding: 8px;
+      min-width: 140px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.2s;
+      z-index: 200;
+    }
+
+    .lang-selector:hover .lang-dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .lang-dropdown a {
+      display: block;
+      padding: 8px 12px;
+      color: var(--warm-600);
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      transition: all 0.15s;
+    }
+
+    .lang-dropdown a:hover {
+      background: var(--primary-50);
+      color: var(--primary-700);
+    }
+
+    .lang-dropdown a.active {
+      background: var(--primary-100);
+      color: var(--primary-700);
+      font-weight: 600;
     }
 
     .btn {
@@ -589,7 +652,22 @@
         <a href="#features">Features</a>
         <a href="#screenshots">Screenshots</a>
         <a href="https://github.com/yurug/maplume" target="_blank">GitHub</a>
-        <a href="fr/" class="lang-switch">FR</a>
+        <div class="lang-selector">
+          <span class="lang-current">
+            EN
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </span>
+          <div class="lang-dropdown">
+            <a href="./" class="active">English</a>
+            <a href="fr/">Français</a>
+            <a href="de/">Deutsch</a>
+            <a href="es/">Español</a>
+            <a href="it/">Italiano</a>
+            <a href="ja/">日本語</a>
+            <a href="pt/">Português</a>
+            <a href="zh/">中文</a>
+          </div>
+        </div>
         <a href="#download" class="btn btn-primary">Download</a>
       </nav>
     </div>
@@ -790,7 +868,7 @@
       <h2>Start writing today</h2>
       <p>Free and open source. Available for Windows, macOS, and Linux.</p>
       <div class="download-buttons">
-        <a href="https://github.com/yurug/maplume/releases/download/v1.1.2/MaPlume.Setup.1.1.2.exe" class="download-btn">
+        <a href="https://github.com/yurug/maplume/releases/download/v1.2.0/MaPlume.Setup.1.2.0.exe" class="download-btn">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
             <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
           </svg>
@@ -819,7 +897,7 @@
         </button>
       </div>
       <p class="download-note">
-        Version 1.1.2 • <a href="https://github.com/yurug/maplume/releases">All releases</a>
+        Version 1.2.0 • <a href="https://github.com/yurug/maplume/releases">All releases</a>
       </p>
     </div>
   </section>
@@ -858,7 +936,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeMacModal()">Cancel</button>
-        <a href="https://github.com/yurug/maplume/releases/download/v1.1.2/MaPlume-1.1.2-universal.dmg" class="btn btn-primary" onclick="closeMacModal()">Download</a>
+        <a href="https://github.com/yurug/maplume/releases/download/v1.2.0/MaPlume-1.2.0-universal.dmg" class="btn btn-primary" onclick="closeMacModal()">Download</a>
       </div>
     </div>
   </div>
@@ -883,11 +961,11 @@
           <li>Download the <strong>.AppImage</strong> file</li>
           <li>Make it executable:</li>
         </ol>
-        <code>chmod +x MaPlume-1.1.2.AppImage</code>
+        <code>chmod +x MaPlume-1.2.0.AppImage</code>
         <ol start="3">
           <li>Double-click the file or run from terminal:</li>
         </ol>
-        <code>./MaPlume-1.1.2.AppImage</code>
+        <code>./MaPlume-1.2.0.AppImage</code>
 
         <p style="margin-top: 16px; color: var(--warm-500); font-size: 0.875rem;">
           Tip: You can move the AppImage to <code>~/.local/bin/</code> to access it from anywhere.
@@ -895,7 +973,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeLinuxModal()">Cancel</button>
-        <a href="https://github.com/yurug/maplume/releases/download/v1.1.2/MaPlume-1.1.2.AppImage" class="btn btn-primary" onclick="closeLinuxModal()">Download</a>
+        <a href="https://github.com/yurug/maplume/releases/download/v1.2.0/MaPlume-1.2.0.AppImage" class="btn btn-primary" onclick="closeLinuxModal()">Download</a>
       </div>
     </div>
   </div>

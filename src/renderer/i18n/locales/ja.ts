@@ -205,6 +205,7 @@ export default {
   socialFeatures: 'ソーシャル機能',
   socialDescription: '他の作家とつながり、進捗を共有し、執筆セッションに参加しましょう。',
   socialOptional: 'ソーシャル機能はオプションです。いつでもオフラインでMaPlumeを使用できます。',
+  socialEncryption: 'あなたのデータはエンドツーエンドで暗号化されています。あなたと共有相手だけがデータを読むことができます。',
   createAccount: 'アカウント作成',
   login: 'ログイン',
   logout: 'ログアウト',
@@ -295,4 +296,11 @@ export default {
   viewSharedProject: 'プロジェクトを表示',
   projectShared: 'プロジェクトを共有しました！',
   noProjectData: 'プロジェクトデータがありません。',
+
+  // Stat Trends
+  statTrendTitle: '{stat}の推移',
+  timeRange7Days: '7日間',
+  timeRange30Days: '30日間',
+  timeRangeAll: '全期間',
+  noTrendData: 'まだデータがありません',
 } as const;

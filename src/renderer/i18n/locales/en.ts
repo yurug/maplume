@@ -374,4 +374,11 @@ export default {
   avatarCategoryAnimals: 'Animals',
   preview: 'Preview',
   saving: 'Saving...',
+
+  // Stat Trends
+  statTrendTitle: '{stat} Over Time',
+  timeRange7Days: '7 days',
+  timeRange30Days: '30 days',
+  timeRangeAll: 'All time',
+  noTrendData: 'Not enough data yet',
 } as const;
