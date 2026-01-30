@@ -210,6 +210,7 @@ export default {
   socialFeatures: 'Social Features',
   socialDescription: 'Connect with other writers, share your progress, and join writing parties.',
   socialOptional: 'Social features are optional. You can always use MaPlume offline.',
+  socialEncryption: 'Your data is end-to-end encrypted. Only you and the people you share with can read it.',
 
   // Account
   createAccount: 'Create Account',

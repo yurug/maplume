@@ -7,6 +7,7 @@
  */
 
 import React, { useState } from 'react';
+import { Shield } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { useI18n } from '../../i18n';
 import { AccountSetup } from './AccountSetup';
@@ -73,6 +74,11 @@ export function SocialTab({ selectedPartyId }: SocialTabProps) {
               >
                 {t.loginWithSeedPhrase || 'Log In with Recovery Phrase'}
               </button>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-sm text-warm-500">
+              <Shield className="w-4 h-4 text-success-500" />
+              <p>{t.socialEncryption || 'Your data is end-to-end encrypted. Only you and the people you share with can read it.'}</p>
             </div>
 
             <p className="text-sm text-warm-500">
