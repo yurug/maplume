@@ -23,6 +23,8 @@ import { SponsorDialog } from './components/SponsorDialog';
 import { SocialTab } from './components/social/SocialTab';
 import { ConnectionStatus } from './components/social/ConnectionStatus';
 import { SharedProjectView } from './components/social/SharedProjectView';
+import { ShareProjectModal } from './components/social/ShareProjectModal';
+import { Dashboard } from './components/Dashboard';
 import { calculateStatistics } from './services/statistics';
 import { getUserDataPath, ensureDirectory } from './services/storage';
 import { useSocial } from './context/SocialContext';
@@ -44,6 +46,7 @@ function AppContent() {
   const [showGlobalStats, setShowGlobalStats] = useState(false);
   const [showSponsor, setShowSponsor] = useState(false);
   const [showSocial, setShowSocial] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
   const [selectedPartyId, setSelectedPartyId] = useState<string | null>(null);
   const [dataPath, setDataPath] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -51,6 +54,7 @@ function AppContent() {
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
   const [selectedSharedProjectId, setSelectedSharedProjectId] = useState<string | null>(null);
+  const [sharingProjectId, setSharingProjectId] = useState<string | null>(null);
 
   const activeProject = state.projects.find((p) => p.id === state.activeProjectId);
 
@@ -290,39 +294,64 @@ function AppContent() {
               onOpenSettings={() => setShowSettings(true)}
               onOpenGlobalStats={() => setShowGlobalStats(true)}
               onOpenSponsor={() => setShowSponsor(true)}
-              onOpenSocial={() => setShowSocial(true)}
-              onProjectSelect={() => {
+              onOpenSocial={() => {
+                setShowSocial(true);
+                setShowDashboard(false);
+              }}
+              onOpenDashboard={() => {
+                setShowDashboard(true);
                 setShowSocial(false);
                 setSelectedPartyId(null);
                 setSelectedSharedProjectId(null);
               }}
+              onProjectSelect={() => {
+                setShowSocial(false);
+                setShowDashboard(false);
+                setSelectedPartyId(null);
+                setSelectedSharedProjectId(null);
+              }}
+              onShareProject={(projectId) => setSharingProjectId(projectId)}
               onViewSharedProject={(shareId) => {
                 setShowSocial(false);
+                setShowDashboard(false);
                 setSelectedPartyId(null);
                 setSelectedSharedProjectId(shareId);
               }}
               onViewParty={(partyId) => {
                 setShowSocial(true);
+                setShowDashboard(false);
                 setSelectedPartyId(partyId);
                 setSelectedSharedProjectId(null);
               }}
               showSocial={showSocial}
+              showDashboard={showDashboard}
               selectedPartyId={selectedPartyId}
               selectedSharedProjectId={selectedSharedProjectId}
             />
           </aside>
 
           {/* Main Content */}
-          <main className="main-content relative" style={showSocial ? {} : getBackgroundStyles()}>
+          <main className="main-content relative" style={(showSocial || showDashboard) ? {} : getBackgroundStyles()}>
             {/* Overlay for readability when using background images */}
-            {!showSocial && activeProject?.background?.type === 'image' && backgroundImageUrl && (
+            {!showSocial && !showDashboard && activeProject?.background?.type === 'image' && backgroundImageUrl && (
               <div
                 className="pointer-events-none absolute inset-0 bg-white dark:bg-warm-900"
                 style={{ opacity: getOverlayOpacity() }}
               />
             )}
             <AnimatePresence mode="wait">
-              {showSocial ? (
+              {showDashboard ? (
+                <motion.div
+                  key="dashboard"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="relative z-10 h-full overflow-y-auto"
+                >
+                  <Dashboard />
+                </motion.div>
+              ) : showSocial ? (
                 <motion.div
                   key="social"
                   initial={{ opacity: 0, y: 20 }}
@@ -505,6 +534,22 @@ function AppContent() {
         {/* Sponsor Dialog */}
         <AnimatePresence>
           {showSponsor && <SponsorDialog onClose={() => setShowSponsor(false)} />}
+        </AnimatePresence>
+
+        {/* Share Project Modal */}
+        <AnimatePresence>
+          {sharingProjectId && (() => {
+            const projectToShare = state.projects.find(p => p.id === sharingProjectId);
+            if (!projectToShare) return null;
+            const projectEntries = state.entries.filter(e => e.projectId === sharingProjectId);
+            return (
+              <ShareProjectModal
+                project={projectToShare}
+                entries={projectEntries}
+                onClose={() => setSharingProjectId(null)}
+              />
+            );
+          })()}
         </AnimatePresence>
 
         {/* What's New Dialog */}

@@ -36,7 +36,8 @@ export interface Project {
 export interface WordEntry {
   id: string;
   projectId: string;
-  date: string; // ISO date string
+  date: string; // ISO date string (YYYY-MM-DD)
+  time?: string; // Time of entry (HH:MM format, 24-hour)
   wordCount: number;
   isIncrement: boolean; // true if this was entered as an increment, false if total
   note?: string; // Optional comment/note for this entry
@@ -45,7 +46,7 @@ export interface WordEntry {
 }
 
 // Current storage schema version
-export const STORAGE_VERSION = 3;
+export const STORAGE_VERSION = 4;
 
 export interface AppData {
   version: number;
