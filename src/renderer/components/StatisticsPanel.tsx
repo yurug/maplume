@@ -1,25 +1,30 @@
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Target,
   TrendingUp,
-  TrendingDown,
   Calendar,
   Flame,
   Trophy,
   Clock,
   BarChart3,
   Sparkles,
+  LineChart,
 } from 'lucide-react';
-import type { Statistics, UnitType } from '@shared/types';
+import type { Statistics, UnitType, Project, WordEntry } from '@shared/types';
+import type { TrendableStatType } from '../services/statistics';
 import { useI18n } from '../i18n';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Progress } from './ui/progress';
+import { StatTrendModal } from './StatTrendModal';
 import { cn } from '../lib/utils';
 
 interface StatisticsPanelProps {
   stats: Statistics;
   unitType: UnitType;
   endDate: string;
+  project: Project;
+  entries: WordEntry[];
 }
 
 // Circular progress ring component
@@ -86,16 +91,18 @@ function StatCard({
   value,
   sub,
   icon: Icon,
-  trend,
   highlight,
+  clickable,
+  onClick,
   delay = 0,
 }: {
   label: string;
   value: string;
   sub?: string;
   icon: React.ElementType;
-  trend?: 'up' | 'down' | 'neutral';
   highlight?: boolean;
+  clickable?: boolean;
+  onClick?: () => void;
   delay?: number;
 }) {
   return (
@@ -105,8 +112,13 @@ function StatCard({
       transition={{ delay, duration: 0.3 }}
       className={cn(
         'stat-card group',
-        highlight && 'milestone-glow active'
+        highlight && 'milestone-glow active',
+        clickable && 'cursor-pointer hover:ring-2 hover:ring-primary-300 dark:hover:ring-primary-600'
       )}
+      onClick={onClick}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={clickable ? (e) => e.key === 'Enter' && onClick?.() : undefined}
     >
       <div className="mb-2 flex items-start justify-between">
         <div
@@ -119,20 +131,9 @@ function StatCard({
         >
           <Icon className="h-4 w-4" />
         </div>
-        {trend && trend !== 'neutral' && (
-          <div
-            className={cn(
-              'flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium',
-              trend === 'up'
-                ? 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400'
-                : 'bg-danger-100 text-danger-700 dark:bg-danger-900/30 dark:text-danger-400'
-            )}
-          >
-            {trend === 'up' ? (
-              <TrendingUp className="h-3 w-3" />
-            ) : (
-              <TrendingDown className="h-3 w-3" />
-            )}
+        {clickable && (
+          <div className="text-warm-300 opacity-0 transition-opacity group-hover:opacity-100 dark:text-warm-600">
+            <LineChart className="h-4 w-4" />
           </div>
         )}
       </div>
@@ -157,8 +158,9 @@ function StatCard({
   );
 }
 
-export function StatisticsPanel({ stats, unitType, endDate }: StatisticsPanelProps) {
+export function StatisticsPanel({ stats, unitType, endDate, project, entries }: StatisticsPanelProps) {
   const { t } = useI18n();
+  const [trendModal, setTrendModal] = useState<TrendableStatType | null>(null);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '-';
@@ -214,10 +216,6 @@ export function StatisticsPanel({ stats, unitType, endDate }: StatisticsPanelPro
     }
   };
 
-  const isOnTrack =
-    stats.projectedCompletionDate === null ||
-    new Date(stats.projectedCompletionDate) <= new Date(endDate);
-
   // All stats displayed together
   const allStats = [
     {
@@ -225,53 +223,73 @@ export function StatisticsPanel({ stats, unitType, endDate }: StatisticsPanelPro
       value: formatCount(stats.currentWordCount),
       sub: getOfTargetLabel(),
       icon: Target,
-      trend: stats.percentComplete >= 50 ? 'up' : ('neutral' as const),
       highlight: stats.percentComplete >= 100,
+      clickable: true,
+      onClick: () => setTrendModal('progress'),
     },
     {
       label: getRemainingLabel(),
       value: formatCount(stats.wordsRemaining),
       sub: undefined,
       icon: BarChart3,
-      trend: 'neutral' as const,
+      clickable: false,
     },
     {
       label: t.dailyAverage,
       value: formatAverage(stats.dailyAverage),
       sub: getPerDayLabel(),
       icon: TrendingUp,
-      trend: stats.dailyAverage > 0 ? 'up' : ('neutral' as const),
+      clickable: true,
+      onClick: () => setTrendModal('dailyAverage'),
     },
     {
       label: t.currentStreak,
       value: stats.currentStreak.toString(),
       sub: stats.currentStreak === 1 ? t.day : t.days,
       icon: Flame,
-      trend: stats.currentStreak >= 3 ? 'up' : ('neutral' as const),
       highlight: stats.currentStreak >= 7,
+      clickable: true,
+      onClick: () => setTrendModal('currentStreak'),
     },
     {
       label: t.weeklyAverage,
       value: formatAverage(stats.weeklyAverage),
       sub: getPerDayLabel(),
       icon: Calendar,
-      trend: 'neutral' as const,
+      clickable: true,
+      onClick: () => setTrendModal('weeklyAverage'),
     },
     {
       label: t.bestDay,
       value: stats.bestDay ? formatCount(stats.bestDay.words) : '-',
       sub: stats.bestDay ? formatDate(stats.bestDay.date) : undefined,
       icon: Trophy,
-      trend: 'neutral' as const,
+      clickable: false,
     },
     {
       label: t.projectedFinish,
       value: formatDate(stats.projectedCompletionDate),
       sub: undefined,
       icon: Clock,
-      trend: isOnTrack ? 'up' : ('down' as const),
+      clickable: false,
     },
   ];
+
+  // Get current value for the trend modal
+  const getTrendCurrentValue = (): number => {
+    switch (trendModal) {
+      case 'progress':
+        return stats.currentWordCount;
+      case 'dailyAverage':
+        return stats.dailyAverage;
+      case 'currentStreak':
+        return stats.currentStreak;
+      case 'weeklyAverage':
+        return stats.weeklyAverage;
+      default:
+        return 0;
+    }
+  };
 
   return (
     <Card>
@@ -302,6 +320,19 @@ export function StatisticsPanel({ stats, unitType, endDate }: StatisticsPanelPro
           ))}
         </div>
       </CardContent>
+
+      {/* Trend Modal */}
+      <AnimatePresence>
+        {trendModal && (
+          <StatTrendModal
+            project={project}
+            entries={entries}
+            statType={trendModal}
+            currentValue={getTrendCurrentValue()}
+            onClose={() => setTrendModal(null)}
+          />
+        )}
+      </AnimatePresence>
     </Card>
   );
 }

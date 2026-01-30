@@ -205,6 +205,7 @@ export default {
   socialFeatures: 'Funciones sociales',
   socialDescription: 'Conéctate con otros escritores, comparte tu progreso y únete a sesiones de escritura.',
   socialOptional: 'Las funciones sociales son opcionales. Siempre puedes usar MaPlume sin conexión.',
+  socialEncryption: 'Tus datos están cifrados de extremo a extremo. Solo tú y las personas con quienes compartes pueden leerlos.',
   createAccount: 'Crear cuenta',
   login: 'Iniciar sesión',
   logout: 'Cerrar sesión',
@@ -295,4 +296,11 @@ export default {
   viewSharedProject: 'Ver proyecto',
   projectShared: '¡Proyecto compartido con éxito!',
   noProjectData: 'No hay datos del proyecto disponibles.',
+
+  // Stat Trends
+  statTrendTitle: '{stat} a lo largo del tiempo',
+  timeRange7Days: '7 días',
+  timeRange30Days: '30 días',
+  timeRangeAll: 'Todo',
+  noTrendData: 'Aún no hay suficientes datos',
 } as const;

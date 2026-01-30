@@ -106,6 +106,140 @@ export interface ChartDataPoint {
   notes?: string[]; // Notes for entries on this date
 }
 
+// Types for stat trend data
+export type TrendableStatType = 'progress' | 'dailyAverage' | 'currentStreak' | 'weeklyAverage';
+export type TrendTimeRange = '7d' | '30d' | 'all';
+
+export interface StatTrendDataPoint {
+  date: string;
+  value: number;
+}
+
+/**
+ * Calculate historical trend data for a specific stat type
+ */
+export function getStatTrendData(
+  project: Project,
+  entries: WordEntry[],
+  statType: TrendableStatType,
+  timeRange: TrendTimeRange
+): StatTrendDataPoint[] {
+  const projectEntries = entries
+    .filter((e) => e.projectId === project.id)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  if (projectEntries.length === 0) {
+    return [];
+  }
+
+  // Build cumulative totals by date
+  const cumulativeByDate: Record<string, number> = {};
+  let cumulative = 0;
+
+  for (const entry of projectEntries) {
+    if (entry.isIncrement) {
+      cumulative += entry.wordCount;
+    } else {
+      cumulative = entry.wordCount;
+    }
+    cumulativeByDate[entry.date] = cumulative;
+  }
+
+  // Calculate daily amounts
+  const sortedDates = Object.keys(cumulativeByDate).sort();
+  const dailyAmountByDate: Record<string, number> = {};
+  let prevCumulative = 0;
+
+  for (const date of sortedDates) {
+    const todayCumulative = cumulativeByDate[date];
+    const dailyAmount = todayCumulative - prevCumulative;
+    if (dailyAmount > 0) {
+      dailyAmountByDate[date] = dailyAmount;
+    }
+    prevCumulative = todayCumulative;
+  }
+
+  // Filter dates based on time range
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  let startDate: Date;
+
+  if (timeRange === '7d') {
+    startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - 7);
+  } else if (timeRange === '30d') {
+    startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - 30);
+  } else {
+    // 'all' - use project start date or first entry
+    startDate = new Date(project.startDate);
+  }
+
+  const startDateStr = startDate.toISOString().split('T')[0];
+
+  // Generate data points for each date with entries in the range
+  const result: StatTrendDataPoint[] = [];
+  const datesWithData = sortedDates.filter((d) => d >= startDateStr && d <= todayStr);
+
+  for (const date of datesWithData) {
+    let value: number;
+
+    switch (statType) {
+      case 'progress':
+        // Cumulative word count up to this date
+        value = cumulativeByDate[date] || 0;
+        break;
+
+      case 'dailyAverage': {
+        // Average of all daily amounts up to this date
+        const datesUpToNow = sortedDates.filter((d) => d <= date);
+        const amounts = datesUpToNow
+          .map((d) => dailyAmountByDate[d])
+          .filter((a) => a !== undefined && a > 0);
+        value = amounts.length > 0 ? amounts.reduce((sum, a) => sum + a, 0) / amounts.length : 0;
+        break;
+      }
+
+      case 'currentStreak': {
+        // Calculate streak as of this date
+        const checkDate = new Date(date);
+        let streak = 0;
+        const datesWithWriting = new Set(sortedDates.filter((d) => d <= date));
+
+        for (let i = 0; i < 365; i++) {
+          const dateStr = checkDate.toISOString().split('T')[0];
+          if (datesWithWriting.has(dateStr)) {
+            streak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+          } else {
+            break;
+          }
+        }
+        value = streak;
+        break;
+      }
+
+      case 'weeklyAverage': {
+        // Rolling 7-day average as of this date
+        const sevenDaysAgo = new Date(date);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+
+        const last7DaysDates = sortedDates.filter((d) => d > sevenDaysAgoStr && d <= date);
+        const amounts = last7DaysDates
+          .map((d) => dailyAmountByDate[d])
+          .filter((a) => a !== undefined && a > 0);
+        value = amounts.length > 0 ? amounts.reduce((sum, a) => sum + a, 0) / amounts.length : 0;
+        break;
+      }
+    }
+
+    result.push({ date, value });
+  }
+
+  return result;
+}
+
 export function getChartData(project: Project, entries: WordEntry[]): ChartDataPoint[] {
   const projectEntries = entries
     .filter((e) => e.projectId === project.id)
