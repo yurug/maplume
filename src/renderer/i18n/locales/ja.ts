@@ -136,6 +136,13 @@ export default {
   supportMaPlume: 'MaPlume を応援',
   supportDescription: 'MaPlume が執筆の助けになっていれば、開発を支援していただけると嬉しいです。',
 
+  // GIF Generator
+  generateGif: 'GIF を生成',
+  generatingGif: 'GIF を生成中...',
+  gifPreview: 'GIF プレビュー',
+  downloadGif: 'GIF をダウンロード',
+  gifGenerationError: 'GIF の生成に失敗しました',
+
   // Messages
   newMessage: '新しいメッセージ',
 
@@ -243,7 +250,6 @@ export default {
   pendingRequest: '保留中...',
   accept: '承認',
   reject: '拒否',
-  cancel: 'キャンセル',
   addFriendDescription: 'ユーザー名を入力して友達リクエストを送信します。',
   messageOptional: 'メッセージ（任意）',
   friendRequestMessagePlaceholder: 'こんにちは！MaPlumeでつながりましょう。',
