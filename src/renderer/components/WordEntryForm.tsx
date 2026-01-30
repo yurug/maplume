@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, PenLine, Plus, Equal, Sparkles } from 'lucide-react';
+import { Calendar, PenLine, Plus, Equal, Sparkles, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useI18n } from '../i18n';
 import { Button } from './ui/button';
@@ -29,6 +29,8 @@ export function WordEntryForm({ project, selectedDate, onDateChange }: WordEntry
   const [wordCount, setWordCount] = useState('');
   const [isIncrement, setIsIncrement] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [note, setNote] = useState('');
+  const [showNoteField, setShowNoteField] = useState(false);
 
   const unitType: UnitType = project.unitType || 'words';
 
@@ -78,8 +80,10 @@ export function WordEntryForm({ project, selectedDate, onDateChange }: WordEntry
     const count = parseInt(wordCount, 10);
     if (isNaN(count) || count < 0) return;
 
-    actions.addEntry(project.id, selectedDate, count, isIncrement);
+    actions.addEntry(project.id, selectedDate, count, isIncrement, note.trim() || undefined);
     setWordCount('');
+    setNote('');
+    setShowNoteField(false);
 
     // Show success animation
     setShowSuccess(true);
@@ -178,6 +182,39 @@ export function WordEntryForm({ project, selectedDate, onDateChange }: WordEntry
             <PenLine className="h-4 w-4" />
             {t.log}
           </Button>
+        </div>
+
+        {/* Note toggle and input */}
+        <div className="border-t border-warm-200 dark:border-warm-700">
+          <button
+            type="button"
+            onClick={() => setShowNoteField(!showNoteField)}
+            className="flex w-full items-center gap-2 px-5 py-2 text-sm text-warm-500 hover:text-warm-700 dark:hover:text-warm-300 transition-colors"
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            {t.addNote || 'Add a note'}
+            {showNoteField ? (
+              <ChevronUp className="h-3.5 w-3.5 ml-auto" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5 ml-auto" />
+            )}
+            {note && !showNoteField && (
+              <span className="ml-2 text-xs text-primary-500">({t.noteAdded || 'note added'})</span>
+            )}
+          </button>
+
+          {showNoteField && (
+            <div className="px-5 pb-4">
+              <Input
+                type="text"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder={t.notePlaceholder || 'What did you write about today?'}
+                maxLength={200}
+                className="text-sm"
+              />
+            </div>
+          )}
         </div>
       </form>
     </Card>

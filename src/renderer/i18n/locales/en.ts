@@ -65,6 +65,11 @@ export default {
   total: '= Total',
   log: 'Log',
   unitsLogged: '{unit} logged!',
+  addNote: 'Add a note',
+  noteAdded: 'note added',
+  notePlaceholder: 'What did you write about today?',
+  note: 'Note',
+  notes: 'Notes',
 
   // Chart
   actual: 'Actual',
@@ -295,6 +300,8 @@ export default {
   shareTypeStats: 'Stats only (no entries)',
   shareTypeFullDesc: 'Friend can see your complete writing history',
   shareTypeStatsDesc: 'Friend can only see overall progress',
+  includeNotes: 'Include entry notes',
+  includeNotesDesc: 'Share your comments and notes with this friend',
   sharedProjects: 'Shared Projects',
   sharedWithYou: 'Shared with you',
   youAreSharing: 'You are sharing',

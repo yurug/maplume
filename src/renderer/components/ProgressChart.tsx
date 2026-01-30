@@ -11,7 +11,7 @@ import {
   Area,
   ComposedChart,
 } from 'recharts';
-import { ZoomIn, ZoomOut, RotateCcw, TrendingUp, Target, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, TrendingUp, Target, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
 import type { Project, WordEntry, UnitType } from '@shared/types';
 import { getChartData } from '../services/statistics';
 import { useI18n } from '../i18n';
@@ -58,6 +58,9 @@ function CustomTooltip({ active, payload, label, t, unitType }: any) {
 
   const unit = getUnitDisplay(unitType, t);
 
+  // Get notes from the payload data
+  const notes = payload[0]?.payload?.notes as string[] | undefined;
+
   return (
     <div className="chart-tooltip">
       <p className="mb-2 font-medium text-warm-900 dark:text-warm-100">{formatDate(label)}</p>
@@ -77,6 +80,21 @@ function CustomTooltip({ active, payload, label, t, unitType }: any) {
           </div>
         ))}
       </div>
+      {notes && notes.length > 0 && (
+        <div className="mt-2 pt-2 border-t border-warm-200 dark:border-warm-600">
+          <div className="flex items-center gap-1 text-xs text-warm-500 dark:text-warm-400 mb-1">
+            <MessageSquare className="h-3 w-3" />
+            {t.notes || 'Notes'}:
+          </div>
+          <div className="space-y-1">
+            {notes.map((note, i) => (
+              <p key={i} className="text-sm text-warm-700 dark:text-warm-300 italic">
+                "{note}"
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
