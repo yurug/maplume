@@ -258,7 +258,7 @@ export default {
   receivedRequests: 'Received',
   sentRequests: 'Sent',
   pendingRequest: 'Pending...',
-  addFriendDescription: 'Enter a username to send a friend request.',
+  addFriendDescription: 'Search for a user to send a friend request.',
   messageOptional: 'Message (optional)',
   friendRequestMessagePlaceholder: 'Hi! I would like to connect with you on MaPlume.',
   sendFriendRequest: 'Send Friend Request',
@@ -266,6 +266,8 @@ export default {
   friendRequestAutoAccepted: 'You are now friends!',
   removeFriendConfirm: 'Remove this friend?',
   offlineMessage: 'You are offline. Friend features require an internet connection.',
+  noUsersFound: 'No users found',
+  searchHint: 'Type at least 2 characters to search',
 
   // Cloud Backup
   cloudBackup: 'Cloud Backup',

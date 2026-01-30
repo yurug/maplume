@@ -258,7 +258,7 @@ export default {
   receivedRequests: 'Reçues',
   sentRequests: 'Envoyées',
   pendingRequest: 'En attente...',
-  addFriendDescription: 'Entrez un nom d\'utilisateur pour envoyer une demande d\'ami.',
+  addFriendDescription: 'Recherchez un utilisateur pour envoyer une demande d\'ami.',
   messageOptional: 'Message (optionnel)',
   friendRequestMessagePlaceholder: 'Salut ! J\'aimerais me connecter avec toi sur MaPlume.',
   sendFriendRequest: 'Envoyer une demande d\'ami',
@@ -266,6 +266,8 @@ export default {
   friendRequestAutoAccepted: 'Vous êtes maintenant amis !',
   removeFriendConfirm: 'Supprimer cet ami ?',
   offlineMessage: 'Vous êtes hors ligne. Les fonctionnalités d\'amis nécessitent une connexion internet.',
+  noUsersFound: 'Aucun utilisateur trouvé',
+  searchHint: 'Tapez au moins 2 caractères pour rechercher',
 
   // Cloud Backup
   cloudBackup: 'Sauvegarde cloud',

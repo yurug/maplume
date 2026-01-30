@@ -26,7 +26,6 @@ export function FriendsPanel({ onBack }: { onBack: () => void }) {
   const [error, setError] = useState<string | null>(null);
 
   // Add friend state
-  const [searchUsername, setSearchUsername] = useState('');
   const [searchMessage, setSearchMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -96,15 +95,12 @@ export function FriendsPanel({ onBack }: { onBack: () => void }) {
     }
   };
 
-  const handleSendRequest = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchUsername.trim()) return;
-
+  const handleSendRequest = async (userId: string, username: string) => {
     setSending(true);
     setSendResult(null);
 
     try {
-      const result = await apiClient.sendFriendRequest(searchUsername.trim(), searchMessage.trim() || undefined);
+      const result = await apiClient.sendFriendRequest(username, searchMessage.trim() || undefined);
 
       if (result.autoAccepted) {
         setSendResult({ type: 'success', message: t.friendRequestAutoAccepted || 'You are now friends!' });
@@ -112,7 +108,6 @@ export function FriendsPanel({ onBack }: { onBack: () => void }) {
         setSendResult({ type: 'success', message: t.friendRequestSent || 'Friend request sent!' });
       }
 
-      setSearchUsername('');
       setSearchMessage('');
       await loadFriends();
     } catch (err) {
@@ -224,11 +219,9 @@ export function FriendsPanel({ onBack }: { onBack: () => void }) {
 
         {activeTab === 'add' && (
           <AddFriend
-            username={searchUsername}
             message={searchMessage}
-            onUsernameChange={setSearchUsername}
             onMessageChange={setSearchMessage}
-            onSubmit={handleSendRequest}
+            onSendRequest={handleSendRequest}
             sending={sending}
             result={sendResult}
             disabled={!state.isOnline}
@@ -431,50 +424,178 @@ function RequestsList({
   );
 }
 
-// Add friend sub-component
+// Search result type
+interface SearchUser {
+  id: string;
+  username: string;
+  avatarPreset: string | null;
+}
+
+// Add friend sub-component with fuzzy search
 function AddFriend({
-  username,
   message,
-  onUsernameChange,
   onMessageChange,
-  onSubmit,
+  onSendRequest,
   sending,
   result,
   disabled,
   t,
 }: {
-  username: string;
   message: string;
-  onUsernameChange: (value: string) => void;
   onMessageChange: (value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSendRequest: (userId: string, username: string) => void;
   sending: boolean;
   result: { type: 'success' | 'error'; message: string } | null;
   disabled: boolean;
   t: Record<string, string>;
 }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Debounced search
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (searchQuery.length < 2) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    setSearching(true);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await apiClient.searchUsers(searchQuery);
+        setSearchResults(response.users);
+        setShowDropdown(response.users.length > 0);
+      } catch (err) {
+        console.error('Search failed:', err);
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  const handleSelectUser = (user: SearchUser) => {
+    setSelectedUser(user);
+    setSearchQuery(user.username);
+    setShowDropdown(false);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedUser(null);
+    setSearchQuery('');
+    setSearchResults([]);
+    inputRef.current?.focus();
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedUser) {
+      onSendRequest(selectedUser.id, selectedUser.username);
+      // Clear selection after sending
+      setSelectedUser(null);
+      setSearchQuery('');
+    }
+  };
+
   return (
     <div>
       <p className="text-warm-600 dark:text-warm-400 mb-4">
         {t.addFriendDescription || 'Enter a username to send a friend request.'}
       </p>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-warm-700 dark:text-warm-300 mb-1">
             {t.username || 'Username'}
           </label>
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => onUsernameChange(e.target.value)}
-              placeholder={t.usernamePlaceholder || 'username'}
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-warm-300 dark:border-warm-600 bg-white dark:bg-warm-800 text-warm-900 dark:text-warm-100 placeholder-warm-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              disabled={disabled}
-            />
+            {selectedUser ? (
+              <div className="flex items-center gap-2 w-full pl-10 pr-4 py-2 rounded-lg border border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/30">
+                <Avatar preset={selectedUser.avatarPreset} username={selectedUser.username} size="xs" />
+                <span className="font-medium text-warm-900 dark:text-warm-100">{selectedUser.username}</span>
+                <button
+                  type="button"
+                  onClick={handleClearSelection}
+                  className="ml-auto text-warm-400 hover:text-warm-600 dark:hover:text-warm-200"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
+                  placeholder={t.usernamePlaceholder || 'Search by username...'}
+                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-warm-300 dark:border-warm-600 bg-white dark:bg-warm-800 text-warm-900 dark:text-warm-100 placeholder-warm-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  disabled={disabled}
+                />
+                {searching && (
+                  <RefreshCw className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400 animate-spin" />
+                )}
+              </>
+            )}
+
+            {/* Search results dropdown */}
+            {showDropdown && !selectedUser && (
+              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 rounded-lg shadow-lg max-h-60 overflow-auto">
+                {searchResults.map((user) => (
+                  <button
+                    key={user.id}
+                    type="button"
+                    onClick={() => handleSelectUser(user)}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-warm-100 dark:hover:bg-warm-700 transition-colors text-left"
+                  >
+                    <Avatar preset={user.avatarPreset} username={user.username} size="sm" />
+                    <span className="font-medium text-warm-900 dark:text-warm-100">{user.username}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* No results message */}
+            {searchQuery.length >= 2 && !searching && searchResults.length === 0 && !selectedUser && (
+              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-warm-800 border border-warm-200 dark:border-warm-700 rounded-lg shadow-lg p-4 text-center text-warm-500">
+                {t.noUsersFound || 'No users found'}
+              </div>
+            )}
           </div>
+          <p className="mt-1 text-xs text-warm-500">
+            {t.searchHint || 'Type at least 2 characters to search'}
+          </p>
         </div>
 
         <div>
@@ -494,7 +615,7 @@ function AddFriend({
 
         <Button
           type="submit"
-          disabled={disabled || sending || !username.trim()}
+          disabled={disabled || sending || !selectedUser}
           className="w-full"
         >
           {sending ? (
