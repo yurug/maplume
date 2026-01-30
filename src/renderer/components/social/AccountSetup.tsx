@@ -3,7 +3,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, Copy, Check, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Copy, Check, AlertTriangle, Shield } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { useI18n } from '../../i18n';
 import { Button } from '../ui/button';
@@ -172,6 +172,14 @@ export function AccountSetup({ onBack }: AccountSetupProps) {
               />
               <p className="mt-2 text-sm text-warm-500">
                 {t.usernameHint || '3-30 characters, letters, numbers, and underscores only.'}
+              </p>
+            </div>
+
+            {/* Encryption notice */}
+            <div className="flex items-start gap-3 p-4 bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800 rounded-lg">
+              <Shield className="w-5 h-5 text-success-600 dark:text-success-500 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-success-800 dark:text-success-200">
+                {t.socialEncryption || 'Your data is end-to-end encrypted. Only you and the people you share with can read it.'}
               </p>
             </div>
 
