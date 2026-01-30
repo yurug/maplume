@@ -32,7 +32,8 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:unit:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
+    "test:e2e": "xvfb-run --auto-servernum playwright test",
+    "test:e2e:visible": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed"
   },
