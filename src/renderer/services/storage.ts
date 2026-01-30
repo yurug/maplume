@@ -50,6 +50,16 @@ function migrateData(data: Record<string, unknown>): AppData {
     version = 3;
   }
 
+  // Migration from v3 to v4: Add time field to entries
+  if (version === 3) {
+    const entries = (data.entries as Record<string, unknown>[]) || [];
+    data.entries = entries.map((entry) => ({
+      ...entry,
+      time: (entry as { time?: string }).time || '12:00', // Default to mid-day for existing entries
+    }));
+    version = 4;
+  }
+
   return {
     ...data,
     version: STORAGE_VERSION,
@@ -121,16 +131,20 @@ export function createWordEntry(
   projectId: string,
   date: string,
   wordCount: number,
-  isIncrement: boolean
+  isIncrement: boolean,
+  time?: string
 ): WordEntry {
-  const now = new Date().toISOString();
+  const now = new Date();
+  // Use provided time or current time in HH:MM format
+  const entryTime = time || `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
   return {
     id: generateId(),
     projectId,
     date,
+    time: entryTime,
     wordCount,
     isIncrement,
-    createdAt: now,
-    updatedAt: now,
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
   };
 }

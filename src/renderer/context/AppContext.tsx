@@ -144,7 +144,7 @@ interface AppContextValue {
     updateProject: (project: Project) => void;
     archiveProject: (projectId: string) => void;
     setActiveProject: (projectId: string | null) => void;
-    addEntry: (projectId: string, date: string, wordCount: number, isIncrement: boolean, note?: string) => void;
+    addEntry: (projectId: string, date: string, wordCount: number, isIncrement: boolean, note?: string, time?: string) => void;
     updateEntry: (entry: WordEntry) => void;
     deleteEntry: (entryId: string) => void;
     updateSettings: (settings: Partial<AppSettings>) => void;
@@ -213,17 +213,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'SET_ACTIVE_PROJECT', projectId });
     },
 
-    addEntry: (projectId, date, wordCount, isIncrement, note) => {
-      const now = new Date().toISOString();
+    addEntry: (projectId, date, wordCount, isIncrement, note, time) => {
+      const now = new Date();
+      // Use provided time or current time in HH:MM format
+      const entryTime = time || `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
       const entry: WordEntry = {
         id: generateId(),
         projectId,
         date,
+        time: entryTime,
         wordCount,
         isIncrement,
         note,
-        createdAt: now,
-        updatedAt: now,
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
       };
       dispatch({ type: 'ADD_ENTRY', entry });
     },
