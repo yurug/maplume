@@ -9,6 +9,7 @@ import projectsRoutes from './routes/projects';
 import friendsRoutes from './routes/friends';
 import sharesRoutes from './routes/shares';
 import partiesRoutes from './routes/parties';
+import statsRoutes from './routes/stats';
 
 // Track database status
 let dbStatus: { ready: boolean; error?: string; lastAttempt?: number } = { ready: false };
@@ -80,6 +81,7 @@ export function createApp(): Express {
   app.use('/api/friends', friendsRoutes);
   app.use('/api/shares', sharesRoutes);
   app.use('/api/parties', partiesRoutes);
+  app.use('/api/stats', statsRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {
