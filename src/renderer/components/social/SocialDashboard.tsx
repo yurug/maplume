@@ -160,7 +160,7 @@ export function SocialDashboard({ selectedPartyId }: SocialDashboardProps) {
               className="relative group"
               title={t.changeAvatar || 'Change avatar'}
             >
-              <Avatar preset={state.user.avatarPreset} username={state.user.username} size="lg" />
+              <Avatar preset={state.user.avatarPreset} avatarData={state.user.avatarData} username={state.user.username} size="lg" />
               <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <Pencil className="w-4 h-4 text-white" />
               </div>
@@ -451,9 +451,13 @@ export function SocialDashboard({ selectedPartyId }: SocialDashboardProps) {
       {showAvatarPicker && state.user && (
         <AvatarPicker
           currentPreset={state.user.avatarPreset}
+          currentAvatarData={state.user.avatarData}
           username={state.user.username}
           onSelect={actions.updateAvatar}
+          onSelectAvatarData={actions.updateAvatarData}
+          onUploadAvatar={actions.uploadAvatar}
           onClose={() => setShowAvatarPicker(false)}
+          isOnline={state.isOnline}
         />
       )}
     </div>

@@ -1,124 +1,125 @@
 /**
- * AvatarPicker - Modal for selecting an avatar preset
+ * AvatarPicker - Modal for selecting avatars
+ *
+ * Modes:
+ * - DiceBear: Professional avatar styles with customization (default)
+ * - Upload: Upload your own image
  */
 
 import React, { useState } from 'react';
-import { X, Check } from 'lucide-react';
-import { AVATAR_PRESETS, type AvatarPreset } from '@maplume/shared';
+import { X, Sparkles, Upload } from 'lucide-react';
+import type { AvatarData } from '@maplume/shared';
 import { useI18n } from '../../i18n';
 import { Button } from '../ui/button';
-import { Avatar } from './Avatar';
+import { AvatarEditor } from './AvatarEditor';
+import { AvatarUpload } from './AvatarUpload';
+
+type AvatarMode = 'create' | 'upload';
 
 interface AvatarPickerProps {
-  currentPreset: string | null;
+  currentPreset: string | null; // Legacy support
+  currentAvatarData?: AvatarData | null;
   username: string;
-  onSelect: (preset: string) => Promise<void>;
+  onSelect: (preset: string) => Promise<void>; // Legacy support
+  onSelectAvatarData: (avatarData: AvatarData) => Promise<void>;
+  onUploadAvatar: (imageData: string) => Promise<void>;
   onClose: () => void;
+  isOnline: boolean;
 }
 
-// Group presets by category
-const avatarCategories = {
-  writer: ['writer-1', 'writer-2', 'writer-3', 'writer-4'] as AvatarPreset[],
-  quill: ['quill-1', 'quill-2', 'quill-3', 'quill-4'] as AvatarPreset[],
-  book: ['book-1', 'book-2', 'book-3', 'book-4'] as AvatarPreset[],
-  animals: ['cat-1', 'cat-2', 'owl-1', 'owl-2'] as AvatarPreset[],
-};
-
-export function AvatarPicker({ currentPreset, username, onSelect, onClose }: AvatarPickerProps) {
+export function AvatarPicker({
+  currentPreset,
+  currentAvatarData,
+  username,
+  onSelect,
+  onSelectAvatarData,
+  onUploadAvatar,
+  onClose,
+  isOnline,
+}: AvatarPickerProps) {
   const { t } = useI18n();
-  const [selectedPreset, setSelectedPreset] = useState<string | null>(currentPreset);
-  const [saving, setSaving] = useState(false);
 
-  const handleSave = async () => {
-    if (!selectedPreset) return;
-
-    setSaving(true);
-    try {
-      await onSelect(selectedPreset);
-      onClose();
-    } catch (error) {
-      console.error('Failed to update avatar:', error);
-    } finally {
-      setSaving(false);
-    }
+  // Determine initial mode
+  const getInitialMode = (): AvatarMode => {
+    if (currentAvatarData?.type === 'uploaded') return 'upload';
+    return 'create';
   };
 
-  const categoryLabels: Record<string, string> = {
-    writer: t.avatarCategoryWriter || 'Writers',
-    quill: t.avatarCategoryQuill || 'Quills',
-    book: t.avatarCategoryBook || 'Books',
-    animals: t.avatarCategoryAnimals || 'Animals',
+  const [mode, setMode] = useState<AvatarMode>(getInitialMode());
+
+  const handleSaveAvatar = async (avatarData: AvatarData) => {
+    await onSelectAvatarData(avatarData);
+    onClose();
   };
+
+  const handleUpload = async (imageData: string) => {
+    await onUploadAvatar(imageData);
+    onClose();
+  };
+
+  const tabs = [
+    { id: 'create' as const, label: t.avatarModeCreate || 'Create Avatar', icon: Sparkles },
+    { id: 'upload' as const, label: t.avatarModeUpload || 'Upload Photo', icon: Upload },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-warm-900 rounded-xl shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-hidden">
+      <div className="relative bg-white dark:bg-warm-900 rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-warm-200 dark:border-warm-700">
           <h2 className="text-lg font-semibold text-warm-900 dark:text-warm-100">
-            {t.chooseAvatar || 'Choose Avatar'}
+            {t.chooseAvatar || 'Choose Your Avatar'}
           </h2>
           <Button variant="ghost" size="icon-sm" onClick={onClose}>
             <X className="w-5 h-5" />
           </Button>
         </div>
 
-        {/* Content */}
-        <div className="p-4 overflow-y-auto max-h-[60vh]">
-          {/* Preview */}
-          <div className="flex items-center justify-center mb-6">
-            <div className="text-center">
-              <Avatar preset={selectedPreset} username={username} size="xl" />
-              <p className="mt-2 text-sm text-warm-500">
-                {t.preview || 'Preview'}
-              </p>
-            </div>
-          </div>
-
-          {/* Categories */}
-          {Object.entries(avatarCategories).map(([category, presets]) => (
-            <div key={category} className="mb-6">
-              <h3 className="text-sm font-medium text-warm-500 uppercase tracking-wider mb-3">
-                {categoryLabels[category]}
-              </h3>
-              <div className="grid grid-cols-4 gap-3">
-                {presets.map((preset) => (
-                  <button
-                    key={preset}
-                    onClick={() => setSelectedPreset(preset)}
-                    className={`relative p-2 rounded-lg transition-all ${
-                      selectedPreset === preset
-                        ? 'bg-primary-100 dark:bg-primary-900 ring-2 ring-primary-500'
-                        : 'hover:bg-warm-100 dark:hover:bg-warm-800'
-                    }`}
-                  >
-                    <Avatar preset={preset} username={username} size="lg" className="mx-auto" />
-                    {selectedPreset === preset && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center">
-                        <Check className="w-3 h-3 text-white" />
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
+        {/* Mode Tabs */}
+        <div className="flex border-b border-warm-200 dark:border-warm-700">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setMode(tab.id)}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                mode === tab.id
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/20'
+                  : 'border-transparent text-warm-500 hover:text-warm-700 dark:hover:text-warm-300 hover:bg-warm-50 dark:hover:bg-warm-800'
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </button>
           ))}
         </div>
 
-        {/* Footer */}
-        <div className="flex justify-end gap-3 p-4 border-t border-warm-200 dark:border-warm-700">
-          <Button variant="outline" onClick={onClose} disabled={saving}>
-            {t.cancel || 'Cancel'}
-          </Button>
-          <Button onClick={handleSave} disabled={saving || !selectedPreset}>
-            {saving ? (t.saving || 'Saving...') : (t.save || 'Save')}
-          </Button>
+        {/* Content */}
+        <div className="flex-1 overflow-hidden">
+          {mode === 'create' && (
+            <AvatarEditor
+              initialData={currentAvatarData}
+              username={username}
+              onSave={handleSaveAvatar}
+              onCancel={onClose}
+            />
+          )}
+
+          {mode === 'upload' && (
+            <AvatarUpload
+              currentImage={currentAvatarData?.type === 'uploaded' ? currentAvatarData.uploadedUrl : null}
+              onUpload={handleUpload}
+              onCancel={onClose}
+              isOnline={isOnline}
+            />
+          )}
         </div>
       </div>
     </div>
   );
 }
+
+export default AvatarPicker;

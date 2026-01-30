@@ -220,6 +220,18 @@ ipcMain.handle('set-config-value', (_event, key: string, value: unknown) => {
   return true;
 });
 
+// Avatar image handler
+ipcMain.handle('select-avatar-image', async () => {
+  const result = await dialog.showOpenDialog(mainWindow!, {
+    properties: ['openFile'],
+    title: 'Select Avatar Image',
+    filters: [
+      { name: 'Images', extensions: ['png', 'jpg', 'jpeg'] },
+    ],
+  });
+  return result.canceled ? null : result.filePaths[0];
+});
+
 // Background image handlers
 ipcMain.handle('select-background-image', async () => {
   const result = await dialog.showOpenDialog(mainWindow!, {

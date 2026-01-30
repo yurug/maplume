@@ -1,14 +1,20 @@
 /**
- * Avatar - Displays user avatar based on preset
+ * Avatar - Unified avatar display using DiceBear
  *
- * Renders an SVG-based avatar for the given preset, or falls back to initials
+ * Supports:
+ * - DiceBear generated avatars (new default) - 20 beautiful styles
+ * - Uploaded images
+ * - Legacy presets (converted to DiceBear)
  */
 
-import React from 'react';
-import { AVATAR_PRESETS, type AvatarPreset } from '@maplume/shared';
+import React, { useMemo } from 'react';
+import { createAvatar } from '@dicebear/core';
+import * as collection from '@dicebear/collection';
+import type { AvatarData, DiceBearConfig, DiceBearStyle } from '@maplume/shared';
 
 interface AvatarProps {
-  preset: string | null;
+  avatarData?: AvatarData | null;
+  preset?: string | null; // Legacy support
   username: string;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
@@ -16,195 +22,170 @@ interface AvatarProps {
 
 // Size mappings
 const sizeClasses = {
-  xs: 'w-6 h-6 text-[10px]',
-  sm: 'w-8 h-8 text-xs',
-  md: 'w-10 h-10 text-sm',
-  lg: 'w-12 h-12 text-base',
-  xl: 'w-16 h-16 text-lg',
+  xs: 'w-6 h-6',
+  sm: 'w-8 h-8',
+  md: 'w-10 h-10',
+  lg: 'w-12 h-12',
+  xl: 'w-16 h-16',
 };
 
-// Color palettes for each avatar type
-const avatarColors: Record<string, { bg: string; fg: string; accent: string }> = {
-  'writer-1': { bg: '#E8D5B7', fg: '#5D4037', accent: '#8D6E63' },
-  'writer-2': { bg: '#C5CAE9', fg: '#303F9F', accent: '#5C6BC0' },
-  'writer-3': { bg: '#FFCCBC', fg: '#BF360C', accent: '#FF5722' },
-  'writer-4': { bg: '#B2DFDB', fg: '#00695C', accent: '#26A69A' },
-  'quill-1': { bg: '#FFF9C4', fg: '#F57F17', accent: '#FFB300' },
-  'quill-2': { bg: '#F3E5F5', fg: '#6A1B9A', accent: '#AB47BC' },
-  'quill-3': { bg: '#E1F5FE', fg: '#0277BD', accent: '#29B6F6' },
-  'quill-4': { bg: '#FCE4EC', fg: '#AD1457', accent: '#EC407A' },
-  'book-1': { bg: '#D7CCC8', fg: '#4E342E', accent: '#795548' },
-  'book-2': { bg: '#DCEDC8', fg: '#33691E', accent: '#7CB342' },
-  'book-3': { bg: '#CFD8DC', fg: '#37474F', accent: '#607D8B' },
-  'book-4': { bg: '#FFE0B2', fg: '#E65100', accent: '#FF9800' },
-  'cat-1': { bg: '#FFF3E0', fg: '#E65100', accent: '#FF8A65' },
-  'cat-2': { bg: '#E0E0E0', fg: '#424242', accent: '#757575' },
-  'owl-1': { bg: '#D1C4E9', fg: '#4527A0', accent: '#7E57C2' },
-  'owl-2': { bg: '#FFECB3', fg: '#FF6F00', accent: '#FFB300' },
+// Map style names to DiceBear style modules
+const STYLE_MAP: Record<DiceBearStyle, any> = {
+  'adventurer': collection.adventurer,
+  'adventurer-neutral': collection.adventurerNeutral,
+  'avataaars': collection.avataaars,
+  'big-ears': collection.bigEars,
+  'big-ears-neutral': collection.bigEarsNeutral,
+  'lorelei': collection.lorelei,
+  'lorelei-neutral': collection.loreleiNeutral,
+  'micah': collection.micah,
+  'open-peeps': collection.openPeeps,
+  'personas': collection.personas,
+  'pixel-art': collection.pixelArt,
+  'pixel-art-neutral': collection.pixelArtNeutral,
+  'thumbs': collection.thumbs,
+  'bottts': collection.bottts,
+  'fun-emoji': collection.funEmoji,
+  'shapes': collection.shapes,
 };
 
-// Generate initials from username
-function getInitials(username: string): string {
-  return username.charAt(0).toUpperCase();
-}
-
-// SVG components for each avatar type
-function WriterIcon({ colors }: { colors: typeof avatarColors[string] }) {
-  return (
-    <svg viewBox="0 0 100 100" className="w-full h-full">
-      <circle cx="50" cy="50" r="50" fill={colors.bg} />
-      {/* Head */}
-      <circle cx="50" cy="35" r="18" fill={colors.fg} />
-      {/* Body */}
-      <path d="M25 85 Q25 55 50 55 Q75 55 75 85" fill={colors.fg} />
-      {/* Pen in hand */}
-      <rect x="60" y="50" width="4" height="25" rx="1" fill={colors.accent} transform="rotate(-30 60 50)" />
-    </svg>
-  );
-}
-
-function QuillIcon({ colors }: { colors: typeof avatarColors[string] }) {
-  return (
-    <svg viewBox="0 0 100 100" className="w-full h-full">
-      <circle cx="50" cy="50" r="50" fill={colors.bg} />
-      {/* Quill feather */}
-      <path
-        d="M25 75 Q35 55 45 35 Q50 20 55 35 Q55 55 50 65 Q45 75 25 75"
-        fill={colors.fg}
-        stroke={colors.accent}
-        strokeWidth="2"
-      />
-      {/* Quill tip */}
-      <path d="M25 75 L30 85 L35 75" fill={colors.accent} />
-      {/* Feather details */}
-      <path d="M40 40 Q50 35 50 50" fill="none" stroke={colors.accent} strokeWidth="1.5" />
-      <path d="M42 50 Q50 45 52 55" fill="none" stroke={colors.accent} strokeWidth="1.5" />
-    </svg>
-  );
-}
-
-function BookIcon({ colors }: { colors: typeof avatarColors[string] }) {
-  return (
-    <svg viewBox="0 0 100 100" className="w-full h-full">
-      <circle cx="50" cy="50" r="50" fill={colors.bg} />
-      {/* Book cover */}
-      <rect x="25" y="25" width="50" height="50" rx="3" fill={colors.fg} />
-      {/* Book spine */}
-      <rect x="25" y="25" width="8" height="50" rx="2" fill={colors.accent} />
-      {/* Pages */}
-      <rect x="35" y="30" width="35" height="40" fill="#FAFAFA" rx="1" />
-      {/* Text lines */}
-      <rect x="40" y="38" width="25" height="3" fill={colors.accent} opacity="0.5" />
-      <rect x="40" y="46" width="20" height="3" fill={colors.accent} opacity="0.5" />
-      <rect x="40" y="54" width="25" height="3" fill={colors.accent} opacity="0.5" />
-    </svg>
-  );
-}
-
-function CatIcon({ colors }: { colors: typeof avatarColors[string] }) {
-  return (
-    <svg viewBox="0 0 100 100" className="w-full h-full">
-      <circle cx="50" cy="50" r="50" fill={colors.bg} />
-      {/* Cat face */}
-      <circle cx="50" cy="55" r="28" fill={colors.fg} />
-      {/* Ears */}
-      <path d="M25 40 L32 25 L42 40" fill={colors.fg} />
-      <path d="M75 40 L68 25 L58 40" fill={colors.fg} />
-      {/* Inner ears */}
-      <path d="M28 38 L32 30 L38 38" fill={colors.accent} />
-      <path d="M72 38 L68 30 L62 38" fill={colors.accent} />
-      {/* Eyes */}
-      <ellipse cx="40" cy="52" rx="5" ry="6" fill={colors.bg} />
-      <ellipse cx="60" cy="52" rx="5" ry="6" fill={colors.bg} />
-      <circle cx="40" cy="52" r="3" fill="#333" />
-      <circle cx="60" cy="52" r="3" fill="#333" />
-      {/* Nose */}
-      <path d="M47 62 L50 66 L53 62" fill={colors.accent} />
-      {/* Mouth */}
-      <path d="M50 66 Q45 72 40 68" fill="none" stroke={colors.accent} strokeWidth="1.5" />
-      <path d="M50 66 Q55 72 60 68" fill="none" stroke={colors.accent} strokeWidth="1.5" />
-    </svg>
-  );
-}
-
-function OwlIcon({ colors }: { colors: typeof avatarColors[string] }) {
-  return (
-    <svg viewBox="0 0 100 100" className="w-full h-full">
-      <circle cx="50" cy="50" r="50" fill={colors.bg} />
-      {/* Body */}
-      <ellipse cx="50" cy="58" r="30" ry="32" fill={colors.fg} />
-      {/* Eye circles */}
-      <circle cx="38" cy="48" r="14" fill={colors.bg} />
-      <circle cx="62" cy="48" r="14" fill={colors.bg} />
-      {/* Eyes */}
-      <circle cx="38" cy="48" r="8" fill="#333" />
-      <circle cx="62" cy="48" r="8" fill="#333" />
-      <circle cx="36" cy="46" r="3" fill="#FFF" />
-      <circle cx="60" cy="46" r="3" fill="#FFF" />
-      {/* Beak */}
-      <path d="M45 55 L50 68 L55 55" fill={colors.accent} />
-      {/* Ear tufts */}
-      <path d="M28 35 L32 20 L40 35" fill={colors.fg} />
-      <path d="M72 35 L68 20 L60 35" fill={colors.fg} />
-      {/* Chest feathers */}
-      <ellipse cx="50" cy="72" rx="15" ry="10" fill={colors.bg} opacity="0.5" />
-    </svg>
-  );
-}
-
-// Get the icon component for a preset
-function getAvatarIcon(preset: AvatarPreset, colors: typeof avatarColors[string]) {
-  if (preset.startsWith('writer-')) {
-    return <WriterIcon colors={colors} />;
+// Generate DiceBear avatar SVG
+export function generateDiceBearAvatar(config: DiceBearConfig): string {
+  const styleModule = STYLE_MAP[config.style];
+  if (!styleModule) {
+    // Fallback to adventurer if style not found
+    return generateDiceBearAvatar({ ...config, style: 'adventurer' });
   }
-  if (preset.startsWith('quill-')) {
-    return <QuillIcon colors={colors} />;
+
+  const options: Record<string, any> = {
+    seed: config.seed,
+    size: 128,
+    radius: 0, // Force no radius to prevent SVG masks
+  };
+
+  // Add background color if specified (not for all styles)
+  if (config.backgroundColor && config.backgroundColor !== 'transparent') {
+    options.backgroundColor = [config.backgroundColor.replace('#', '')];
   }
-  if (preset.startsWith('book-')) {
-    return <BookIcon colors={colors} />;
+
+  // Style-specific adjustments
+  // Some styles need specific options to render properly
+  switch (config.style) {
+    case 'bottts':
+    case 'bottts-neutral':
+      // Bottts renders better with specific colors
+      options.colors = ['amber', 'blue', 'blueGrey', 'brown', 'cyan', 'deepOrange', 'deepPurple', 'green', 'grey', 'indigo', 'lightBlue', 'lightGreen', 'lime', 'orange', 'pink', 'purple', 'red', 'teal', 'yellow'];
+      break;
+    case 'shapes':
+      // Shapes needs colors
+      options.colors = ['0284c7', '0d9488', '059669', 'ca8a04', 'dc2626', 'db2777', '9333ea', '4f46e5'];
+      break;
+    case 'thumbs':
+      // Thumbs with rotation options
+      options.shapeColor = ['0284c7', '0d9488', '059669', 'ca8a04', 'dc2626', 'db2777', '9333ea', '4f46e5'];
+      break;
   }
-  if (preset.startsWith('cat-')) {
-    return <CatIcon colors={colors} />;
+
+  // Add other options from config
+  if (config.flip !== undefined) {
+    options.flip = config.flip;
   }
-  if (preset.startsWith('owl-')) {
-    return <OwlIcon colors={colors} />;
+  if (config.rotate !== undefined) {
+    options.rotate = config.rotate;
   }
-  return null;
+
+  // Apply custom options last (can override defaults)
+  if (config.options) {
+    Object.assign(options, config.options);
+  }
+
+  // ALWAYS force radius to 0 to prevent SVG masks that clip avatars
+  // We handle circular shape with CSS clip-path instead
+  options.radius = 0;
+
+  const avatar = createAvatar(styleModule, options);
+  return avatar.toString();
 }
 
-export function Avatar({ preset, username, size = 'md', className = '' }: AvatarProps) {
+// Default avatar for when no data is provided
+function generateDefaultAvatar(username: string): string {
+  return generateDiceBearAvatar({
+    style: 'adventurer',
+    seed: username || 'default',
+    backgroundColor: 'b6e3f4',
+  });
+}
+
+export function Avatar({ avatarData, preset, username, size = 'md', className = '' }: AvatarProps) {
   const sizeClass = sizeClasses[size];
 
-  // Check if preset is valid
-  const isValidPreset = preset && AVATAR_PRESETS.includes(preset as AvatarPreset);
-
-  if (isValidPreset && preset) {
-    const colors = avatarColors[preset] || avatarColors['writer-1'];
-    const icon = getAvatarIcon(preset as AvatarPreset, colors);
-
-    if (icon) {
-      return (
-        <div className={`${sizeClass} rounded-full overflow-hidden flex-shrink-0 ${className}`}>
-          {icon}
-        </div>
-      );
+  const avatarSvg = useMemo(() => {
+    // Priority 1: Uploaded image (handled separately)
+    if (avatarData?.type === 'uploaded' && avatarData.uploadedUrl) {
+      return null;
     }
+
+    // Priority 2: DiceBear config
+    if (avatarData?.type === 'dicebear' && avatarData.dicebear) {
+      return generateDiceBearAvatar(avatarData.dicebear);
+    }
+
+    // Priority 3: Legacy custom config - convert to DiceBear
+    if (avatarData?.type === 'custom' && avatarData.custom) {
+      const customSeed = `${avatarData.custom.hairStyle}-${avatarData.custom.faceShape}-${avatarData.custom.eyes}`;
+      return generateDiceBearAvatar({
+        style: 'adventurer',
+        seed: customSeed,
+        backgroundColor: avatarData.custom.backgroundColor?.replace('#', '') || 'e8d5b7',
+      });
+    }
+
+    // Priority 4: Legacy preset
+    if (avatarData?.type === 'preset' && avatarData.preset) {
+      return generateDiceBearAvatar({
+        style: 'adventurer',
+        seed: avatarData.preset,
+        backgroundColor: 'e8d5b7',
+      });
+    }
+
+    // Priority 5: Old preset prop (backwards compatibility)
+    if (preset) {
+      return generateDiceBearAvatar({
+        style: 'adventurer',
+        seed: preset,
+        backgroundColor: 'e8d5b7',
+      });
+    }
+
+    // Fallback: Generate from username
+    return generateDefaultAvatar(username);
+  }, [avatarData, preset, username]);
+
+  // Uploaded image - no scaling needed since user controls the crop
+  if (avatarData?.type === 'uploaded' && avatarData.uploadedUrl) {
+    return (
+      <div className={`${sizeClass} rounded-full overflow-hidden flex-shrink-0 ${className}`}>
+        <img
+          src={avatarData.uploadedUrl}
+          alt={username}
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
   }
 
-  // Fallback to initials
-  const initials = getInitials(username);
-  const colors = avatarColors['writer-1'];
-
+  // DiceBear SVG - scale SVG larger and clip to show face area better
   return (
     <div
-      className={`${sizeClass} rounded-full flex items-center justify-center font-medium flex-shrink-0 ${className}`}
-      style={{ backgroundColor: colors.bg, color: colors.fg }}
+      className={`${sizeClass} flex-shrink-0 rounded-full overflow-hidden ${className}`}
     >
-      {initials}
+      <div
+        className="w-[120%] h-[120%] -ml-[10%] -mt-[5%] [&>svg]:w-full [&>svg]:h-full"
+        dangerouslySetInnerHTML={{ __html: avatarSvg || '' }}
+      />
     </div>
   );
 }
 
-// Export for use in AvatarPicker
-export { avatarColors, AVATAR_PRESETS };
-export type { AvatarPreset };
+export default Avatar;

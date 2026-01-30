@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Config storage (more reliable than localStorage on Windows)
   getConfigValue: (key: string) => ipcRenderer.invoke('get-config-value', key),
   setConfigValue: (key: string, value: unknown) => ipcRenderer.invoke('set-config-value', key, value),
+  // Avatar image handling
+  selectAvatarImage: () => ipcRenderer.invoke('select-avatar-image'),
   // Background image handling
   selectBackgroundImage: () => ipcRenderer.invoke('select-background-image'),
   copyBackgroundImage: (sourcePath: string, dataPath: string, projectId: string) =>

@@ -29,6 +29,7 @@ export interface LoginResponse {
     id: string;
     username: string;
     avatarPreset: string | null;
+    avatarData: import('./social-types').AvatarData | null;
   };
 }
 
@@ -43,16 +44,27 @@ export interface RefreshResponse {
 // Profile
 export interface UpdateProfileRequest {
   avatarPreset?: string;
+  avatarData?: import('./social-types').AvatarData;
   bio?: string; // Encrypted by client
   statsPublic?: boolean;
   searchable?: boolean;
   encryptionPublicKey?: string; // X25519 public key for project sharing
 }
 
+// Avatar Upload
+export interface UploadAvatarRequest {
+  imageData: string; // Base64 encoded image data
+}
+
+export interface UploadAvatarResponse {
+  avatarData: import('./social-types').AvatarData;
+}
+
 export interface UserProfileResponse {
   id: string;
   username: string;
   avatarPreset: string | null;
+  avatarData: import('./social-types').AvatarData | null;
   bio: string | null; // Encrypted
   statsPublic: boolean;
   searchable: boolean;
@@ -81,6 +93,7 @@ export interface FriendUser {
   id: string;
   username: string;
   avatarPreset: string | null;
+  avatarData?: import('./social-types').AvatarData | null;
   bio?: string | null;
   lastSeenAt?: number | null;
   publicKey?: string; // X25519 public key for encryption
@@ -170,6 +183,7 @@ export interface PartyParticipant {
   id: string;
   username: string;
   avatarPreset: string | null;
+  avatarData?: import('./social-types').AvatarData | null;
   wordsWritten: number;
   startWordCount: number;
   currentWordCount: number;
@@ -181,7 +195,7 @@ export interface PartyParticipant {
 export interface Party {
   id: string;
   title: string;
-  creator: { id: string; username: string; avatarPreset: string | null };
+  creator: { id: string; username: string; avatarPreset: string | null; avatarData?: import('./social-types').AvatarData | null };
   scheduledStart: number | null;
   actualStart: number | null;
   durationMinutes: number;
@@ -199,12 +213,12 @@ export interface PartyInvite {
   party: {
     id: string;
     title: string;
-    creator: { id: string; username: string; avatarPreset: string | null };
+    creator: { id: string; username: string; avatarPreset: string | null; avatarData?: import('./social-types').AvatarData | null };
     scheduledStart: number | null;
     durationMinutes: number;
     status: PartyStatus;
   };
-  invitedBy: { id: string; username: string; avatarPreset: string | null };
+  invitedBy: { id: string; username: string; avatarPreset: string | null; avatarData?: import('./social-types').AvatarData | null };
   createdAt: number;
 }
 

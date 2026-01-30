@@ -2,6 +2,7 @@ import { Pool, PoolClient } from 'pg';
 import { randomUUID } from 'crypto';
 import { config } from '../config';
 import { hashToken } from './auth';
+import type { AvatarData } from '@maplume/shared';
 
 let pool: Pool | null = null;
 
@@ -13,6 +14,8 @@ export interface DbUser {
   publicKey: string;
   encryptionPublicKey: string | null; // X25519 key for encryption
   avatarPreset: string | null;
+  avatarData: AvatarData | null; // New comprehensive avatar field
+  avatarImage: string | null; // Base64 data URL for uploaded images
   bio: string | null;
   statsPublic: boolean;
   searchable: boolean;
@@ -294,6 +297,35 @@ async function runMigrations(): Promise<void> {
 
       console.log('Migration 005_parties applied');
     }
+
+    // Migration 006: Enhanced avatar system
+    if (!applied.has('006_avatar_data')) {
+      console.log('Applying migration: 006_avatar_data');
+
+      // Add avatar_data JSONB column for new avatar system
+      await client.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_data JSONB
+      `);
+
+      // Add avatar_image column for storing uploaded image data URLs
+      await client.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_image TEXT
+      `);
+
+      // Migrate existing presets to new avatar_data format
+      await client.query(`
+        UPDATE users
+        SET avatar_data = jsonb_build_object('type', 'preset', 'preset', avatar_preset)
+        WHERE avatar_preset IS NOT NULL AND avatar_data IS NULL
+      `);
+
+      await client.query(`INSERT INTO migrations (name, applied_at) VALUES ($1, $2)`, [
+        '006_avatar_data',
+        Date.now(),
+      ]);
+
+      console.log('Migration 006_avatar_data applied');
+    }
   } finally {
     client.release();
   }
@@ -327,7 +359,7 @@ export async function createUser(username: string, publicKey: string, encryption
 
 export async function getUserByUsername(username: string): Promise<DbUser | null> {
   const result = await getPool().query(
-    `SELECT id, username, username_lower, public_key, encryption_public_key, avatar_preset, bio,
+    `SELECT id, username, username_lower, public_key, encryption_public_key, avatar_preset, avatar_data, avatar_image, bio,
             stats_public, searchable, created_at, deleted_at, last_seen_at
      FROM users WHERE username_lower = $1 AND deleted_at IS NULL`,
     [username.toLowerCase()]
@@ -345,6 +377,8 @@ export async function getUserByUsername(username: string): Promise<DbUser | null
     publicKey: row.public_key,
     encryptionPublicKey: row.encryption_public_key,
     avatarPreset: row.avatar_preset,
+    avatarData: row.avatar_data,
+    avatarImage: row.avatar_image,
     bio: row.bio,
     statsPublic: row.stats_public,
     searchable: row.searchable,
@@ -356,7 +390,7 @@ export async function getUserByUsername(username: string): Promise<DbUser | null
 
 export async function getUserById(id: string): Promise<DbUser | null> {
   const result = await getPool().query(
-    `SELECT id, username, username_lower, public_key, encryption_public_key, avatar_preset, bio,
+    `SELECT id, username, username_lower, public_key, encryption_public_key, avatar_preset, avatar_data, avatar_image, bio,
             stats_public, searchable, created_at, deleted_at, last_seen_at
      FROM users WHERE id = $1`,
     [id]
@@ -374,6 +408,8 @@ export async function getUserById(id: string): Promise<DbUser | null> {
     publicKey: row.public_key,
     encryptionPublicKey: row.encryption_public_key,
     avatarPreset: row.avatar_preset,
+    avatarData: row.avatar_data,
+    avatarImage: row.avatar_image,
     bio: row.bio,
     statsPublic: row.stats_public,
     searchable: row.searchable,
@@ -390,6 +426,8 @@ export async function updateUser(id: string, updates: Record<string, unknown>): 
 
   const columnMap: Record<string, string> = {
     avatarPreset: 'avatar_preset',
+    avatarData: 'avatar_data',
+    avatarImage: 'avatar_image',
     bio: 'bio',
     statsPublic: 'stats_public',
     searchable: 'searchable',
@@ -399,7 +437,12 @@ export async function updateUser(id: string, updates: Record<string, unknown>): 
     const column = columnMap[key];
     if (column) {
       setClauses.push(`${column} = $${paramIndex}`);
-      values.push(value);
+      // Handle JSONB type for avatarData
+      if (key === 'avatarData' && value !== null) {
+        values.push(JSON.stringify(value));
+      } else {
+        values.push(value);
+      }
       paramIndex++;
     }
   }
@@ -425,9 +468,28 @@ export async function softDeleteUser(id: string): Promise<void> {
   await getPool().query(`UPDATE users SET deleted_at = $1 WHERE id = $2`, [Date.now(), id]);
 }
 
+export async function updateUserAvatar(id: string, avatarData: AvatarData, avatarImage: string | null): Promise<void> {
+  await getPool().query(
+    `UPDATE users SET avatar_data = $1, avatar_image = $2, avatar_preset = $3 WHERE id = $4`,
+    [
+      JSON.stringify(avatarData),
+      avatarImage,
+      avatarData.type === 'preset' ? avatarData.preset : null,
+      id
+    ]
+  );
+}
+
+export async function deleteUserAvatar(id: string): Promise<void> {
+  await getPool().query(
+    `UPDATE users SET avatar_data = NULL, avatar_image = NULL, avatar_preset = NULL WHERE id = $1`,
+    [id]
+  );
+}
+
 export async function searchUsers(query: string, limit: number): Promise<DbUser[]> {
   const result = await getPool().query(
-    `SELECT id, username, username_lower, public_key, encryption_public_key, avatar_preset, bio,
+    `SELECT id, username, username_lower, public_key, encryption_public_key, avatar_preset, avatar_data, avatar_image, bio,
             stats_public, searchable, created_at, deleted_at, last_seen_at
      FROM users
      WHERE username_lower LIKE $1 AND searchable = TRUE AND deleted_at IS NULL
@@ -442,6 +504,8 @@ export async function searchUsers(query: string, limit: number): Promise<DbUser[
     publicKey: row.public_key,
     encryptionPublicKey: row.encryption_public_key,
     avatarPreset: row.avatar_preset,
+    avatarData: row.avatar_data,
+    avatarImage: row.avatar_image,
     bio: row.bio,
     statsPublic: row.stats_public,
     searchable: row.searchable,
@@ -625,7 +689,7 @@ export async function getFriendRequest(
 export async function getPendingFriendRequests(userId: string): Promise<Array<DbFriendRequest & { fromUser: DbUser }>> {
   const result = await getPool().query(
     `SELECT fr.id, fr.from_user_id, fr.to_user_id, fr.message, fr.created_at, fr.responded_at, fr.status,
-            u.username, u.avatar_preset, u.bio
+            u.username, u.avatar_preset, u.avatar_data, u.avatar_image, u.bio
      FROM friend_requests fr
      JOIN users u ON u.id = fr.from_user_id
      WHERE fr.to_user_id = $1 AND fr.status = 'pending'
@@ -648,6 +712,8 @@ export async function getPendingFriendRequests(userId: string): Promise<Array<Db
       publicKey: '',
       encryptionPublicKey: null,
       avatarPreset: row.avatar_preset,
+      avatarData: row.avatar_data,
+      avatarImage: row.avatar_image,
       bio: row.bio,
       statsPublic: false,
       searchable: true,
@@ -661,7 +727,7 @@ export async function getPendingFriendRequests(userId: string): Promise<Array<Db
 export async function getSentFriendRequests(userId: string): Promise<Array<DbFriendRequest & { toUser: DbUser }>> {
   const result = await getPool().query(
     `SELECT fr.id, fr.from_user_id, fr.to_user_id, fr.message, fr.created_at, fr.responded_at, fr.status,
-            u.username, u.avatar_preset, u.bio
+            u.username, u.avatar_preset, u.avatar_data, u.avatar_image, u.bio
      FROM friend_requests fr
      JOIN users u ON u.id = fr.to_user_id
      WHERE fr.from_user_id = $1 AND fr.status = 'pending'
@@ -684,6 +750,8 @@ export async function getSentFriendRequests(userId: string): Promise<Array<DbFri
       publicKey: '',
       encryptionPublicKey: null,
       avatarPreset: row.avatar_preset,
+      avatarData: row.avatar_data,
+      avatarImage: row.avatar_image,
       bio: row.bio,
       statsPublic: false,
       searchable: true,
@@ -767,7 +835,7 @@ export async function cancelFriendRequest(requestId: string, userId: string): Pr
 
 export async function getFriends(userId: string): Promise<DbUser[]> {
   const result = await getPool().query(
-    `SELECT u.id, u.username, u.username_lower, u.public_key, u.encryption_public_key, u.avatar_preset, u.bio,
+    `SELECT u.id, u.username, u.username_lower, u.public_key, u.encryption_public_key, u.avatar_preset, u.avatar_data, u.avatar_image, u.bio,
             u.stats_public, u.searchable, u.created_at, u.deleted_at, u.last_seen_at
      FROM friendships f
      JOIN users u ON u.id = f.friend_id
@@ -783,6 +851,8 @@ export async function getFriends(userId: string): Promise<DbUser[]> {
     publicKey: row.public_key,
     encryptionPublicKey: row.encryption_public_key,
     avatarPreset: row.avatar_preset,
+    avatarData: row.avatar_data,
+    avatarImage: row.avatar_image,
     bio: row.bio,
     statsPublic: row.stats_public,
     searchable: row.searchable,
@@ -880,7 +950,7 @@ export async function getProjectSharesOwned(ownerId: string): Promise<Array<DbPr
     `SELECT ps.id, ps.owner_id, ps.shared_with_id, ps.project_local_id, ps.share_type,
             ps.encrypted_data, ps.ephemeral_public_key, ps.data_hash,
             ps.created_at, ps.updated_at, ps.revoked_at,
-            u.username, u.avatar_preset, u.bio
+            u.username, u.avatar_preset, u.avatar_data, u.avatar_image, u.bio
      FROM project_shares ps
      JOIN users u ON u.id = ps.shared_with_id
      WHERE ps.owner_id = $1 AND ps.revoked_at IS NULL
@@ -907,6 +977,8 @@ export async function getProjectSharesOwned(ownerId: string): Promise<Array<DbPr
       publicKey: '',
       encryptionPublicKey: null,
       avatarPreset: row.avatar_preset,
+      avatarData: row.avatar_data,
+      avatarImage: row.avatar_image,
       bio: row.bio,
       statsPublic: false,
       searchable: true,
@@ -922,7 +994,7 @@ export async function getProjectSharesReceived(userId: string): Promise<Array<Db
     `SELECT ps.id, ps.owner_id, ps.shared_with_id, ps.project_local_id, ps.share_type,
             ps.encrypted_data, ps.ephemeral_public_key, ps.data_hash,
             ps.created_at, ps.updated_at, ps.revoked_at,
-            u.username, u.avatar_preset, u.bio, u.public_key
+            u.username, u.avatar_preset, u.avatar_data, u.avatar_image, u.bio, u.public_key
      FROM project_shares ps
      JOIN users u ON u.id = ps.owner_id
      WHERE ps.shared_with_id = $1 AND ps.revoked_at IS NULL
@@ -949,6 +1021,8 @@ export async function getProjectSharesReceived(userId: string): Promise<Array<Db
       publicKey: row.public_key,
       encryptionPublicKey: null,
       avatarPreset: row.avatar_preset,
+      avatarData: row.avatar_data,
+      avatarImage: row.avatar_image,
       bio: row.bio,
       statsPublic: false,
       searchable: true,
@@ -964,7 +1038,7 @@ export async function getProjectShare(shareId: string): Promise<(DbProjectShare 
     `SELECT ps.id, ps.owner_id, ps.shared_with_id, ps.project_local_id, ps.share_type,
             ps.encrypted_data, ps.ephemeral_public_key, ps.data_hash,
             ps.created_at, ps.updated_at, ps.revoked_at,
-            u.username, u.avatar_preset, u.bio, u.public_key
+            u.username, u.avatar_preset, u.avatar_data, u.avatar_image, u.bio, u.public_key
      FROM project_shares ps
      JOIN users u ON u.id = ps.owner_id
      WHERE ps.id = $1`,
@@ -995,6 +1069,8 @@ export async function getProjectShare(shareId: string): Promise<(DbProjectShare 
       publicKey: row.public_key,
       encryptionPublicKey: null,
       avatarPreset: row.avatar_preset,
+      avatarData: row.avatar_data,
+      avatarImage: row.avatar_image,
       bio: row.bio,
       statsPublic: false,
       searchable: true,
@@ -1338,7 +1414,7 @@ export async function addPartyParticipant(partyId: string, userId: string, start
 export async function getPartyParticipants(partyId: string): Promise<Array<DbPartyParticipant & { user: DbUser }>> {
   const result = await getPool().query(
     `SELECT pp.id, pp.party_id, pp.user_id, pp.start_word_count, pp.current_word_count, pp.words_written, pp.joined_at, pp.left_at, pp.last_update,
-            u.username, u.avatar_preset, u.bio
+            u.username, u.avatar_preset, u.avatar_data, u.avatar_image, u.bio
      FROM party_participants pp
      JOIN users u ON u.id = pp.user_id
      WHERE pp.party_id = $1 AND pp.left_at IS NULL
@@ -1363,6 +1439,8 @@ export async function getPartyParticipants(partyId: string): Promise<Array<DbPar
       publicKey: '',
       encryptionPublicKey: null,
       avatarPreset: row.avatar_preset,
+      avatarData: row.avatar_data,
+      avatarImage: row.avatar_image,
       bio: row.bio,
       statsPublic: false,
       searchable: true,
@@ -1434,7 +1512,7 @@ export async function getPendingInvitesForUser(userId: string): Promise<Array<Db
   const result = await getPool().query(
     `SELECT pi.id, pi.party_id, pi.invited_by, pi.invited_user_id, pi.status, pi.created_at, pi.responded_at,
             p.id as p_id, p.creator_id, p.title, p.scheduled_start, p.actual_start, p.duration_minutes, p.ended_at, p.join_code, p.ranking_enabled, p.created_at as p_created_at, p.status as p_status,
-            u.username, u.avatar_preset
+            u.username, u.avatar_preset, u.avatar_data, u.avatar_image
      FROM party_invites pi
      JOIN parties p ON p.id = pi.party_id
      JOIN users u ON u.id = pi.invited_by
@@ -1471,6 +1549,8 @@ export async function getPendingInvitesForUser(userId: string): Promise<Array<Db
       publicKey: '',
       encryptionPublicKey: null,
       avatarPreset: row.avatar_preset,
+      avatarData: row.avatar_data,
+      avatarImage: row.avatar_image,
       bio: null,
       statsPublic: false,
       searchable: true,

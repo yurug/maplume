@@ -39,6 +39,8 @@ import type {
   UpdatePartyProgressResponse,
   InviteToPartyRequest,
   Party,
+  UploadAvatarRequest,
+  UploadAvatarResponse,
 } from '@maplume/shared';
 import { sign, bytesToBase64 } from './crypto';
 
@@ -316,6 +318,21 @@ class ApiClient {
    */
   async updateProfile(updates: UpdateProfileRequest): Promise<{ success: boolean }> {
     return this.request('PUT', '/api/users/me', updates);
+  }
+
+  /**
+   * Upload an avatar image
+   */
+  async uploadAvatar(imageData: string): Promise<UploadAvatarResponse> {
+    const request: UploadAvatarRequest = { imageData };
+    return this.request<UploadAvatarResponse>('POST', '/api/users/me/avatar', request);
+  }
+
+  /**
+   * Delete uploaded avatar
+   */
+  async deleteAvatar(): Promise<{ success: boolean }> {
+    return this.request('DELETE', '/api/users/me/avatar');
   }
 
   /**
