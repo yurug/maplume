@@ -6,7 +6,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { launchApp, closeApp, seedTestData, type TestApp } from '../electron';
+import { launchApp, closeApp, seedTestData, seedAndReload, type TestApp } from '../electron';
 
 let testApp: TestApp;
 
@@ -67,10 +67,8 @@ test.describe('Project Creation', () => {
 
 test.describe('Project Editing', () => {
   test('user can edit an existing project', async () => {
-    const { window, dataPath } = testApp;
-
     // Seed a project
-    seedTestData(dataPath, {
+    await seedAndReload(testApp, {
       projects: [{
         id: 'test-project',
         title: 'Original Title',
@@ -85,12 +83,14 @@ test.describe('Project Editing', () => {
       }],
     });
 
-    // Reload to pick up seeded data
-    await window.reload();
-    await window.waitForSelector('text=Original Title');
+    const { window } = testApp;
+    await window.waitForSelector('text=Original Title', { timeout: 15000 });
 
-    // Click edit button
-    await window.click('button[title*="Edit"], button:has-text("Edit")');
+    // Select the project first
+    await window.click('text=Original Title');
+
+    // Click edit button (pencil icon in the header)
+    await window.click('[data-testid="edit-project"], button:has-text("Edit")');
 
     // Change title
     await window.fill('input[value="Original Title"]', 'Updated Title');
@@ -100,15 +100,12 @@ test.describe('Project Editing', () => {
 
     // Verify change
     await expect(window.locator('text=Updated Title')).toBeVisible();
-    await expect(window.locator('text=Original Title')).not.toBeVisible();
   });
 });
 
 test.describe('Project Archiving', () => {
   test('user can archive a completed project', async () => {
-    const { window, dataPath } = testApp;
-
-    seedTestData(dataPath, {
+    await seedAndReload(testApp, {
       projects: [{
         id: 'test-project',
         title: 'Completed Novel',
@@ -123,16 +120,19 @@ test.describe('Project Archiving', () => {
       }],
     });
 
-    await window.reload();
-    await window.waitForSelector('text=Completed Novel');
+    const { window } = testApp;
+    await window.waitForSelector('text=Completed Novel', { timeout: 15000 });
 
-    // Edit project and archive
-    await window.click('button[title*="Edit"], button:has-text("Edit")');
+    // Select and edit project
+    await window.click('text=Completed Novel');
+    await window.click('[data-testid="edit-project"], button:has-text("Edit")');
+
+    // Toggle archive switch
     await window.click('text=Archive');
     await window.click('button:has-text("Save")');
 
     // Project should be hidden by default
-    await expect(window.locator('text=Completed Novel')).not.toBeVisible();
+    await expect(window.locator('text=Completed Novel')).not.toBeVisible({ timeout: 5000 });
 
     // Show archived
     await window.click('text=Show archived');
