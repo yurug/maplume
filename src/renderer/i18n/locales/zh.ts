@@ -136,6 +136,13 @@ export default {
   supportMaPlume: '支持 MaPlume',
   supportDescription: '如果 MaPlume 对您的写作有所帮助，欢迎支持项目发展。',
 
+  // GIF Generator
+  generateGif: '生成 GIF',
+  generatingGif: '正在生成 GIF...',
+  gifPreview: 'GIF 预览',
+  downloadGif: '下载 GIF',
+  gifGenerationError: 'GIF 生成失败',
+
   // Messages
   newMessage: '新消息',
 
@@ -243,7 +250,6 @@ export default {
   pendingRequest: '待处理...',
   accept: '接受',
   reject: '拒绝',
-  cancel: '取消',
   addFriendDescription: '输入用户名以发送好友请求。',
   messageOptional: '消息（可选）',
   friendRequestMessagePlaceholder: '你好！我想在MaPlume上与你联系。',

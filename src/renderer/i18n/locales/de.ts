@@ -136,6 +136,13 @@ export default {
   supportMaPlume: 'MaPlume unterstützen',
   supportDescription: 'Wenn MaPlume Ihnen beim Schreiben hilft, unterstützen Sie die Entwicklung mit einer kleinen Spende.',
 
+  // GIF Generator
+  generateGif: 'GIF erstellen',
+  generatingGif: 'GIF wird erstellt...',
+  gifPreview: 'GIF-Vorschau',
+  downloadGif: 'GIF herunterladen',
+  gifGenerationError: 'GIF-Erstellung fehlgeschlagen',
+
   // Messages
   newMessage: 'Neue Nachricht',
 
@@ -243,7 +250,6 @@ export default {
   pendingRequest: 'Ausstehend...',
   accept: 'Annehmen',
   reject: 'Ablehnen',
-  cancel: 'Abbrechen',
   addFriendDescription: 'Geben Sie einen Benutzernamen ein, um eine Freundschaftsanfrage zu senden.',
   messageOptional: 'Nachricht (optional)',
   friendRequestMessagePlaceholder: 'Hallo! Ich möchte mich mit dir auf MaPlume verbinden.',

@@ -11,7 +11,8 @@ import {
   Area,
   ComposedChart,
 } from 'recharts';
-import { ZoomIn, ZoomOut, RotateCcw, TrendingUp, Target, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, TrendingUp, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import { GifGenerator } from './GifGenerator';
 import type { Project, WordEntry, UnitType } from '@shared/types';
 import { getChartData } from '../services/statistics';
 import { useI18n } from '../i18n';
@@ -291,6 +292,9 @@ export function ProgressChart({
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
+
+          {/* GIF Generator */}
+          <GifGenerator project={project} entries={entries} />
 
           {/* Pan right */}
           <Button
