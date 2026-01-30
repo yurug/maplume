@@ -284,6 +284,12 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
   // Initialize social features
   async function initializeSocial(): Promise<void> {
     try {
+      // In test mode (set via localStorage), skip API calls and initialize immediately
+      if (localStorage.getItem('maplume-test-mode') === 'true') {
+        dispatch({ type: 'INITIALIZE', user: null, keyBundle: null });
+        return;
+      }
+
       // Initialize API client
       await apiClient.initialize();
 

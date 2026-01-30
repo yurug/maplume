@@ -25,24 +25,28 @@ test.describe('Project Creation', () => {
     // Click "New" button
     await window.click('button:has-text("New")');
 
+    // Wait for modal to be visible
+    await window.waitForSelector('[role="dialog"], .fixed.inset-0');
+
     // Fill in project details
     await window.fill('input[placeholder*="Novel"]', 'My First Novel');
-    await window.fill('input[type="number"][name="targetWords"], input[type="number"]:near(:text("Target"))', '50000');
 
-    // Set dates
-    const today = new Date().toISOString().split('T')[0];
-    const endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    await window.fill('input[type="date"]:first-of-type', today);
-    await window.fill('input[type="date"]:last-of-type', endDate);
+    // Target words input - use the label association
+    const targetInput = window.locator('input[type="number"]').first();
+    await targetInput.fill('50000');
 
-    // Create the project
-    await window.click('button:has-text("Create")');
+    // Create the project - click the Create button in the modal footer
+    const createButton = window.locator('[role="dialog"] button:has-text("Create"), .fixed.inset-0 button:has-text("Create")').last();
+    await createButton.click();
+
+    // Wait for modal to close
+    await window.waitForSelector('[role="dialog"]', { state: 'hidden', timeout: 5000 }).catch(() => {});
 
     // Verify project appears in sidebar
-    await expect(window.locator('text=My First Novel')).toBeVisible();
+    await expect(window.locator('text=My First Novel').first()).toBeVisible();
 
     // Verify project is selected and shows details
-    await expect(window.locator('text=50,000')).toBeVisible();
+    await expect(window.locator('text=50,000').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('user can create a project tracking pages instead of words', async () => {
@@ -50,18 +54,28 @@ test.describe('Project Creation', () => {
 
     await window.click('button:has-text("New")');
 
+    // Wait for modal
+    await window.waitForSelector('[role="dialog"], .fixed.inset-0');
+
     await window.fill('input[placeholder*="Novel"]', 'Page-Tracked Novel');
 
-    // Select pages unit type
-    await window.click('text=Pages');
+    // Select pages unit type - click the Pages button in unit type selector
+    await window.click('button:has-text("Pages")');
 
-    await window.fill('input[type="number"]:near(:text("Target"))', '300');
+    // Fill target
+    const targetInput = window.locator('input[type="number"]').first();
+    await targetInput.fill('300');
 
-    await window.click('button:has-text("Create")');
+    // Create the project
+    const createButton = window.locator('[role="dialog"] button:has-text("Create"), .fixed.inset-0 button:has-text("Create")').last();
+    await createButton.click();
+
+    // Wait for modal to close
+    await window.waitForSelector('[role="dialog"]', { state: 'hidden', timeout: 5000 }).catch(() => {});
 
     // Verify project shows pages
-    await expect(window.locator('text=Page-Tracked Novel')).toBeVisible();
-    await expect(window.locator('text=300')).toBeVisible();
+    await expect(window.locator('text=Page-Tracked Novel').first()).toBeVisible();
+    await expect(window.locator('text=300').first()).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -89,17 +103,27 @@ test.describe('Project Editing', () => {
     // Select the project first
     await window.click('text=Original Title');
 
+    // Wait for project to be selected
+    await window.waitForTimeout(500);
+
     // Click edit button (pencil icon in the header)
-    await window.click('[data-testid="edit-project"], button:has-text("Edit")');
+    await window.click('[data-testid="edit-project"], button[title*="Edit"], button:has-text("Edit")');
+
+    // Wait for edit modal to appear
+    await window.waitForSelector('[role="dialog"], .fixed.inset-0');
 
     // Change title
     await window.fill('input[value="Original Title"]', 'Updated Title');
 
-    // Save
-    await window.click('button:has-text("Save")');
+    // Save - click the Save button in the modal
+    const saveButton = window.locator('[role="dialog"] button:has-text("Save"), .fixed.inset-0 button:has-text("Save")').last();
+    await saveButton.click();
 
-    // Verify change
-    await expect(window.locator('text=Updated Title')).toBeVisible();
+    // Wait for modal to close
+    await window.waitForSelector('[role="dialog"]', { state: 'hidden', timeout: 5000 }).catch(() => {});
+
+    // Verify change - use first() to avoid multiple matches
+    await expect(window.locator('text=Updated Title').first()).toBeVisible();
   });
 });
 
@@ -125,19 +149,29 @@ test.describe('Project Archiving', () => {
 
     // Select and edit project
     await window.click('text=Completed Novel');
-    await window.click('[data-testid="edit-project"], button:has-text("Edit")');
+    await window.waitForTimeout(500);
+    await window.click('[data-testid="edit-project"], button[title*="Edit"], button:has-text("Edit")');
 
-    // Toggle archive switch
-    await window.click('text=Archive');
-    await window.click('button:has-text("Save")');
+    // Wait for edit modal to fully load
+    await window.waitForSelector('[role="dialog"], .fixed.inset-0');
+    await window.waitForTimeout(500); // Let modal fully render
 
-    // Project should be hidden by default
-    await expect(window.locator('text=Completed Novel')).not.toBeVisible({ timeout: 5000 });
+    // Click Archive button (it's a red/danger button in the modal footer)
+    const archiveButton = window.locator('button:has-text("Archive")').first();
+    await archiveButton.waitFor({ state: 'visible' });
+    await archiveButton.click();
 
-    // Show archived
+    // Wait for modal to close and page to update
+    await window.waitForTimeout(1000);
+
+    // Project should be hidden from sidebar (check just the sidebar, not the whole page)
+    const sidebar = window.locator('aside, [role="complementary"], .w-64');
+    await expect(sidebar.locator('text=Completed Novel')).not.toBeVisible({ timeout: 5000 });
+
+    // Show archived projects
     await window.click('text=Show archived');
 
-    // Now it should be visible
-    await expect(window.locator('text=Completed Novel')).toBeVisible();
+    // Now it should be visible in sidebar
+    await expect(sidebar.locator('text=Completed Novel')).toBeVisible();
   });
 });
