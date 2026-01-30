@@ -39,6 +39,8 @@ export interface ElectronAPI {
   // Config storage (more reliable than localStorage on Windows)
   getConfigValue: (key: string) => Promise<unknown | null>;
   setConfigValue: (key: string, value: unknown) => Promise<boolean>;
+  // Avatar image handling
+  selectAvatarImage: () => Promise<string | null>;
   // Background image handling
   selectBackgroundImage: () => Promise<string | null>;
   copyBackgroundImage: (sourcePath: string, dataPath: string, projectId: string) => Promise<string | null>;

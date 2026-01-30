@@ -9,7 +9,7 @@
  */
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
-import type { LocalUser, SyncStatus, KeyBundle, AppData, Project, WordEntry } from '@maplume/shared';
+import type { LocalUser, SyncStatus, KeyBundle, AppData, Project, WordEntry, AvatarData } from '@maplume/shared';
 import type { SharedProjectInfo, FriendUser, Party, PartyInvite } from '@maplume/shared';
 import { apiClient } from '../services/api';
 import { syncService } from '../services/sync';
@@ -66,6 +66,7 @@ type SocialAction =
   | { type: 'INITIALIZE'; user: LocalUser | null; keyBundle: KeyBundle | null }
   | { type: 'SET_USER'; user: LocalUser; keyBundle: KeyBundle }
   | { type: 'UPDATE_USER_AVATAR'; avatarPreset: string }
+  | { type: 'UPDATE_USER_AVATAR_DATA'; avatarData: AvatarData }
   | { type: 'SET_ONLINE'; online: boolean }
   | { type: 'SET_SYNC_STATUS'; status: SyncStatus }
   | { type: 'SET_PENDING_COUNT'; count: number }
@@ -117,7 +118,21 @@ function socialReducer(state: SocialState, action: SocialAction): SocialState {
     case 'UPDATE_USER_AVATAR':
       return {
         ...state,
-        user: state.user ? { ...state.user, avatarPreset: action.avatarPreset } : null,
+        user: state.user ? {
+          ...state.user,
+          avatarPreset: action.avatarPreset,
+          avatarData: { type: 'preset', preset: action.avatarPreset },
+        } : null,
+      };
+
+    case 'UPDATE_USER_AVATAR_DATA':
+      return {
+        ...state,
+        user: state.user ? {
+          ...state.user,
+          avatarData: action.avatarData,
+          avatarPreset: action.avatarData.type === 'preset' ? action.avatarData.preset || null : null,
+        } : null,
       };
 
     case 'SET_ONLINE':
@@ -249,6 +264,8 @@ interface SocialContextValue {
     getPartyDetails: (partyId: string) => Promise<Party | null>;
     // Profile actions
     updateAvatar: (avatarPreset: string) => Promise<void>;
+    updateAvatarData: (avatarData: AvatarData) => Promise<void>;
+    uploadAvatar: (imageData: string) => Promise<void>;
   };
 }
 
@@ -321,6 +338,7 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
               id: profile.id,
               username: profile.username,
               avatarPreset: profile.avatarPreset,
+              avatarData: profile.avatarData,
               bio: profile.bio,
               statsPublic: profile.statsPublic,
               searchable: profile.searchable,
@@ -399,6 +417,7 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
         id: loginResponse.user.id,
         username: loginResponse.user.username,
         avatarPreset: loginResponse.user.avatarPreset,
+        avatarData: loginResponse.user.avatarData,
         bio: null,
         statsPublic: false,
         searchable: true,
@@ -466,6 +485,7 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
         id: profile.id,
         username: profile.username,
         avatarPreset: profile.avatarPreset,
+        avatarData: profile.avatarData,
         bio: profile.bio,
         statsPublic: profile.statsPublic,
         searchable: profile.searchable,
@@ -843,7 +863,7 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Update user avatar
+  // Update user avatar (preset)
   const updateAvatar = useCallback(async (avatarPreset: string): Promise<void> => {
     if (!state.user) {
       throw new Error('Not logged in');
@@ -854,6 +874,36 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'UPDATE_USER_AVATAR', avatarPreset });
     } catch (error) {
       console.error('Failed to update avatar:', error);
+      throw error;
+    }
+  }, [state.user]);
+
+  // Update user avatar data (custom or preset)
+  const updateAvatarData = useCallback(async (avatarData: AvatarData): Promise<void> => {
+    if (!state.user) {
+      throw new Error('Not logged in');
+    }
+
+    try {
+      await apiClient.updateProfile({ avatarData });
+      dispatch({ type: 'UPDATE_USER_AVATAR_DATA', avatarData });
+    } catch (error) {
+      console.error('Failed to update avatar data:', error);
+      throw error;
+    }
+  }, [state.user]);
+
+  // Upload avatar image
+  const uploadAvatar = useCallback(async (imageData: string): Promise<void> => {
+    if (!state.user) {
+      throw new Error('Not logged in');
+    }
+
+    try {
+      const response = await apiClient.uploadAvatar(imageData);
+      dispatch({ type: 'UPDATE_USER_AVATAR_DATA', avatarData: response.avatarData });
+    } catch (error) {
+      console.error('Failed to upload avatar:', error);
       throw error;
     }
   }, [state.user]);
@@ -929,6 +979,8 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
       getPartyDetails,
       // Profile actions
       updateAvatar,
+      updateAvatarData,
+      uploadAvatar,
     },
   };
 
