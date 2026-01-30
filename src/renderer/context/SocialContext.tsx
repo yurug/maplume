@@ -10,7 +10,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import type { LocalUser, SyncStatus, KeyBundle, AppData, Project, WordEntry, AvatarData } from '@maplume/shared';
-import type { SharedProjectInfo, FriendUser, Party, PartyInvite } from '@maplume/shared';
+import type { SharedProjectInfo, FriendUser, Party, PartyInvite, FriendRequest } from '@maplume/shared';
 import { apiClient } from '../services/api';
 import { syncService } from '../services/sync';
 import {
@@ -53,6 +53,7 @@ interface SocialState {
   ownedShares: SharedProjectInfo[];
   receivedShares: SharedProjectInfo[];
   friends: FriendWithKey[];
+  friendRequests: FriendRequest[]; // Received friend requests
   // Writing parties
   activeParties: Party[];
   upcomingParties: Party[];
@@ -74,6 +75,7 @@ type SocialAction =
   | { type: 'LOGOUT' }
   | { type: 'SET_SHARES'; owned: SharedProjectInfo[]; received: SharedProjectInfo[] }
   | { type: 'SET_FRIENDS'; friends: FriendWithKey[] }
+  | { type: 'SET_FRIEND_REQUESTS'; requests: FriendRequest[] }
   | { type: 'SET_PARTIES'; active: Party[]; upcoming: Party[]; invites: PartyInvite[] }
   | { type: 'UPDATE_ACTIVE_PARTY'; party: Party }
   | { type: 'ADD_PARTY_PROGRESS_SNAPSHOT'; partyId: string; snapshot: PartyProgressSnapshot };
@@ -90,6 +92,7 @@ const initialState: SocialState = {
   ownedShares: [],
   receivedShares: [],
   friends: [],
+  friendRequests: [],
   activeParties: [],
   upcomingParties: [],
   partyInvites: [],
@@ -178,6 +181,12 @@ function socialReducer(state: SocialState, action: SocialAction): SocialState {
         friends: action.friends,
       };
 
+    case 'SET_FRIEND_REQUESTS':
+      return {
+        ...state,
+        friendRequests: action.requests,
+      };
+
     case 'SET_PARTIES':
       return {
         ...state,
@@ -235,6 +244,9 @@ interface SocialContextValue {
     isLoggedIn: () => boolean;
     refreshShares: () => Promise<void>;
     refreshFriends: () => Promise<void>;
+    refreshFriendRequests: () => Promise<void>;
+    acceptFriendRequest: (requestId: string) => Promise<void>;
+    rejectFriendRequest: (requestId: string) => Promise<void>;
     shareProject: (
       project: Project,
       entries: WordEntry[],
@@ -606,6 +618,34 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.user]);
 
+  // Refresh friend requests
+  const refreshFriendRequests = useCallback(async (): Promise<void> => {
+    if (!state.user) return;
+
+    try {
+      const response = await apiClient.getFriendRequests();
+      dispatch({
+        type: 'SET_FRIEND_REQUESTS',
+        requests: response.received,
+      });
+    } catch (error) {
+      console.error('Failed to refresh friend requests:', error);
+    }
+  }, [state.user]);
+
+  // Accept a friend request
+  const acceptFriendRequest = useCallback(async (requestId: string): Promise<void> => {
+    await apiClient.acceptFriendRequest(requestId);
+    await refreshFriendRequests();
+    await refreshFriends();
+  }, [refreshFriendRequests, refreshFriends]);
+
+  // Reject a friend request
+  const rejectFriendRequest = useCallback(async (requestId: string): Promise<void> => {
+    await apiClient.rejectFriendRequest(requestId);
+    await refreshFriendRequests();
+  }, [refreshFriendRequests]);
+
   // Share a project with a friend
   const shareProject = useCallback(async (
     project: Project,
@@ -960,6 +1000,9 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
       isLoggedIn,
       refreshShares,
       refreshFriends,
+      refreshFriendRequests,
+      acceptFriendRequest,
+      rejectFriendRequest,
       shareProject,
       updateSharedProject,
       revokeShare,

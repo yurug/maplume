@@ -241,6 +241,8 @@ export default {
   receivedRequests: '受信',
   sentRequests: '送信済み',
   pendingRequest: '保留中...',
+  accept: '承認',
+  reject: '拒否',
   addFriendDescription: 'ユーザー名を入力して友達リクエストを送信します。',
   messageOptional: 'メッセージ（任意）',
   friendRequestMessagePlaceholder: 'こんにちは！MaPlumeでつながりましょう。',
