@@ -243,6 +243,7 @@ export default {
   pendingRequest: '保留中...',
   accept: '承認',
   reject: '拒否',
+  cancel: 'キャンセル',
   addFriendDescription: 'ユーザー名を入力して友達リクエストを送信します。',
   messageOptional: 'メッセージ（任意）',
   friendRequestMessagePlaceholder: 'こんにちは！MaPlumeでつながりましょう。',

@@ -266,6 +266,7 @@ export default {
   pendingRequest: 'Pending...',
   accept: 'Accept',
   reject: 'Reject',
+  cancel: 'Cancel',
   addFriendDescription: 'Search for a user to send a friend request.',
   messageOptional: 'Message (optional)',
   friendRequestMessagePlaceholder: 'Hi! I would like to connect with you on MaPlume.',
