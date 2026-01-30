@@ -228,6 +228,8 @@ scw container container update <container-id> \
 
 **Important:** Use GitHub Actions for building releases - do NOT build locally (requires Wine for Windows, macOS for Mac builds).
 
+**Before releasing:** Check CI status at GitHub → Actions → "Tests" workflow. Tests are informational (non-blocking) but review failures before releasing to decide if fixes are needed.
+
 1. **Update version number:**
    ```bash
    npm version <major|minor|patch> --no-git-tag-version
