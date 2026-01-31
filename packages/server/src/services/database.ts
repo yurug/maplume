@@ -536,13 +536,15 @@ export async function deleteUserAvatar(id: string): Promise<void> {
 }
 
 export async function searchUsers(query: string, limit: number): Promise<DbUser[]> {
+  // Escape LIKE special characters to prevent pattern injection
+  const escapedQuery = query.toLowerCase().replace(/[%_\\]/g, '\\$&');
   const result = await getPool().query(
     `SELECT id, username, username_lower, public_key, encryption_public_key, avatar_preset, avatar_data, avatar_image, bio,
             stats_public, searchable, created_at, deleted_at, last_seen_at
      FROM users
-     WHERE username_lower LIKE $1 AND searchable = TRUE AND deleted_at IS NULL
+     WHERE username_lower LIKE $1 ESCAPE '\\' AND searchable = TRUE AND deleted_at IS NULL
      LIMIT $2`,
-    [`%${query.toLowerCase()}%`, limit]
+    [`%${escapedQuery}%`, limit]
   );
 
   return result.rows.map((row) => ({

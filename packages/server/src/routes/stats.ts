@@ -4,6 +4,10 @@ import { config } from '../config';
 
 const router = Router();
 
+// Simple admin token check (set via environment variable)
+// For a production system, use proper admin authentication
+const ADMIN_TOKEN = process.env.ADMIN_STATS_TOKEN;
+
 // Initialize pool for stats queries
 function getPool(): Pool {
   return new Pool({
@@ -50,8 +54,17 @@ interface ServerStats {
   timestamp: number;
 }
 
-// GET /api/stats - Get server statistics (public endpoint for admin use)
+// GET /api/stats - Get server statistics (requires admin token)
 router.get('/', async (req, res) => {
+  // Check admin authorization
+  const authHeader = req.headers.authorization;
+  if (!ADMIN_TOKEN) {
+    return res.status(503).json({ error: 'Stats endpoint not configured' });
+  }
+  if (!authHeader || authHeader !== `Bearer ${ADMIN_TOKEN}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   const pool = getPool();
 
   try {

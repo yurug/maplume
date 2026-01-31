@@ -56,11 +56,17 @@ function getEnvOrThrow(key: string): string {
 export function loadConfig(): Config {
   const httpsEnabled = getEnvOrDefault('HTTPS_ENABLED', 'false') === 'true';
 
+  // Warn if using default JWT secret in production
+  const jwtSecret = getEnvOrDefault('JWT_SECRET', 'dev-secret-change-in-production');
+  if (jwtSecret === 'dev-secret-change-in-production' && process.env.NODE_ENV === 'production') {
+    console.error('⚠️  WARNING: Using default JWT_SECRET in production! Set JWT_SECRET environment variable.');
+  }
+
   return {
     port: parseInt(getEnvOrDefault('PORT', '8443'), 10),
     host: getEnvOrDefault('HOST', '0.0.0.0'),
     databaseUrl: getEnvOrDefault('DATABASE_URL', 'postgresql://localhost:5432/maplume'),
-    jwtSecret: getEnvOrDefault('JWT_SECRET', 'dev-secret-change-in-production'),
+    jwtSecret,
     jwtAccessExpiry: getEnvOrDefault('JWT_ACCESS_EXPIRY', '15m'),
     jwtRefreshExpiry: getEnvOrDefault('JWT_REFRESH_EXPIRY', '365d'),
     domain: getEnvOrDefault('DOMAIN', 'localhost'),
