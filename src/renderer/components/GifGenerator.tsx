@@ -6,6 +6,7 @@ import { getChartData } from '../services/statistics';
 import { useI18n } from '../i18n';
 import { useTheme } from '../context/ThemeContext';
 import { Button } from './ui/button';
+import logoSvg from '../assets/logo.svg';
 
 interface GifGeneratorProps {
   project: Project;
@@ -71,7 +72,8 @@ export function GifGenerator({ project, entries }: GifGeneratorProps) {
     data: ChartDataPoint[],
     progressIndex: number,
     maxValue: number,
-    activeNote: { text: string; opacity: number } | null
+    activeNote: { text: string; opacity: number } | null,
+    logoImg: HTMLImageElement | null
   ) => {
     const chartWidth = CANVAS_WIDTH - PADDING.left - PADDING.right;
     const chartHeight = CANVAS_HEIGHT - PADDING.top - PADDING.bottom;
@@ -246,6 +248,14 @@ export function GifGenerator({ project, entries }: GifGeneratorProps) {
 
       ctx.globalAlpha = 1;
     }
+
+    // Draw logo in top-right corner
+    if (logoImg) {
+      const logoSize = 36;
+      const logoX = CANVAS_WIDTH - logoSize - 12;
+      const logoY = 12;
+      ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+    }
   }, [colors, project, formatValue, formatDate, t, isDark]);
 
   // Generate GIF
@@ -262,6 +272,14 @@ export function GifGenerator({ project, entries }: GifGeneratorProps) {
     setGifUrl(null);
 
     try {
+      // Load logo image
+      const logoImg = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = logoSvg;
+      });
+
       const data = getChartData(project, entries) as ChartDataPoint[];
       const maxValue = Math.max(
         project.targetWords,
@@ -320,7 +338,7 @@ export function GifGenerator({ project, entries }: GifGeneratorProps) {
             }
 
             // Draw frame
-            drawFrame(ctx, data, i, maxValue, activeNote);
+            drawFrame(ctx, data, i, maxValue, activeNote, logoImg);
 
             // Get image data and add to GIF
             const imageData = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -354,7 +372,7 @@ export function GifGenerator({ project, entries }: GifGeneratorProps) {
       }
 
       // Add final frame with longer delay
-      drawFrame(ctx, data, data.length - 1, maxValue, null);
+      drawFrame(ctx, data, data.length - 1, maxValue, null, logoImg);
       const finalImageData = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       const finalPalette = quantize(finalImageData.data, 256, { format: 'rgba4444' });
       const finalIndexedPixels = applyPalette(finalImageData.data, finalPalette, 'rgba4444');
