@@ -171,8 +171,21 @@ ipcMain.handle('select-data-folder', async () => {
   return result.canceled ? null : result.filePaths[0];
 });
 
+// Validate that a path is within allowed directories (user data folder or app data)
+function isPathAllowed(filePath: string): boolean {
+  const resolved = path.resolve(filePath);
+  const userDataPath = app.getPath('userData');
+  const homePath = app.getPath('home');
+  // Allow paths within userData or user's home directory (for user-chosen data folders)
+  return resolved.startsWith(userDataPath) || resolved.startsWith(homePath);
+}
+
 ipcMain.handle('read-data', async (_event, filePath: string) => {
   try {
+    if (!isPathAllowed(filePath)) {
+      console.warn('Blocked read attempt to path outside allowed directories:', filePath);
+      return null;
+    }
     const data = await fs.promises.readFile(filePath, 'utf-8');
     return JSON.parse(data);
   } catch {
@@ -182,6 +195,10 @@ ipcMain.handle('read-data', async (_event, filePath: string) => {
 
 ipcMain.handle('write-data', async (_event, filePath: string, data: unknown) => {
   try {
+    if (!isPathAllowed(filePath)) {
+      console.warn('Blocked write attempt to path outside allowed directories:', filePath);
+      return false;
+    }
     await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
     return true;
   } catch {
@@ -203,8 +220,36 @@ ipcMain.handle('get-system-locale', () => {
 });
 
 ipcMain.handle('open-external-url', async (_event, url: string) => {
-  const { shell } = await import('electron');
-  shell.openExternal(url);
+  // Validate URL to prevent opening arbitrary protocols
+  try {
+    const parsed = new URL(url);
+    // Only allow https URLs (and http for localhost in dev)
+    const allowedProtocols = ['https:'];
+    if (isDev && parsed.hostname === 'localhost') {
+      allowedProtocols.push('http:');
+    }
+    if (!allowedProtocols.includes(parsed.protocol)) {
+      console.warn('Blocked attempt to open non-HTTPS URL:', url);
+      return;
+    }
+    // Optional: whitelist known domains
+    const allowedDomains = [
+      'github.com',
+      'maplume.app',
+      'yurug.github.io',
+    ];
+    const isAllowedDomain = allowedDomains.some(
+      (domain) => parsed.hostname === domain || parsed.hostname.endsWith('.' + domain)
+    );
+    if (!isAllowedDomain) {
+      console.warn('Blocked attempt to open non-whitelisted domain:', url);
+      return;
+    }
+    const { shell } = await import('electron');
+    shell.openExternal(url);
+  } catch (error) {
+    console.error('Invalid URL:', url, error);
+  }
 });
 
 // Config handlers for persistent storage (fixes Windows localStorage issues)
