@@ -1,14 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Film, Download, X, Loader2 } from 'lucide-react';
 import GIF from 'gif.js';
-// @ts-expect-error - Vite raw import
-import gifWorkerScript from 'gif.js/dist/gif.worker.js?raw';
 import type { Project, WordEntry, UnitType } from '@shared/types';
 import { getChartData } from '../services/statistics';
 import { useI18n } from '../i18n';
 import { useTheme } from '../context/ThemeContext';
 import { Button } from './ui/button';
-import { cn } from '../lib/utils';
 
 interface GifGeneratorProps {
   project: Project;
@@ -26,16 +23,6 @@ interface ChartDataPoint {
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 450;
 const PADDING = { top: 60, right: 80, bottom: 60, left: 70 };
-
-// Create blob URL for worker script once (works in Electron)
-let workerBlobUrl: string | null = null;
-function getWorkerBlobUrl(): string {
-  if (!workerBlobUrl) {
-    const blob = new Blob([gifWorkerScript], { type: 'application/javascript' });
-    workerBlobUrl = URL.createObjectURL(blob);
-  }
-  return workerBlobUrl;
-}
 
 export function GifGenerator({ project, entries }: GifGeneratorProps) {
   const { t } = useI18n();
@@ -290,13 +277,12 @@ export function GifGenerator({ project, entries }: GifGeneratorProps) {
       });
       const maxActivity = Math.max(...activities, 1);
 
-      // Create GIF encoder
+      // Create GIF encoder (workers disabled due to Electron CSP restrictions)
       const gif = new GIF({
-        workers: 2,
+        workers: 0,
         quality: 10,
         width: CANVAS_WIDTH,
         height: CANVAS_HEIGHT,
-        workerScript: getWorkerBlobUrl(),
       });
 
       // Find indices with notes
