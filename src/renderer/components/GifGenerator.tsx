@@ -249,12 +249,18 @@ export function GifGenerator({ project, entries }: GifGeneratorProps) {
       ctx.globalAlpha = 1;
     }
 
-    // Draw logo in top-right corner
+    // Draw logo and URL in top-right corner
     if (logoImg) {
       const logoSize = 36;
       const logoX = CANVAS_WIDTH - logoSize - 12;
       const logoY = 12;
       ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+
+      // Draw URL next to logo
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillStyle = colors.text;
+      ctx.textAlign = 'right';
+      ctx.fillText('maplume.short.gy/i', logoX - 8, logoY + logoSize / 2 + 4);
     }
   }, [colors, project, formatValue, formatDate, t, isDark]);
 
