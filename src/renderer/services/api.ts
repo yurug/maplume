@@ -41,6 +41,13 @@ import type {
   Party,
   UploadAvatarRequest,
   UploadAvatarResponse,
+  CreateCommentRequest,
+  CreateCommentResponse,
+  GetCommentsResponse,
+  UpdateCommentRequest,
+  AddReactionRequest,
+  AddReactionResponse,
+  GetReactionsResponse,
 } from '@maplume/shared';
 import { sign, bytesToBase64 } from './crypto';
 
@@ -453,6 +460,59 @@ class ApiClient {
    */
   async revokeShare(shareId: string): Promise<{ success: boolean }> {
     return this.request('DELETE', `/api/shares/${shareId}`);
+  }
+
+  // ============ Share Comments ============
+
+  /**
+   * Create a comment on a shared project
+   */
+  async createComment(shareId: string, request: CreateCommentRequest): Promise<CreateCommentResponse> {
+    return this.request<CreateCommentResponse>('POST', `/api/shares/${shareId}/comments`, request);
+  }
+
+  /**
+   * Get all comments for a share
+   */
+  async getComments(shareId: string): Promise<GetCommentsResponse> {
+    return this.request<GetCommentsResponse>('GET', `/api/shares/${shareId}/comments`);
+  }
+
+  /**
+   * Update a comment
+   */
+  async updateComment(shareId: string, commentId: string, request: UpdateCommentRequest): Promise<{ success: boolean }> {
+    return this.request('PUT', `/api/shares/${shareId}/comments/${commentId}`, request);
+  }
+
+  /**
+   * Delete a comment
+   */
+  async deleteComment(shareId: string, commentId: string): Promise<{ success: boolean }> {
+    return this.request('DELETE', `/api/shares/${shareId}/comments/${commentId}`);
+  }
+
+  // ============ Share Reactions ============
+
+  /**
+   * Add a reaction
+   */
+  async addReaction(shareId: string, request: AddReactionRequest): Promise<AddReactionResponse> {
+    return this.request<AddReactionResponse>('POST', `/api/shares/${shareId}/reactions`, request);
+  }
+
+  /**
+   * Get all reactions for a share
+   */
+  async getReactions(shareId: string): Promise<GetReactionsResponse> {
+    return this.request<GetReactionsResponse>('GET', `/api/shares/${shareId}/reactions`);
+  }
+
+  /**
+   * Remove a reaction
+   */
+  async removeReaction(shareId: string, reactionId: string): Promise<{ success: boolean }> {
+    return this.request('DELETE', `/api/shares/${shareId}/reactions/${reactionId}`);
   }
 
   // ============ Writing Parties ============

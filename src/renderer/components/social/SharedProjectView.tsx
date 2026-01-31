@@ -1,11 +1,11 @@
 /**
  * SharedProjectView - Read-only view of a shared project
  *
- * Shows the project's progress chart and statistics.
+ * Shows the project's progress chart, statistics, and allows comments/reactions.
  */
 
-import React, { useEffect, useState } from 'react';
-import { ArrowLeft, RefreshCw, Eye, Lock, User, Target, Calendar, TrendingUp, Award } from 'lucide-react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { ArrowLeft, RefreshCw, Eye, Lock, User, Target, Calendar, TrendingUp, Award, MessageCircle } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -19,7 +19,9 @@ import {
 import { useSocial } from '../../context/SocialContext';
 import { useI18n } from '../../i18n';
 import { Button } from '../ui/button';
-import type { Project, WordEntry } from '@maplume/shared';
+import { CommentSection } from './CommentSection';
+import { ReactionBar, InlineReactions } from './ReactionBar';
+import type { Project, WordEntry, ReactionCount } from '@maplume/shared';
 import { calculateStatistics, getChartData } from '../../services/statistics';
 
 interface SharedProjectViewProps {
@@ -38,9 +40,20 @@ export function SharedProjectView({ shareId, onBack }: SharedProjectViewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<DecryptedProject | null>(null);
+  const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null);
 
-  // Find share info
-  const share = state.receivedShares.find(s => s.id === shareId);
+  // Find share info - check both received and owned shares
+  const receivedShare = state.receivedShares.find(s => s.id === shareId);
+  const ownedShare = state.ownedShares.find(s => s.id === shareId);
+  const share = receivedShare || ownedShare;
+  const isOwner = !!ownedShare;
+
+  // Get owner's public key for encryption (either from share or from friends list)
+  const ownerPublicKey = receivedShare?.owner?.publicKey ||
+    state.friends.find(f => f.id === ownedShare?.sharedWith?.id)?.publicKey || '';
+
+  // Get interactions for this share
+  const interactions = state.shareInteractions[shareId];
 
   useEffect(() => {
     const loadProject = async () => {
@@ -49,6 +62,11 @@ export function SharedProjectView({ shareId, onBack }: SharedProjectViewProps) {
       try {
         const decrypted = await actions.decryptSharedProject(shareId);
         setData(decrypted);
+
+        // Load interactions if we have the owner's public key
+        if (ownerPublicKey) {
+          await actions.loadShareInteractions(shareId, ownerPublicKey);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load project');
       } finally {
@@ -56,6 +74,35 @@ export function SharedProjectView({ shareId, onBack }: SharedProjectViewProps) {
       }
     };
     loadProject();
+  }, [shareId, actions, ownerPublicKey]);
+
+  // Get reaction counts for a target
+  const getReactionCounts = useCallback((
+    targetType: 'entry' | 'note' | 'comment',
+    targetId: string
+  ): ReactionCount[] => {
+    return actions.getReactionCounts(shareId, targetType, targetId);
+  }, [shareId, actions]);
+
+  // Handle adding/removing reactions
+  const handleAddReaction = useCallback(async (
+    targetType: 'entry' | 'note' | 'comment',
+    targetId: string,
+    emoji: string
+  ) => {
+    try {
+      await actions.addReaction(shareId, targetType, targetId, emoji);
+    } catch (err) {
+      console.error('Failed to add reaction:', err);
+    }
+  }, [shareId, actions]);
+
+  const handleRemoveReaction = useCallback(async (reactionId: string) => {
+    try {
+      await actions.removeReaction(shareId, reactionId);
+    } catch (err) {
+      console.error('Failed to remove reaction:', err);
+    }
   }, [shareId, actions]);
 
   if (loading) {
@@ -278,43 +325,74 @@ export function SharedProjectView({ shareId, onBack }: SharedProjectViewProps) {
             <h3 className="text-sm font-medium text-warm-500 uppercase tracking-wider mb-4">
               {t.entries || 'Entries'} ({entries.length})
             </h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-warm-200 dark:border-warm-700">
-                    <th className="text-left py-2 px-3 font-medium text-warm-600 dark:text-warm-400">
-                      {t.date || 'Date'}
-                    </th>
-                    <th className="text-right py-2 px-3 font-medium text-warm-600 dark:text-warm-400">
-                      {getUnitLabel()}
-                    </th>
-                    <th className="text-left py-2 px-3 font-medium text-warm-600 dark:text-warm-400">
-                      {t.type || 'Type'}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {entries.slice().reverse().slice(0, 10).map((entry, index) => (
-                    <tr
-                      key={index}
-                      className="border-b border-warm-100 dark:border-warm-800"
-                    >
-                      <td className="py-2 px-3 text-warm-900 dark:text-warm-100">
-                        {formatDate(entry.date)}
-                      </td>
-                      <td className="py-2 px-3 text-right text-warm-900 dark:text-warm-100 font-mono">
-                        {entry.wordCount.toLocaleString()}
-                      </td>
-                      <td className="py-2 px-3 text-warm-500">
-                        {entry.isIncrement ? '+' : '='}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-2">
+              {entries.slice().reverse().slice(0, 10).map((entry) => {
+                const entryId = entry.id || `${entry.date}-${entry.wordCount}`;
+                const entryReactions = getReactionCounts('entry', entryId);
+                const entryComments = interactions?.comments.filter(
+                  c => c.targetType === 'entry' && c.targetId === entryId
+                ) || [];
+                const isExpanded = expandedEntryId === entryId;
+
+                return (
+                  <div
+                    key={entryId}
+                    className="group p-3 rounded-lg border border-warm-100 dark:border-warm-800 hover:border-warm-200 dark:hover:border-warm-700 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <span className="text-warm-900 dark:text-warm-100 font-medium">
+                          {formatDate(entry.date)}
+                        </span>
+                        <span className="text-warm-900 dark:text-warm-100 font-mono">
+                          {entry.isIncrement ? '+' : ''}{entry.wordCount.toLocaleString()}
+                        </span>
+                        {entry.note && (
+                          <span className="text-sm text-warm-500 truncate max-w-[200px]">
+                            {entry.note}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {/* Comment indicator */}
+                        {entryComments.length > 0 && (
+                          <button
+                            onClick={() => setExpandedEntryId(isExpanded ? null : entryId)}
+                            className="flex items-center gap-1 text-xs text-warm-400 hover:text-warm-600"
+                          >
+                            <MessageCircle className="w-3 h-3" />
+                            {entryComments.length}
+                          </button>
+                        )}
+                        {/* Reactions */}
+                        <InlineReactions
+                          reactions={entryReactions}
+                          onAddReaction={(emoji) => handleAddReaction('entry', entryId, emoji)}
+                          onRemoveReaction={handleRemoveReaction}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Expanded comments section */}
+                    {(isExpanded || entryComments.length === 0) && ownerPublicKey && (
+                      <div className="mt-3 pt-3 border-t border-warm-100 dark:border-warm-800">
+                        <CommentSection
+                          shareId={shareId}
+                          targetType="entry"
+                          targetId={entryId}
+                          ownerPublicKey={ownerPublicKey}
+                          comments={interactions?.comments || []}
+                          getReactionCounts={getReactionCounts}
+                          expanded={isExpanded}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
               {entries.length > 10 && (
                 <p className="text-center text-sm text-warm-500 mt-2">
-                  ...{entries.length - 10} {t.entries || 'more entries'}
+                  ...{entries.length - 10} {t.moreEntries || 'more entries'}
                 </p>
               )}
             </div>
@@ -327,9 +405,34 @@ export function SharedProjectView({ shareId, onBack }: SharedProjectViewProps) {
             <h3 className="text-sm font-medium text-warm-500 uppercase tracking-wider mb-2">
               {t.projectNotes || 'Notes'}
             </h3>
-            <p className="text-warm-700 dark:text-warm-300 whitespace-pre-wrap">
-              {project.notes}
-            </p>
+            <div className="p-4 rounded-lg border border-warm-200 dark:border-warm-700 bg-warm-50/50 dark:bg-warm-800/50">
+              <p className="text-warm-700 dark:text-warm-300 whitespace-pre-wrap mb-4">
+                {project.notes}
+              </p>
+
+              {/* Reactions on notes */}
+              <div className="flex items-center gap-4 pt-3 border-t border-warm-200 dark:border-warm-700">
+                <ReactionBar
+                  reactions={getReactionCounts('note', 'project-notes')}
+                  onAddReaction={(emoji) => handleAddReaction('note', 'project-notes', emoji)}
+                  onRemoveReaction={handleRemoveReaction}
+                />
+              </div>
+
+              {/* Comments on notes */}
+              {ownerPublicKey && (
+                <div className="mt-4 pt-4 border-t border-warm-200 dark:border-warm-700">
+                  <CommentSection
+                    shareId={shareId}
+                    targetType="note"
+                    targetId="project-notes"
+                    ownerPublicKey={ownerPublicKey}
+                    comments={interactions?.comments || []}
+                    getReactionCounts={getReactionCounts}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

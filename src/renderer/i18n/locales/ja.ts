@@ -393,6 +393,19 @@ export default {
   crop: 'トリミング',
   processing: '処理中...',
 
+  // Comments and Reactions
+  comments: 'コメント',
+  comment: 'コメント',
+  addComment: 'コメントを追加',
+  editComment: '編集',
+  deleteComment: '削除',
+  noComments: 'コメントはまだありません',
+  commentPlaceholder: 'コメントを書く...',
+  addReaction: 'リアクションを追加',
+  edited: '編集済み',
+  justNow: 'たった今',
+  moreEntries: '件のエントリー',
+
   // Dashboard
   dashboard: 'ダッシュボード',
   activity: 'アクティビティ',

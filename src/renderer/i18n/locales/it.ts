@@ -393,6 +393,19 @@ export default {
   crop: 'Ritaglia',
   processing: 'Elaborazione...',
 
+  // Comments and Reactions
+  comments: 'Commenti',
+  comment: 'commento',
+  addComment: 'Aggiungi un commento',
+  editComment: 'Modifica',
+  deleteComment: 'Elimina',
+  noComments: 'Nessun commento ancora',
+  commentPlaceholder: 'Scrivi un commento...',
+  addReaction: 'Aggiungi reazione',
+  edited: 'modificato',
+  justNow: 'proprio ora',
+  moreEntries: 'altre voci',
+
   // Dashboard
   dashboard: 'Dashboard',
   activity: 'Attività',

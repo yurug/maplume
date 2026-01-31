@@ -393,6 +393,19 @@ export default {
   crop: '裁剪',
   processing: '处理中...',
 
+  // Comments and Reactions
+  comments: '评论',
+  comment: '评论',
+  addComment: '添加评论',
+  editComment: '编辑',
+  deleteComment: '删除',
+  noComments: '暂无评论',
+  commentPlaceholder: '写评论...',
+  addReaction: '添加反应',
+  edited: '已编辑',
+  justNow: '刚刚',
+  moreEntries: '更多条目',
+
   // Dashboard
   dashboard: '仪表盘',
   activity: '活动',
