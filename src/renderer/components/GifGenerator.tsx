@@ -324,19 +324,11 @@ export function GifGenerator({ project, entries }: GifGeneratorProps) {
 
             // Get image data and add to GIF
             const imageData = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-            const { data: pixels } = imageData;
+            const { data: rgba } = imageData;
 
-            // Convert to RGB format for gifenc
-            const rgbPixels = new Uint8Array((CANVAS_WIDTH * CANVAS_HEIGHT) * 3);
-            for (let j = 0; j < CANVAS_WIDTH * CANVAS_HEIGHT; j++) {
-              rgbPixels[j * 3] = pixels[j * 4];
-              rgbPixels[j * 3 + 1] = pixels[j * 4 + 1];
-              rgbPixels[j * 3 + 2] = pixels[j * 4 + 2];
-            }
-
-            // Quantize to 256 colors and create palette
-            const palette = quantize(rgbPixels, 256);
-            const indexedPixels = applyPalette(rgbPixels, palette);
+            // Quantize RGBA data to 256 colors palette
+            const palette = quantize(rgba, 256, { format: 'rgba4444' });
+            const indexedPixels = applyPalette(rgba, palette, 'rgba4444');
 
             // Calculate delay based on activity
             const activity = activities[i] || 0;
@@ -364,14 +356,8 @@ export function GifGenerator({ project, entries }: GifGeneratorProps) {
       // Add final frame with longer delay
       drawFrame(ctx, data, data.length - 1, maxValue, null);
       const finalImageData = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-      const finalRgbPixels = new Uint8Array((CANVAS_WIDTH * CANVAS_HEIGHT) * 3);
-      for (let j = 0; j < CANVAS_WIDTH * CANVAS_HEIGHT; j++) {
-        finalRgbPixels[j * 3] = finalImageData.data[j * 4];
-        finalRgbPixels[j * 3 + 1] = finalImageData.data[j * 4 + 1];
-        finalRgbPixels[j * 3 + 2] = finalImageData.data[j * 4 + 2];
-      }
-      const finalPalette = quantize(finalRgbPixels, 256);
-      const finalIndexedPixels = applyPalette(finalRgbPixels, finalPalette);
+      const finalPalette = quantize(finalImageData.data, 256, { format: 'rgba4444' });
+      const finalIndexedPixels = applyPalette(finalImageData.data, finalPalette, 'rgba4444');
       gif.writeFrame(finalIndexedPixels, CANVAS_WIDTH, CANVAS_HEIGHT, { palette: finalPalette, delay: 200 });
 
       setProgress(95);
