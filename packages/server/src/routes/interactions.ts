@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { createError } from '../middleware/errorHandler';
 import { authMiddleware } from '../middleware/auth';
+import { config } from '../config';
 import * as db from '../services/database';
 
 const router = Router();
@@ -36,11 +37,31 @@ router.post('/:shareId/comments', async (req: Request, res: Response, next) => {
     if (!targetId || typeof targetId !== 'string') {
       throw createError('targetId is required', 400, 'INVALID_TARGET_ID');
     }
+    if (targetId.length > config.limits.maxTargetIdLength) {
+      throw createError('targetId too long', 400, 'INVALID_TARGET_ID');
+    }
     if (!encryptedContent || typeof encryptedContent !== 'string') {
       throw createError('encryptedContent is required', 400, 'INVALID_CONTENT');
     }
+    if (encryptedContent.length > config.limits.maxEncryptedContentSize) {
+      throw createError(
+        `Comment too large (max ${Math.round(config.limits.maxEncryptedContentSize / 1024)}KB)`,
+        400,
+        'CONTENT_TOO_LARGE'
+      );
+    }
     if (!nonce || typeof nonce !== 'string') {
       throw createError('nonce is required', 400, 'INVALID_NONCE');
+    }
+
+    // Check comment count limit for this share
+    const commentCount = await db.countShareComments(shareId);
+    if (commentCount >= config.limits.maxCommentsPerShare) {
+      throw createError(
+        `Comment limit reached for this share (max ${config.limits.maxCommentsPerShare})`,
+        400,
+        'COMMENT_LIMIT_REACHED'
+      );
     }
 
     const commentId = await db.createShareComment(
@@ -110,6 +131,13 @@ router.put('/:shareId/comments/:commentId', async (req: Request, res: Response, 
     if (!encryptedContent || typeof encryptedContent !== 'string') {
       throw createError('encryptedContent is required', 400, 'INVALID_CONTENT');
     }
+    if (encryptedContent.length > config.limits.maxEncryptedContentSize) {
+      throw createError(
+        `Comment too large (max ${Math.round(config.limits.maxEncryptedContentSize / 1024)}KB)`,
+        400,
+        'CONTENT_TOO_LARGE'
+      );
+    }
     if (!nonce || typeof nonce !== 'string') {
       throw createError('nonce is required', 400, 'INVALID_NONCE');
     }
@@ -171,13 +199,26 @@ router.post('/:shareId/reactions', async (req: Request, res: Response, next) => 
     if (!targetId || typeof targetId !== 'string') {
       throw createError('targetId is required', 400, 'INVALID_TARGET_ID');
     }
+    if (targetId.length > config.limits.maxTargetIdLength) {
+      throw createError('targetId too long', 400, 'INVALID_TARGET_ID');
+    }
     if (!emoji || typeof emoji !== 'string') {
       throw createError('emoji is required', 400, 'INVALID_EMOJI');
     }
 
-    // Limit emoji to reasonable length (most emojis are 1-4 chars, but some are longer due to ZWJ)
-    if (emoji.length > 20) {
+    // Limit emoji to reasonable length
+    if (emoji.length > config.limits.maxEmojiLength) {
       throw createError('Invalid emoji', 400, 'INVALID_EMOJI');
+    }
+
+    // Check reaction count limit for this share
+    const reactionCount = await db.countShareReactions(shareId);
+    if (reactionCount >= config.limits.maxReactionsPerShare) {
+      throw createError(
+        `Reaction limit reached for this share (max ${config.limits.maxReactionsPerShare})`,
+        400,
+        'REACTION_LIMIT_REACHED'
+      );
     }
 
     const reactionId = await db.addShareReaction(

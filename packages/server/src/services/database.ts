@@ -1854,3 +1854,46 @@ export async function getShareReaction(reactionId: string): Promise<DbShareReact
     createdAt: parseInt(row.created_at),
   };
 }
+
+// ============ Count Functions for Rate Limiting ============
+
+export async function countUserShares(userId: string): Promise<number> {
+  const result = await getPool().query(
+    `SELECT COUNT(*) as count FROM project_shares WHERE owner_id = $1 AND revoked_at IS NULL`,
+    [userId]
+  );
+  return parseInt(result.rows[0].count);
+}
+
+export async function countShareComments(shareId: string): Promise<number> {
+  const result = await getPool().query(
+    `SELECT COUNT(*) as count FROM share_comments WHERE share_id = $1 AND deleted_at IS NULL`,
+    [shareId]
+  );
+  return parseInt(result.rows[0].count);
+}
+
+export async function countShareReactions(shareId: string): Promise<number> {
+  const result = await getPool().query(
+    `SELECT COUNT(*) as count FROM share_reactions WHERE share_id = $1`,
+    [shareId]
+  );
+  return parseInt(result.rows[0].count);
+}
+
+export async function countPendingFriendRequests(userId: string): Promise<number> {
+  const result = await getPool().query(
+    `SELECT COUNT(*) as count FROM friend_requests WHERE from_user_id = $1 AND status = 'pending'`,
+    [userId]
+  );
+  return parseInt(result.rows[0].count);
+}
+
+export async function countActivePartiesForUser(userId: string): Promise<number> {
+  const result = await getPool().query(
+    `SELECT COUNT(*) as count FROM parties
+     WHERE creator_id = $1 AND status IN ('active', 'scheduled')`,
+    [userId]
+  );
+  return parseInt(result.rows[0].count);
+}

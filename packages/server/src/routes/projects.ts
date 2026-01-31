@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+import { config } from '../config';
 import * as db from '../services/database';
 
 const router = Router();
@@ -13,6 +14,15 @@ router.post('/sync', authMiddleware, async (req: Request, res: Response, next) =
 
     if (!encryptedBlob || typeof encryptedBlob !== 'string') {
       throw createError('Encrypted blob is required', 400, 'MISSING_BLOB');
+    }
+
+    // Validate blob size
+    if (encryptedBlob.length > config.limits.maxEncryptedBlobSize) {
+      throw createError(
+        `Project data too large (max ${Math.round(config.limits.maxEncryptedBlobSize / 1024 / 1024)}MB)`,
+        400,
+        'BLOB_TOO_LARGE'
+      );
     }
 
     if (!blobHash || typeof blobHash !== 'string') {

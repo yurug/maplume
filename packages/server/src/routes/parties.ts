@@ -4,6 +4,7 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { authMiddleware } from '../middleware/auth';
+import { config } from '../config';
 import {
   createParty,
   getPartyById,
@@ -23,6 +24,7 @@ import {
   respondToInvite,
   getCreatorInfo,
   areFriends,
+  countActivePartiesForUser,
   DbParty,
 } from '../services/database';
 import type {
@@ -88,8 +90,24 @@ router.post('/', authMiddleware, async (req: Request, res: Response, next: NextF
       return res.status(400).json({ error: 'Title is required', code: 'INVALID_TITLE' });
     }
 
+    if (title.length > config.limits.maxTitleLength) {
+      return res.status(400).json({
+        error: `Title too long (max ${config.limits.maxTitleLength} characters)`,
+        code: 'TITLE_TOO_LONG'
+      });
+    }
+
     if (!durationMinutes || durationMinutes < 5 || durationMinutes > 525600) {
       return res.status(400).json({ error: 'Duration must be between 5 minutes and 1 year', code: 'INVALID_DURATION' });
+    }
+
+    // Check active party limit
+    const activePartyCount = await countActivePartiesForUser(userId);
+    if (activePartyCount >= config.limits.maxActivePartiesPerUser) {
+      return res.status(400).json({
+        error: `Active party limit reached (max ${config.limits.maxActivePartiesPerUser})`,
+        code: 'PARTY_LIMIT_REACHED'
+      });
     }
 
     // Create party

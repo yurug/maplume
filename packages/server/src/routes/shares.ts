@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { createError } from '../middleware/errorHandler';
 import { authMiddleware } from '../middleware/auth';
+import { config } from '../config';
 import * as db from '../services/database';
 
 const router = Router();
@@ -44,6 +45,28 @@ router.post('/', async (req: Request, res: Response, next) => {
     const areFriends = await db.areFriends(userId, sharedWithId);
     if (!areFriends) {
       throw createError('You can only share projects with friends', 403, 'NOT_FRIENDS');
+    }
+
+    // Validate encryptedData size
+    if (encryptedData.length > config.limits.maxEncryptedDataSize) {
+      throw createError(
+        `Share data too large (max ${Math.round(config.limits.maxEncryptedDataSize / 1024 / 1024)}MB)`,
+        400,
+        'DATA_TOO_LARGE'
+      );
+    }
+
+    // Check user's share count limit (only for new shares)
+    const existingShare = await db.getShareByOwnerAndRecipient(userId, sharedWithId, projectLocalId);
+    if (!existingShare) {
+      const shareCount = await db.countUserShares(userId);
+      if (shareCount >= config.limits.maxSharesPerUser) {
+        throw createError(
+          `Share limit reached (max ${config.limits.maxSharesPerUser} shares)`,
+          400,
+          'SHARE_LIMIT_REACHED'
+        );
+      }
     }
 
     // Create or update the share

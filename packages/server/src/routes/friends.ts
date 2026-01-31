@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { createError } from '../middleware/errorHandler';
 import { authMiddleware } from '../middleware/auth';
+import { config } from '../config';
 import * as db from '../services/database';
 
 const router = Router();
@@ -93,12 +94,31 @@ router.post('/request', async (req: Request, res: Response, next) => {
       throw createError('Already friends with this user', 400, 'ALREADY_FRIENDS');
     }
 
+    // Validate message length
+    if (message && typeof message === 'string' && message.length > config.limits.maxMessageLength) {
+      throw createError(
+        `Message too long (max ${config.limits.maxMessageLength} characters)`,
+        400,
+        'MESSAGE_TOO_LONG'
+      );
+    }
+
     // Check if there's already a pending request from them to us
     const existingRequest = await db.getFriendRequest(targetUser.id, userId);
     if (existingRequest && existingRequest.status === 'pending') {
       // Auto-accept their request instead
       await db.acceptFriendRequest(existingRequest.id, userId);
       return res.json({ success: true, autoAccepted: true });
+    }
+
+    // Check pending friend request limit
+    const pendingCount = await db.countPendingFriendRequests(userId);
+    if (pendingCount >= config.limits.maxPendingFriendRequests) {
+      throw createError(
+        `Too many pending friend requests (max ${config.limits.maxPendingFriendRequests})`,
+        400,
+        'REQUEST_LIMIT_REACHED'
+      );
     }
 
     // Create the friend request

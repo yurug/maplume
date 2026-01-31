@@ -24,6 +24,14 @@ const registerLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const challengeLimiter = rateLimit({
+  windowMs: config.rateLimit.challenge.windowMs,
+  max: config.rateLimit.challenge.max,
+  message: { error: 'Too many challenge requests', code: 'RATE_LIMITED' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // POST /api/auth/register
 router.post('/register', registerLimiter, async (req: Request, res: Response, next) => {
   try {
@@ -62,7 +70,7 @@ router.post('/register', registerLimiter, async (req: Request, res: Response, ne
 });
 
 // POST /api/auth/challenge
-router.post('/challenge', async (req: Request, res: Response, next) => {
+router.post('/challenge', challengeLimiter, async (req: Request, res: Response, next) => {
   try {
     const { username } = req.body;
 
