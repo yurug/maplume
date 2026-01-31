@@ -333,7 +333,7 @@ export function GifGenerator({ project, entries }: GifGeneratorProps) {
             // Calculate delay based on activity
             const activity = activities[i] || 0;
             const activityRatio = activity / maxActivity;
-            const baseDelay = 5; // Base delay in centiseconds (50ms)
+            const baseDelay = 10; // Base delay in centiseconds (100ms) - minimum respected by most viewers
             const maxExtraDelay = 15; // Extra delay for high activity
             const delay = Math.round(baseDelay + activityRatio * maxExtraDelay);
 
