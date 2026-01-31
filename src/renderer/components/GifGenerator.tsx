@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Film, Download, X, Loader2 } from 'lucide-react';
-import GIF from 'gif.js';
+import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 import type { Project, WordEntry, UnitType } from '@shared/types';
 import { getChartData } from '../services/statistics';
 import { useI18n } from '../i18n';
@@ -277,13 +277,8 @@ export function GifGenerator({ project, entries }: GifGeneratorProps) {
       });
       const maxActivity = Math.max(...activities, 1);
 
-      // Create GIF encoder (workers disabled due to Electron CSP restrictions)
-      const gif = new GIF({
-        workers: 0,
-        quality: 10,
-        width: CANVAS_WIDTH,
-        height: CANVAS_HEIGHT,
-      });
+      // Create GIF encoder using gifenc (pure JS, no workers needed)
+      const gif = GIFEncoder();
 
       // Find indices with notes
       const notesMap = new Map<number, string[]>();
@@ -297,64 +292,99 @@ export function GifGenerator({ project, entries }: GifGeneratorProps) {
       const totalFrames = data.length;
       let currentNote: { text: string; opacity: number; framesLeft: number } | null = null;
 
+      // Use setTimeout to allow UI updates between frames
+      const processFrame = (i: number): Promise<void> => {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            // Check for new notes at this index
+            const notes = notesMap.get(i);
+            if (notes && notes.length > 0) {
+              currentNote = {
+                text: notes[0],
+                opacity: 1,
+                framesLeft: 15,
+              };
+            }
+
+            // Update note fade
+            let activeNote: { text: string; opacity: number } | null = null;
+            if (currentNote) {
+              activeNote = { text: currentNote.text, opacity: currentNote.opacity };
+              currentNote.framesLeft--;
+              if (currentNote.framesLeft <= 5) {
+                currentNote.opacity = currentNote.framesLeft / 5;
+              }
+              if (currentNote.framesLeft <= 0) {
+                currentNote = null;
+              }
+            }
+
+            // Draw frame
+            drawFrame(ctx, data, i, maxValue, activeNote);
+
+            // Get image data and add to GIF
+            const imageData = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            const { data: pixels } = imageData;
+
+            // Convert to RGB format for gifenc
+            const rgbPixels = new Uint8Array((CANVAS_WIDTH * CANVAS_HEIGHT) * 3);
+            for (let j = 0; j < CANVAS_WIDTH * CANVAS_HEIGHT; j++) {
+              rgbPixels[j * 3] = pixels[j * 4];
+              rgbPixels[j * 3 + 1] = pixels[j * 4 + 1];
+              rgbPixels[j * 3 + 2] = pixels[j * 4 + 2];
+            }
+
+            // Quantize to 256 colors and create palette
+            const palette = quantize(rgbPixels, 256);
+            const indexedPixels = applyPalette(rgbPixels, palette);
+
+            // Calculate delay based on activity
+            const activity = activities[i] || 0;
+            const activityRatio = activity / maxActivity;
+            const baseDelay = 5; // Base delay in centiseconds (50ms)
+            const maxExtraDelay = 15; // Extra delay for high activity
+            const delay = Math.round(baseDelay + activityRatio * maxExtraDelay);
+
+            // Add frame
+            gif.writeFrame(indexedPixels, CANVAS_WIDTH, CANVAS_HEIGHT, { palette, delay });
+
+            // Update progress
+            setProgress(Math.round(((i + 1) / totalFrames) * 90));
+
+            resolve();
+          }, 0);
+        });
+      };
+
+      // Process all frames
       for (let i = 0; i < totalFrames; i++) {
-        // Check for new notes at this index
-        const notes = notesMap.get(i);
-        if (notes && notes.length > 0) {
-          currentNote = {
-            text: notes[0], // Show first note
-            opacity: 1,
-            framesLeft: 15, // Show for 15 frames
-          };
-        }
-
-        // Update note fade
-        let activeNote: { text: string; opacity: number } | null = null;
-        if (currentNote) {
-          activeNote = { text: currentNote.text, opacity: currentNote.opacity };
-          currentNote.framesLeft--;
-          if (currentNote.framesLeft <= 5) {
-            currentNote.opacity = currentNote.framesLeft / 5;
-          }
-          if (currentNote.framesLeft <= 0) {
-            currentNote = null;
-          }
-        }
-
-        // Draw frame
-        drawFrame(ctx, data, i, maxValue, activeNote);
-
-        // Calculate delay based on activity (slower on active days)
-        const activity = activities[i] || 0;
-        const activityRatio = activity / maxActivity;
-        const baseDelay = 50; // Base delay in ms
-        const maxExtraDelay = 150; // Extra delay for high activity
-        const delay = baseDelay + activityRatio * maxExtraDelay;
-
-        // Add frame to GIF
-        gif.addFrame(ctx, { copy: true, delay });
-
-        // Update progress
-        setProgress(Math.round((i / totalFrames) * 80));
+        await processFrame(i);
       }
 
       // Add final frame with longer delay
       drawFrame(ctx, data, data.length - 1, maxValue, null);
-      gif.addFrame(ctx, { copy: true, delay: 2000 });
+      const finalImageData = ctx.getImageData(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      const finalRgbPixels = new Uint8Array((CANVAS_WIDTH * CANVAS_HEIGHT) * 3);
+      for (let j = 0; j < CANVAS_WIDTH * CANVAS_HEIGHT; j++) {
+        finalRgbPixels[j * 3] = finalImageData.data[j * 4];
+        finalRgbPixels[j * 3 + 1] = finalImageData.data[j * 4 + 1];
+        finalRgbPixels[j * 3 + 2] = finalImageData.data[j * 4 + 2];
+      }
+      const finalPalette = quantize(finalRgbPixels, 256);
+      const finalIndexedPixels = applyPalette(finalRgbPixels, finalPalette);
+      gif.writeFrame(finalIndexedPixels, CANVAS_WIDTH, CANVAS_HEIGHT, { palette: finalPalette, delay: 200 });
 
-      // Render GIF
-      gif.on('progress', (p: number) => {
-        setProgress(80 + Math.round(p * 20));
-      });
+      setProgress(95);
 
-      gif.on('finished', (blob: Blob) => {
-        const url = URL.createObjectURL(blob);
-        setGifUrl(url);
-        setIsGenerating(false);
-        setProgress(100);
-      });
+      // Finish and create blob
+      gif.finish();
+      const bytes = gif.bytes();
+      const blob = new Blob([bytes], { type: 'image/gif' });
+      const url = URL.createObjectURL(blob);
 
-      gif.render();
+      setGifUrl(url);
+      setIsGenerating(false);
+      setProgress(100);
     } catch (err) {
       console.error('Failed to generate GIF:', err);
       setError(t.gifGenerationError || 'Failed to generate GIF');
