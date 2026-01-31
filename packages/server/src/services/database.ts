@@ -326,6 +326,54 @@ async function runMigrations(): Promise<void> {
 
       console.log('Migration 006_avatar_data applied');
     }
+
+    // Migration 007: Share comments and reactions
+    if (!applied.has('007_share_interactions')) {
+      console.log('Applying migration: 007_share_interactions');
+
+      // Comments table
+      await client.query(`
+        CREATE TABLE share_comments (
+          id TEXT PRIMARY KEY,
+          share_id TEXT NOT NULL REFERENCES project_shares(id) ON DELETE CASCADE,
+          author_id TEXT NOT NULL REFERENCES users(id),
+          target_type TEXT NOT NULL,
+          target_id TEXT NOT NULL,
+          encrypted_content TEXT NOT NULL,
+          nonce TEXT NOT NULL,
+          created_at BIGINT NOT NULL,
+          updated_at BIGINT NOT NULL,
+          deleted_at BIGINT
+        )
+      `);
+
+      // Reactions table
+      await client.query(`
+        CREATE TABLE share_reactions (
+          id TEXT PRIMARY KEY,
+          share_id TEXT NOT NULL REFERENCES project_shares(id) ON DELETE CASCADE,
+          author_id TEXT NOT NULL REFERENCES users(id),
+          target_type TEXT NOT NULL,
+          target_id TEXT NOT NULL,
+          emoji TEXT NOT NULL,
+          created_at BIGINT NOT NULL,
+          CONSTRAINT unique_reaction UNIQUE (share_id, author_id, target_type, target_id, emoji)
+        )
+      `);
+
+      // Indexes
+      await client.query(`CREATE INDEX idx_share_comments_share ON share_comments(share_id) WHERE deleted_at IS NULL`);
+      await client.query(`CREATE INDEX idx_share_comments_target ON share_comments(share_id, target_type, target_id) WHERE deleted_at IS NULL`);
+      await client.query(`CREATE INDEX idx_share_reactions_share ON share_reactions(share_id)`);
+      await client.query(`CREATE INDEX idx_share_reactions_target ON share_reactions(share_id, target_type, target_id)`);
+
+      await client.query(`INSERT INTO migrations (name, applied_at) VALUES ($1, $2)`, [
+        '007_share_interactions',
+        Date.now(),
+      ]);
+
+      console.log('Migration 007_share_interactions applied');
+    }
   } finally {
     client.release();
   }
@@ -1585,5 +1633,224 @@ export async function getCreatorInfo(creatorId: string): Promise<{ id: string; u
     id: row.id,
     username: row.username,
     avatarPreset: row.avatar_preset,
+  };
+}
+
+// ============ Share Comments ============
+
+export interface DbShareComment {
+  id: string;
+  shareId: string;
+  authorId: string;
+  targetType: 'entry' | 'note';
+  targetId: string;
+  encryptedContent: string;
+  nonce: string;
+  createdAt: number;
+  updatedAt: number;
+  deletedAt: number | null;
+}
+
+export interface DbShareReaction {
+  id: string;
+  shareId: string;
+  authorId: string;
+  targetType: 'entry' | 'note' | 'comment';
+  targetId: string;
+  emoji: string;
+  createdAt: number;
+}
+
+export async function createShareComment(
+  shareId: string,
+  authorId: string,
+  targetType: 'entry' | 'note',
+  targetId: string,
+  encryptedContent: string,
+  nonce: string
+): Promise<string> {
+  const id = randomUUID();
+  const now = Date.now();
+
+  await getPool().query(
+    `INSERT INTO share_comments (id, share_id, author_id, target_type, target_id, encrypted_content, nonce, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)`,
+    [id, shareId, authorId, targetType, targetId, encryptedContent, nonce, now]
+  );
+
+  return id;
+}
+
+export async function getShareComments(
+  shareId: string
+): Promise<Array<DbShareComment & { author: { id: string; username: string; avatarPreset: string | null; avatarData: AvatarData | null } }>> {
+  const result = await getPool().query(
+    `SELECT sc.id, sc.share_id, sc.author_id, sc.target_type, sc.target_id, sc.encrypted_content, sc.nonce,
+            sc.created_at, sc.updated_at, sc.deleted_at,
+            u.username, u.avatar_preset, u.avatar_data
+     FROM share_comments sc
+     JOIN users u ON u.id = sc.author_id
+     WHERE sc.share_id = $1 AND sc.deleted_at IS NULL
+     ORDER BY sc.created_at ASC`,
+    [shareId]
+  );
+
+  return result.rows.map((row) => ({
+    id: row.id,
+    shareId: row.share_id,
+    authorId: row.author_id,
+    targetType: row.target_type,
+    targetId: row.target_id,
+    encryptedContent: row.encrypted_content,
+    nonce: row.nonce,
+    createdAt: parseInt(row.created_at),
+    updatedAt: parseInt(row.updated_at),
+    deletedAt: row.deleted_at ? parseInt(row.deleted_at) : null,
+    author: {
+      id: row.author_id,
+      username: row.username,
+      avatarPreset: row.avatar_preset,
+      avatarData: row.avatar_data,
+    },
+  }));
+}
+
+export async function getShareComment(commentId: string): Promise<DbShareComment | null> {
+  const result = await getPool().query(
+    `SELECT id, share_id, author_id, target_type, target_id, encrypted_content, nonce,
+            created_at, updated_at, deleted_at
+     FROM share_comments WHERE id = $1`,
+    [commentId]
+  );
+
+  if (result.rows.length === 0) return null;
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    shareId: row.share_id,
+    authorId: row.author_id,
+    targetType: row.target_type,
+    targetId: row.target_id,
+    encryptedContent: row.encrypted_content,
+    nonce: row.nonce,
+    createdAt: parseInt(row.created_at),
+    updatedAt: parseInt(row.updated_at),
+    deletedAt: row.deleted_at ? parseInt(row.deleted_at) : null,
+  };
+}
+
+export async function updateShareComment(
+  commentId: string,
+  authorId: string,
+  encryptedContent: string,
+  nonce: string
+): Promise<boolean> {
+  const now = Date.now();
+  const result = await getPool().query(
+    `UPDATE share_comments SET encrypted_content = $1, nonce = $2, updated_at = $3
+     WHERE id = $4 AND author_id = $5 AND deleted_at IS NULL`,
+    [encryptedContent, nonce, now, commentId, authorId]
+  );
+
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function deleteShareComment(commentId: string, authorId: string): Promise<boolean> {
+  const now = Date.now();
+  const result = await getPool().query(
+    `UPDATE share_comments SET deleted_at = $1
+     WHERE id = $2 AND author_id = $3 AND deleted_at IS NULL`,
+    [now, commentId, authorId]
+  );
+
+  return (result.rowCount ?? 0) > 0;
+}
+
+// ============ Share Reactions ============
+
+export async function addShareReaction(
+  shareId: string,
+  authorId: string,
+  targetType: 'entry' | 'note' | 'comment',
+  targetId: string,
+  emoji: string
+): Promise<string> {
+  const id = randomUUID();
+  const now = Date.now();
+
+  // Use UPSERT - if same reaction exists, do nothing (return existing)
+  await getPool().query(
+    `INSERT INTO share_reactions (id, share_id, author_id, target_type, target_id, emoji, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (share_id, author_id, target_type, target_id, emoji) DO NOTHING`,
+    [id, shareId, authorId, targetType, targetId, emoji, now]
+  );
+
+  // Get the actual ID (might be existing)
+  const result = await getPool().query(
+    `SELECT id FROM share_reactions
+     WHERE share_id = $1 AND author_id = $2 AND target_type = $3 AND target_id = $4 AND emoji = $5`,
+    [shareId, authorId, targetType, targetId, emoji]
+  );
+
+  return result.rows[0]?.id || id;
+}
+
+export async function removeShareReaction(reactionId: string, authorId: string): Promise<boolean> {
+  const result = await getPool().query(
+    `DELETE FROM share_reactions WHERE id = $1 AND author_id = $2`,
+    [reactionId, authorId]
+  );
+
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function getShareReactions(
+  shareId: string
+): Promise<Array<DbShareReaction & { author: { id: string; username: string } }>> {
+  const result = await getPool().query(
+    `SELECT sr.id, sr.share_id, sr.author_id, sr.target_type, sr.target_id, sr.emoji, sr.created_at,
+            u.username
+     FROM share_reactions sr
+     JOIN users u ON u.id = sr.author_id
+     WHERE sr.share_id = $1
+     ORDER BY sr.created_at ASC`,
+    [shareId]
+  );
+
+  return result.rows.map((row) => ({
+    id: row.id,
+    shareId: row.share_id,
+    authorId: row.author_id,
+    targetType: row.target_type,
+    targetId: row.target_id,
+    emoji: row.emoji,
+    createdAt: parseInt(row.created_at),
+    author: {
+      id: row.author_id,
+      username: row.username,
+    },
+  }));
+}
+
+export async function getShareReaction(reactionId: string): Promise<DbShareReaction | null> {
+  const result = await getPool().query(
+    `SELECT id, share_id, author_id, target_type, target_id, emoji, created_at
+     FROM share_reactions WHERE id = $1`,
+    [reactionId]
+  );
+
+  if (result.rows.length === 0) return null;
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    shareId: row.share_id,
+    authorId: row.author_id,
+    targetType: row.target_type,
+    targetId: row.target_id,
+    emoji: row.emoji,
+    createdAt: parseInt(row.created_at),
   };
 }

@@ -214,6 +214,60 @@ export function decryptFromSender(
 }
 
 /**
+ * Derive a shared key for comment encryption between two parties
+ * Both the owner and recipient can derive the same key using their private key
+ * and the other's public key.
+ */
+export function deriveShareKey(
+  myPrivateKey: Uint8Array,
+  theirPublicKey: Uint8Array,
+  shareId: string
+): Uint8Array {
+  // Compute ECDH shared secret
+  const sharedSecret = x25519.getSharedSecret(myPrivateKey, theirPublicKey);
+
+  // Derive a unique key for this share using HKDF
+  const info = `maplume-comments-${shareId}`;
+  return hkdf(sha256, sharedSecret, undefined, utf8ToBytes(info), 32);
+}
+
+/**
+ * Encrypt a comment using the shared key
+ * Returns the encrypted content and nonce as base64 strings
+ */
+export function encryptComment(
+  content: string,
+  shareKey: Uint8Array
+): { encryptedContent: string; nonce: string } {
+  const nonce = randomBytes(12);
+  const cipher = gcm(shareKey, nonce);
+  const plaintext = utf8ToBytes(content);
+  const ciphertext = cipher.encrypt(plaintext);
+
+  return {
+    encryptedContent: bytesToBase64(ciphertext),
+    nonce: bytesToBase64(nonce),
+  };
+}
+
+/**
+ * Decrypt a comment using the shared key
+ */
+export function decryptComment(
+  encryptedContent: string,
+  nonce: string,
+  shareKey: Uint8Array
+): string {
+  const ciphertext = base64ToBytes(encryptedContent);
+  const nonceBytes = base64ToBytes(nonce);
+
+  const cipher = gcm(shareKey, nonceBytes);
+  const plaintext = cipher.decrypt(ciphertext);
+
+  return bytesToUtf8(plaintext);
+}
+
+/**
  * Hash data with SHA-256
  */
 export function hash(data: Uint8Array): string {

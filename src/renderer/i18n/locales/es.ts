@@ -393,6 +393,19 @@ export default {
   crop: 'Recortar',
   processing: 'Procesando...',
 
+  // Comments and Reactions
+  comments: 'Comentarios',
+  comment: 'comentario',
+  addComment: 'Añadir un comentario',
+  editComment: 'Editar',
+  deleteComment: 'Eliminar',
+  noComments: 'Sin comentarios aún',
+  commentPlaceholder: 'Escribe un comentario...',
+  addReaction: 'Añadir reacción',
+  edited: 'editado',
+  justNow: 'ahora mismo',
+  moreEntries: 'más entradas',
+
   // Dashboard
   dashboard: 'Panel',
   activity: 'Actividad',

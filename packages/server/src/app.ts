@@ -8,6 +8,7 @@ import usersRoutes from './routes/users';
 import projectsRoutes from './routes/projects';
 import friendsRoutes from './routes/friends';
 import sharesRoutes from './routes/shares';
+import interactionsRoutes from './routes/interactions';
 import partiesRoutes from './routes/parties';
 import statsRoutes from './routes/stats';
 
@@ -80,6 +81,7 @@ export function createApp(): Express {
   app.use('/api/projects', projectsRoutes);
   app.use('/api/friends', friendsRoutes);
   app.use('/api/shares', sharesRoutes);
+  app.use('/api/shares', interactionsRoutes); // Comments and reactions under /api/shares/:shareId
   app.use('/api/parties', partiesRoutes);
   app.use('/api/stats', statsRoutes);
 

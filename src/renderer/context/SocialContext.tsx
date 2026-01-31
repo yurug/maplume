@@ -23,7 +23,11 @@ import {
   hashString,
   utf8ToBytes,
   bytesToUtf8,
+  deriveShareKey,
+  encryptComment,
+  decryptComment,
 } from '../services/crypto';
+import type { ShareComment, ShareReaction, ReactionCount } from '@maplume/shared';
 import pako from 'pako';
 
 // Storage keys
@@ -39,6 +43,26 @@ interface FriendWithKey extends FriendUser {
 interface PartyProgressSnapshot {
   timestamp: number;
   participants: { [participantId: string]: number }; // participantId -> wordsWritten
+}
+
+// Decrypted comment with content as plaintext
+export interface DecryptedComment {
+  id: string;
+  shareId: string;
+  author: { id: string; username: string; avatarPreset: string | null; avatarData?: import('@maplume/shared').AvatarData | null };
+  targetType: 'entry' | 'note';
+  targetId: string;
+  content: string; // Decrypted content
+  createdAt: number;
+  updatedAt: number;
+}
+
+// Share interactions state (per share)
+interface ShareInteractions {
+  comments: DecryptedComment[];
+  reactions: ShareReaction[];
+  loading: boolean;
+  error: string | null;
 }
 
 // State interface
@@ -61,6 +85,8 @@ interface SocialState {
   partyInvites: PartyInvite[];
   // Progress history for party charts (keyed by partyId)
   partyProgressHistory: { [partyId: string]: PartyProgressSnapshot[] };
+  // Share interactions (keyed by shareId)
+  shareInteractions: { [shareId: string]: ShareInteractions };
 }
 
 // Action types
@@ -79,7 +105,14 @@ type SocialAction =
   | { type: 'SET_FRIEND_REQUESTS'; received: FriendRequest[]; sent: FriendRequest[] }
   | { type: 'SET_PARTIES'; active: Party[]; upcoming: Party[]; invites: PartyInvite[] }
   | { type: 'UPDATE_ACTIVE_PARTY'; party: Party }
-  | { type: 'ADD_PARTY_PROGRESS_SNAPSHOT'; partyId: string; snapshot: PartyProgressSnapshot };
+  | { type: 'ADD_PARTY_PROGRESS_SNAPSHOT'; partyId: string; snapshot: PartyProgressSnapshot }
+  | { type: 'SET_SHARE_INTERACTIONS'; shareId: string; interactions: ShareInteractions }
+  | { type: 'ADD_COMMENT'; shareId: string; comment: DecryptedComment }
+  | { type: 'UPDATE_COMMENT'; shareId: string; commentId: string; content: string; updatedAt: number }
+  | { type: 'DELETE_COMMENT'; shareId: string; commentId: string }
+  | { type: 'SET_REACTIONS'; shareId: string; reactions: ShareReaction[] }
+  | { type: 'ADD_REACTION'; shareId: string; reaction: ShareReaction }
+  | { type: 'REMOVE_REACTION'; shareId: string; reactionId: string };
 
 // Initial state
 const initialState: SocialState = {
@@ -99,6 +132,7 @@ const initialState: SocialState = {
   upcomingParties: [],
   partyInvites: [],
   partyProgressHistory: {},
+  shareInteractions: {},
 };
 
 // Reducer
@@ -220,6 +254,106 @@ function socialReducer(state: SocialState, action: SocialAction): SocialState {
       };
     }
 
+    case 'SET_SHARE_INTERACTIONS':
+      return {
+        ...state,
+        shareInteractions: {
+          ...state.shareInteractions,
+          [action.shareId]: action.interactions,
+        },
+      };
+
+    case 'ADD_COMMENT': {
+      const existing = state.shareInteractions[action.shareId] || { comments: [], reactions: [], loading: false, error: null };
+      return {
+        ...state,
+        shareInteractions: {
+          ...state.shareInteractions,
+          [action.shareId]: {
+            ...existing,
+            comments: [...existing.comments, action.comment],
+          },
+        },
+      };
+    }
+
+    case 'UPDATE_COMMENT': {
+      const existing = state.shareInteractions[action.shareId];
+      if (!existing) return state;
+      return {
+        ...state,
+        shareInteractions: {
+          ...state.shareInteractions,
+          [action.shareId]: {
+            ...existing,
+            comments: existing.comments.map(c =>
+              c.id === action.commentId
+                ? { ...c, content: action.content, updatedAt: action.updatedAt }
+                : c
+            ),
+          },
+        },
+      };
+    }
+
+    case 'DELETE_COMMENT': {
+      const existing = state.shareInteractions[action.shareId];
+      if (!existing) return state;
+      return {
+        ...state,
+        shareInteractions: {
+          ...state.shareInteractions,
+          [action.shareId]: {
+            ...existing,
+            comments: existing.comments.filter(c => c.id !== action.commentId),
+          },
+        },
+      };
+    }
+
+    case 'SET_REACTIONS': {
+      const existing = state.shareInteractions[action.shareId] || { comments: [], reactions: [], loading: false, error: null };
+      return {
+        ...state,
+        shareInteractions: {
+          ...state.shareInteractions,
+          [action.shareId]: {
+            ...existing,
+            reactions: action.reactions,
+          },
+        },
+      };
+    }
+
+    case 'ADD_REACTION': {
+      const existing = state.shareInteractions[action.shareId] || { comments: [], reactions: [], loading: false, error: null };
+      return {
+        ...state,
+        shareInteractions: {
+          ...state.shareInteractions,
+          [action.shareId]: {
+            ...existing,
+            reactions: [...existing.reactions, action.reaction],
+          },
+        },
+      };
+    }
+
+    case 'REMOVE_REACTION': {
+      const existing = state.shareInteractions[action.shareId];
+      if (!existing) return state;
+      return {
+        ...state,
+        shareInteractions: {
+          ...state.shareInteractions,
+          [action.shareId]: {
+            ...existing,
+            reactions: existing.reactions.filter(r => r.id !== action.reactionId),
+          },
+        },
+      };
+    }
+
     default:
       return state;
   }
@@ -282,6 +416,14 @@ interface SocialContextValue {
     updateAvatar: (avatarPreset: string) => Promise<void>;
     updateAvatarData: (avatarData: AvatarData) => Promise<void>;
     uploadAvatar: (imageData: string) => Promise<void>;
+    // Share interactions (comments and reactions)
+    loadShareInteractions: (shareId: string, ownerPublicKey: string) => Promise<void>;
+    createComment: (shareId: string, targetType: 'entry' | 'note', targetId: string, content: string, ownerPublicKey: string) => Promise<DecryptedComment>;
+    updateComment: (shareId: string, commentId: string, content: string, ownerPublicKey: string) => Promise<void>;
+    deleteComment: (shareId: string, commentId: string) => Promise<void>;
+    addReaction: (shareId: string, targetType: 'entry' | 'note' | 'comment', targetId: string, emoji: string) => Promise<string>;
+    removeReaction: (shareId: string, reactionId: string) => Promise<void>;
+    getReactionCounts: (shareId: string, targetType: 'entry' | 'note' | 'comment', targetId: string) => ReactionCount[];
   };
 }
 
@@ -996,6 +1138,255 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.keyBundle]);
 
+  // ============ Share Interactions (Comments & Reactions) ============
+
+  // Load all comments and reactions for a share
+  const loadShareInteractions = useCallback(async (
+    shareId: string,
+    ownerPublicKey: string
+  ): Promise<void> => {
+    if (!state.keyBundle) {
+      throw new Error('Not logged in');
+    }
+
+    dispatch({
+      type: 'SET_SHARE_INTERACTIONS',
+      shareId,
+      interactions: { comments: [], reactions: [], loading: true, error: null },
+    });
+
+    try {
+      // Derive the shared key for decryption
+      const theirPublicKey = base64ToUint8Array(ownerPublicKey);
+      const shareKey = deriveShareKey(
+        state.keyBundle.encryptionKeyPair.privateKey,
+        theirPublicKey,
+        shareId
+      );
+
+      // Fetch comments and reactions in parallel
+      const [commentsResponse, reactionsResponse] = await Promise.all([
+        apiClient.getComments(shareId),
+        apiClient.getReactions(shareId),
+      ]);
+
+      // Decrypt comments
+      const decryptedComments: DecryptedComment[] = commentsResponse.comments.map(c => {
+        try {
+          const content = decryptComment(c.encryptedContent, c.nonce, shareKey);
+          return {
+            id: c.id,
+            shareId: c.shareId,
+            author: c.author,
+            targetType: c.targetType,
+            targetId: c.targetId,
+            content,
+            createdAt: c.createdAt,
+            updatedAt: c.updatedAt,
+          };
+        } catch {
+          // If decryption fails, show placeholder
+          return {
+            id: c.id,
+            shareId: c.shareId,
+            author: c.author,
+            targetType: c.targetType,
+            targetId: c.targetId,
+            content: '[Unable to decrypt]',
+            createdAt: c.createdAt,
+            updatedAt: c.updatedAt,
+          };
+        }
+      });
+
+      dispatch({
+        type: 'SET_SHARE_INTERACTIONS',
+        shareId,
+        interactions: {
+          comments: decryptedComments,
+          reactions: reactionsResponse.reactions,
+          loading: false,
+          error: null,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to load share interactions:', error);
+      dispatch({
+        type: 'SET_SHARE_INTERACTIONS',
+        shareId,
+        interactions: {
+          comments: [],
+          reactions: [],
+          loading: false,
+          error: error instanceof Error ? error.message : 'Failed to load',
+        },
+      });
+    }
+  }, [state.keyBundle]);
+
+  // Create a comment
+  const createShareComment = useCallback(async (
+    shareId: string,
+    targetType: 'entry' | 'note',
+    targetId: string,
+    content: string,
+    ownerPublicKey: string
+  ): Promise<DecryptedComment> => {
+    if (!state.keyBundle || !state.user) {
+      throw new Error('Not logged in');
+    }
+
+    // Derive the shared key for encryption
+    const theirPublicKey = base64ToUint8Array(ownerPublicKey);
+    const shareKey = deriveShareKey(
+      state.keyBundle.encryptionKeyPair.privateKey,
+      theirPublicKey,
+      shareId
+    );
+
+    // Encrypt the comment
+    const { encryptedContent, nonce } = encryptComment(content, shareKey);
+
+    // Send to server
+    const response = await apiClient.createComment(shareId, {
+      targetType,
+      targetId,
+      encryptedContent,
+      nonce,
+    });
+
+    // Create decrypted comment for local state
+    const decryptedComment: DecryptedComment = {
+      id: response.comment.id,
+      shareId: response.comment.shareId,
+      author: response.comment.author,
+      targetType: response.comment.targetType,
+      targetId: response.comment.targetId,
+      content,
+      createdAt: response.comment.createdAt,
+      updatedAt: response.comment.updatedAt,
+    };
+
+    dispatch({ type: 'ADD_COMMENT', shareId, comment: decryptedComment });
+
+    return decryptedComment;
+  }, [state.keyBundle, state.user]);
+
+  // Update a comment
+  const updateShareComment = useCallback(async (
+    shareId: string,
+    commentId: string,
+    content: string,
+    ownerPublicKey: string
+  ): Promise<void> => {
+    if (!state.keyBundle) {
+      throw new Error('Not logged in');
+    }
+
+    // Derive the shared key for encryption
+    const theirPublicKey = base64ToUint8Array(ownerPublicKey);
+    const shareKey = deriveShareKey(
+      state.keyBundle.encryptionKeyPair.privateKey,
+      theirPublicKey,
+      shareId
+    );
+
+    // Encrypt the updated content
+    const { encryptedContent, nonce } = encryptComment(content, shareKey);
+
+    // Send to server
+    await apiClient.updateComment(shareId, commentId, { encryptedContent, nonce });
+
+    // Update local state
+    dispatch({
+      type: 'UPDATE_COMMENT',
+      shareId,
+      commentId,
+      content,
+      updatedAt: Date.now(),
+    });
+  }, [state.keyBundle]);
+
+  // Delete a comment
+  const deleteShareComment = useCallback(async (
+    shareId: string,
+    commentId: string
+  ): Promise<void> => {
+    await apiClient.deleteComment(shareId, commentId);
+    dispatch({ type: 'DELETE_COMMENT', shareId, commentId });
+  }, []);
+
+  // Add a reaction
+  const addShareReaction = useCallback(async (
+    shareId: string,
+    targetType: 'entry' | 'note' | 'comment',
+    targetId: string,
+    emoji: string
+  ): Promise<string> => {
+    if (!state.user) {
+      throw new Error('Not logged in');
+    }
+
+    const response = await apiClient.addReaction(shareId, { targetType, targetId, emoji });
+
+    // Add to local state
+    const reaction: ShareReaction = {
+      id: response.reactionId,
+      shareId,
+      author: { id: state.user.id, username: state.user.username },
+      targetType,
+      targetId,
+      emoji,
+      createdAt: Date.now(),
+    };
+
+    dispatch({ type: 'ADD_REACTION', shareId, reaction });
+
+    return response.reactionId;
+  }, [state.user]);
+
+  // Remove a reaction
+  const removeShareReaction = useCallback(async (
+    shareId: string,
+    reactionId: string
+  ): Promise<void> => {
+    await apiClient.removeReaction(shareId, reactionId);
+    dispatch({ type: 'REMOVE_REACTION', shareId, reactionId });
+  }, []);
+
+  // Get reaction counts for a specific target
+  const getReactionCounts = useCallback((
+    shareId: string,
+    targetType: 'entry' | 'note' | 'comment',
+    targetId: string
+  ): ReactionCount[] => {
+    const interactions = state.shareInteractions[shareId];
+    if (!interactions) return [];
+
+    const targetReactions = interactions.reactions.filter(
+      r => r.targetType === targetType && r.targetId === targetId
+    );
+
+    // Group by emoji
+    const counts = new Map<string, { count: number; userReacted: boolean; reactionId?: string }>();
+    for (const r of targetReactions) {
+      const existing = counts.get(r.emoji) || { count: 0, userReacted: false };
+      existing.count++;
+      if (state.user && r.author.id === state.user.id) {
+        existing.userReacted = true;
+        existing.reactionId = r.id;
+      }
+      counts.set(r.emoji, existing);
+    }
+
+    return Array.from(counts.entries()).map(([emoji, data]) => ({
+      emoji,
+      count: data.count,
+      userReacted: data.userReacted,
+      reactionId: data.reactionId,
+    }));
+  }, [state.shareInteractions, state.user]);
+
   const value: SocialContextValue = {
     state,
     actions: {
@@ -1036,6 +1427,14 @@ export function SocialProvider({ children }: { children: React.ReactNode }) {
       updateAvatar,
       updateAvatarData,
       uploadAvatar,
+      // Share interactions (comments and reactions)
+      loadShareInteractions,
+      createComment: createShareComment,
+      updateComment: updateShareComment,
+      deleteComment: deleteShareComment,
+      addReaction: addShareReaction,
+      removeReaction: removeShareReaction,
+      getReactionCounts,
     },
   };
 

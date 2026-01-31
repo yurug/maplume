@@ -461,6 +461,19 @@ export default {
   timeRangeAll: 'All time',
   noTrendData: 'Not enough data yet',
 
+  // Comments and Reactions
+  comments: 'Comments',
+  comment: 'comment',
+  addComment: 'Add a comment',
+  editComment: 'Edit',
+  deleteComment: 'Delete',
+  noComments: 'No comments yet',
+  commentPlaceholder: 'Write a comment...',
+  addReaction: 'Add reaction',
+  edited: 'edited',
+  justNow: 'just now',
+  moreEntries: 'more entries',
+
   // Dashboard
   dashboard: 'Dashboard',
   activity: 'Activity',

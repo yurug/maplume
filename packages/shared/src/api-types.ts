@@ -261,6 +261,79 @@ export interface InviteToPartyRequest {
   friendIds: string[];
 }
 
+// Share Comments and Reactions
+export interface ShareCommentAuthor {
+  id: string;
+  username: string;
+  avatarPreset: string | null;
+  avatarData?: import('./social-types').AvatarData | null;
+}
+
+export interface ShareComment {
+  id: string;
+  shareId: string;
+  author: ShareCommentAuthor;
+  targetType: 'entry' | 'note';
+  targetId: string;
+  encryptedContent: string;
+  nonce: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ShareReaction {
+  id: string;
+  shareId: string;
+  author: { id: string; username: string };
+  targetType: 'entry' | 'note' | 'comment';
+  targetId: string;
+  emoji: string;
+  createdAt: number;
+}
+
+export interface ReactionCount {
+  emoji: string;
+  count: number;
+  userReacted: boolean;
+  reactionId?: string; // ID of user's reaction, if they reacted
+}
+
+// Comment requests/responses
+export interface CreateCommentRequest {
+  targetType: 'entry' | 'note';
+  targetId: string;
+  encryptedContent: string;
+  nonce: string;
+}
+
+export interface CreateCommentResponse {
+  comment: ShareComment;
+}
+
+export interface GetCommentsResponse {
+  comments: ShareComment[];
+}
+
+export interface UpdateCommentRequest {
+  encryptedContent: string;
+  nonce: string;
+}
+
+// Reaction requests/responses
+export interface AddReactionRequest {
+  targetType: 'entry' | 'note' | 'comment';
+  targetId: string;
+  emoji: string;
+}
+
+export interface AddReactionResponse {
+  reactionId: string;
+}
+
+export interface GetReactionsResponse {
+  reactions: ShareReaction[];
+}
+
 // Error response
 export interface ApiError {
   error: string;
