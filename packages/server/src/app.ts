@@ -1,6 +1,7 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import { rateLimit } from 'express-rate-limit';
 import { config } from './config';
 import { errorHandler } from './middleware/errorHandler';
 import authRoutes from './routes/auth';
@@ -37,8 +38,22 @@ export function createApp(): Express {
     allowedHeaders: ['Content-Type', 'Authorization'],
   }));
 
-  // Body parsing
-  app.use(express.json({ limit: '10mb' })); // Allow larger payloads for encrypted data
+  // Body parsing - reduced from 10mb to 6mb (slightly above maxEncryptedBlobSize for overhead)
+  app.use(express.json({ limit: '6mb' }));
+
+  // Global API rate limiting
+  const apiLimiter = rateLimit({
+    windowMs: config.rateLimit.api.windowMs,
+    max: config.rateLimit.api.max,
+    message: { error: 'Too many requests, please try again later', code: 'RATE_LIMITED' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => {
+      // Skip rate limiting for health/debug endpoints
+      return req.path === '/health' || req.path === '/debug';
+    },
+  });
+  app.use('/api', apiLimiter);
 
   // Health check endpoint
   app.get('/health', (_req: Request, res: Response) => {

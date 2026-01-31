@@ -7,20 +7,49 @@ import * as db from './database';
 // In-memory challenge storage (could use Redis in production)
 const challenges = new Map<string, { challenge: string; expiresAt: number }>();
 
+// Maximum total challenges to prevent memory exhaustion
+const MAX_TOTAL_CHALLENGES = 10000;
+
+// Cleanup interval (run every minute)
+let cleanupInterval: NodeJS.Timeout | null = null;
+
+function startChallengeCleanup(): void {
+  if (cleanupInterval) return;
+  cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    for (const [userId, data] of challenges) {
+      if (now > data.expiresAt) {
+        challenges.delete(userId);
+      }
+    }
+  }, 60 * 1000);
+}
+
 export function generateChallenge(): string {
   return randomBytes(32).toString('hex');
 }
 
 export function storeChallenge(userId: string, challenge: string, expiresAt: number): void {
-  challenges.set(userId, { challenge, expiresAt });
+  // Start cleanup if not running
+  startChallengeCleanup();
 
-  // Clean up expired challenges periodically
-  setTimeout(() => {
-    const stored = challenges.get(userId);
-    if (stored && stored.challenge === challenge) {
-      challenges.delete(userId);
+  // Enforce global limit - reject if too many challenges stored
+  if (challenges.size >= MAX_TOTAL_CHALLENGES && !challenges.has(userId)) {
+    // Force cleanup of expired challenges first
+    const now = Date.now();
+    for (const [id, data] of challenges) {
+      if (now > data.expiresAt) {
+        challenges.delete(id);
+      }
     }
-  }, expiresAt - Date.now() + 1000);
+    // If still over limit, just overwrite oldest (Map iteration order is insertion order)
+    if (challenges.size >= MAX_TOTAL_CHALLENGES) {
+      const oldestKey = challenges.keys().next().value;
+      if (oldestKey) challenges.delete(oldestKey);
+    }
+  }
+
+  challenges.set(userId, { challenge, expiresAt });
 }
 
 export async function verifyLogin(

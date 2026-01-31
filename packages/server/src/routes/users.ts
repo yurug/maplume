@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+import { config } from '../config';
 import * as db from '../services/database';
 import type { AvatarData } from '@maplume/shared';
 
@@ -65,6 +66,13 @@ router.put('/me', authMiddleware, async (req: Request, res: Response, next) => {
     }
 
     if (bio !== undefined) {
+      if (typeof bio === 'string' && bio.length > config.limits.maxBioLength) {
+        throw createError(
+          `Bio too long (max ${config.limits.maxBioLength} characters)`,
+          400,
+          'BIO_TOO_LONG'
+        );
+      }
       updates.bio = bio;
     }
     if (statsPublic !== undefined) {
