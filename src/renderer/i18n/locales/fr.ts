@@ -495,4 +495,10 @@ export default {
   friday: 'Ven',
   saturday: 'Sam',
   sunday: 'Dim',
+
+  // Party Chat
+  chat: 'Discussion',
+  sendMessage: 'Envoyer',
+  typeMessage: 'Écrivez un message...',
+  noMessages: 'Aucun message. Dites bonjour !',
 } as const;

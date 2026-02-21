@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as LucideIcons from 'lucide-react';
 import { Plus, Archive, BookOpen, ChevronRight, Settings, Feather, Coffee, Users, Share2, LayoutDashboard, UserPlus, Check, X } from 'lucide-react';
@@ -40,14 +40,17 @@ export function ProjectList({ onNewProject, onOpenSettings, onOpenGlobalStats, o
   const { state: socialState, actions: socialActions } = useSocial();
   const { t, language, setLanguage } = useI18n();
 
+  // Use ref to access latest actions without including in deps
+  const socialActionsRef = useRef(socialActions);
+  socialActionsRef.current = socialActions;
+
   // Refresh shares, parties, and friend requests when user is logged in and online
   useEffect(() => {
     if (socialState.user && socialState.isOnline) {
-      socialActions.refreshShares();
-      socialActions.refreshParties();
-      socialActions.refreshFriendRequests();
+      socialActionsRef.current.refreshShares();
+      socialActionsRef.current.refreshParties();
+      socialActionsRef.current.refreshFriendRequests();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socialState.user?.id, socialState.isOnline]);
 
   // Cycle through supported languages

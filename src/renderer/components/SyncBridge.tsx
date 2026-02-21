@@ -56,14 +56,12 @@ export function SyncBridge() {
 
         // Only reinitialize if we're already initialized (not first load)
         if (appState.initialized && appState.dataPath !== userDataPath) {
-          console.log('[SyncBridge] Switching to user data path:', userDataPath);
           await appActions.reinitialize(userDataPath);
         }
       } else if (appState.initialized) {
         // User logged out - switch back to base folder
         const currentDataPath = appState.dataPath;
         if (currentDataPath && currentDataPath !== baseDataPath && currentDataPath.includes('/users/')) {
-          console.log('[SyncBridge] Switching back to base data path:', baseDataPath);
           await appActions.reinitialize(baseDataPath);
         }
       }

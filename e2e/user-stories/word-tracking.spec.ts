@@ -242,8 +242,7 @@ test.describe('Entry History', () => {
     await expect(window.locator('text=1,500').first()).toBeVisible({ timeout: 5000 });
   });
 
-  // TODO: Fix this test - the edit button selector needs refinement
-  test.skip('user can edit an entry', async () => {
+  test('user can edit an entry', async () => {
     const { window, dataPath } = testApp;
 
     seedTestData(dataPath, {
@@ -268,29 +267,26 @@ test.describe('Entry History', () => {
     await window.click('text=Show Entry History');
     await window.waitForTimeout(500);
 
-    // Find the pencil/edit button (it's a small icon button)
-    const editButton = window.locator('button').filter({ has: window.locator('svg') }).nth(2); // Third button in the actions area
+    // Find the edit button using test ID
+    const editButton = window.locator('[data-testid="edit-entry-entry-1"]');
     await editButton.click();
     await window.waitForTimeout(500);
 
     // Find the editable input that appears in the table row
-    const editableInput = window.locator('table input[type="number"], table input[type="text"]').first();
-    if (await editableInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await editableInput.clear();
-      await editableInput.fill('1500');
+    const editableInput = window.locator('table input[type="number"]').first();
+    await editableInput.clear();
+    await editableInput.fill('1500');
 
-      // Find and click the save/check button
-      const saveButton = window.locator('button').filter({ has: window.locator('svg') }).nth(2);
-      await saveButton.click();
-      await window.waitForTimeout(500);
-    }
+    // Find and click the save button using test ID
+    const saveButton = window.locator('[data-testid="save-entry-entry-1"]');
+    await saveButton.click();
+    await window.waitForTimeout(500);
 
     // Verify statistics updated - 1500 words should show 3% progress
     await expect(window.locator('text=3%').first()).toBeVisible({ timeout: 5000 });
   });
 
-  // TODO: Fix this test - the delete button selector needs refinement
-  test.skip('user can delete an entry', async () => {
+  test('user can delete an entry', async () => {
     const { window, dataPath } = testApp;
 
     seedTestData(dataPath, {
@@ -317,17 +313,14 @@ test.describe('Entry History', () => {
     await window.click('text=Show Entry History');
     await window.waitForTimeout(500);
 
-    // Find the delete button (trash icon) - it's after the edit button
-    const actionButtons = window.locator('table button').filter({ has: window.locator('svg') });
-    const deleteButton = actionButtons.last();
-    await deleteButton.click();
-    await window.waitForTimeout(500);
+    // Set up dialog handler before clicking delete (uses window.confirm)
+    window.on('dialog', async (dialog) => {
+      await dialog.accept();
+    });
 
-    // Confirm deletion if dialog appears
-    const confirmButton = window.locator('button:has-text("Delete"), button:has-text("Confirm")');
-    if (await confirmButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await confirmButton.click();
-    }
+    // Find the delete button using test ID
+    const deleteButton = window.locator('[data-testid="delete-entry-entry-1"]');
+    await deleteButton.click();
     await window.waitForTimeout(1000);
 
     // The entry should be gone - history should show no entries or statistics should show 0

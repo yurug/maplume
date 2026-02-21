@@ -183,6 +183,7 @@ export function EntriesTable({ entries }: EntriesTableProps) {
                             size="icon-sm"
                             onClick={() => handleSave(entry)}
                             className="text-success-600 hover:bg-success-100 hover:text-success-700"
+                            data-testid={`save-entry-${entry.id}`}
                           >
                             <Check className="h-4 w-4" />
                           </Button>
@@ -191,6 +192,7 @@ export function EntriesTable({ entries }: EntriesTableProps) {
                             size="icon-sm"
                             onClick={() => setEditingId(null)}
                             className="text-warm-500 hover:bg-warm-100 hover:text-warm-700"
+                            data-testid={`cancel-edit-${entry.id}`}
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -202,6 +204,7 @@ export function EntriesTable({ entries }: EntriesTableProps) {
                             size="icon-sm"
                             onClick={() => handleEdit(entry)}
                             className="text-warm-500 hover:bg-warm-100 hover:text-warm-700"
+                            data-testid={`edit-entry-${entry.id}`}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -210,6 +213,7 @@ export function EntriesTable({ entries }: EntriesTableProps) {
                             size="icon-sm"
                             onClick={() => handleDelete(entry.id)}
                             className="text-warm-500 hover:bg-danger-100 hover:text-danger-600"
+                            data-testid={`delete-entry-${entry.id}`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

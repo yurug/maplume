@@ -4,7 +4,7 @@
  * Shows cards for each project shared by friends.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Share2, RefreshCw, Eye, Lock, User } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { useI18n } from '../../i18n';
@@ -21,14 +21,17 @@ export function SharedProjectsList({ onBack, onViewProject }: SharedProjectsList
   const { state, actions } = useSocial();
   const [loading, setLoading] = useState(true);
 
+  // Use ref to access latest actions without including in deps
+  const actionsRef = useRef(actions);
+  actionsRef.current = actions;
+
   useEffect(() => {
     const loadShares = async () => {
       setLoading(true);
-      await actions.refreshShares();
+      await actionsRef.current.refreshShares();
       setLoading(false);
     };
     loadShares();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formatDate = (timestamp: number): string => {

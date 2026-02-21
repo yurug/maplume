@@ -29,8 +29,11 @@ const sizeClasses = {
   xl: 'w-16 h-16',
 };
 
+// DiceBear style module type (all styles share this interface)
+type DiceBearStyleModule = typeof collection.adventurer;
+
 // Map style names to DiceBear style modules
-const STYLE_MAP: Record<DiceBearStyle, any> = {
+const STYLE_MAP: Record<DiceBearStyle, DiceBearStyleModule> = {
   'adventurer': collection.adventurer,
   'adventurer-neutral': collection.adventurerNeutral,
   'avataaars': collection.avataaars,
@@ -57,7 +60,7 @@ export function generateDiceBearAvatar(config: DiceBearConfig): string {
     return generateDiceBearAvatar({ ...config, style: 'adventurer' });
   }
 
-  const options: Record<string, any> = {
+  const options: Record<string, unknown> = {
     seed: config.seed,
     size: 128,
     radius: 0, // Force no radius to prevent SVG masks

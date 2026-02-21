@@ -19,18 +19,23 @@ import {
   updateParticipantProgress,
   leaveParty,
   isParticipant,
-  createPartyInvite,
+  createPartyInvitesBatch,
   getPendingInvitesForUser,
   respondToInvite,
   getCreatorInfo,
-  areFriends,
+  filterFriends,
   countActivePartiesForUser,
+  createPartyMessage,
+  getPartyMessages,
+  countPartyMessages,
+  deleteOldestPartyMessages,
   DbParty,
 } from '../services/database';
 import type {
   Party,
   PartyParticipant,
   PartyInvite,
+  PartyMessage,
   CreatePartyRequest,
   CreatePartyResponse,
   GetPartiesResponse,
@@ -38,6 +43,9 @@ import type {
   JoinPartyByCodeResponse,
   UpdatePartyProgressRequest,
   UpdatePartyProgressResponse,
+  SendPartyMessageRequest,
+  SendPartyMessageResponse,
+  GetPartyMessagesResponse,
 } from '@maplume/shared';
 
 const router = Router();
@@ -113,13 +121,11 @@ router.post('/', authMiddleware, async (req: Request, res: Response, next: NextF
     // Create party
     const dbParty = await createParty(userId, title.trim(), durationMinutes, scheduledStart ?? null, rankingEnabled);
 
-    // Send invites if specified
+    // Send invites if specified (using batch operations to avoid N+1 queries)
     if (inviteFriendIds && inviteFriendIds.length > 0) {
-      for (const friendId of inviteFriendIds) {
-        const isFriend = await areFriends(userId, friendId);
-        if (isFriend) {
-          await createPartyInvite(dbParty.id, userId, friendId);
-        }
+      const validFriendIds = await filterFriends(userId, inviteFriendIds);
+      if (validFriendIds.length > 0) {
+        await createPartyInvitesBatch(dbParty.id, userId, validFriendIds);
       }
     }
 
@@ -354,16 +360,13 @@ router.post('/:id/invite', authMiddleware, async (req: Request, res: Response, n
       return res.status(400).json({ error: 'Invalid friend IDs', code: 'INVALID_FRIENDS' });
     }
 
-    const invited: string[] = [];
-    for (const friendId of friendIds) {
-      const isFriend = await areFriends(userId, friendId);
-      if (isFriend) {
-        await createPartyInvite(dbParty.id, userId, friendId);
-        invited.push(friendId);
-      }
+    // Use batch operations to avoid N+1 queries
+    const validFriendIds = await filterFriends(userId, friendIds);
+    if (validFriendIds.length > 0) {
+      await createPartyInvitesBatch(dbParty.id, userId, validFriendIds);
     }
 
-    res.json({ success: true, invited });
+    res.json({ success: true, invited: validFriendIds });
   } catch (error) {
     next(error);
   }
@@ -435,6 +438,103 @@ router.post('/invites/:inviteId/decline', authMiddleware, async (req: Request, r
     await respondToInvite(inviteId, userId, false);
 
     res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ============ Party Messages (Ephemeral Chat) ============
+
+// Send a message to party chat
+router.post('/:id/messages', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.userId!;
+    const partyId = req.params.id as string;
+    const { content } = req.body as SendPartyMessageRequest;
+
+    // Validate content
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      return res.status(400).json({ error: 'Message content is required', code: 'INVALID_CONTENT' });
+    }
+
+    if (content.length > config.limits.maxPartyMessageLength) {
+      return res.status(400).json({
+        error: `Message too long (max ${config.limits.maxPartyMessageLength} characters)`,
+        code: 'MESSAGE_TOO_LONG'
+      });
+    }
+
+    // Check party exists and is active
+    const dbParty = await getPartyById(partyId);
+    if (!dbParty) {
+      return res.status(404).json({ error: 'Party not found', code: 'PARTY_NOT_FOUND' });
+    }
+
+    if (dbParty.status !== 'active') {
+      return res.status(400).json({ error: 'Party is not active', code: 'PARTY_NOT_ACTIVE' });
+    }
+
+    // Check user is a participant
+    const isInParty = await isParticipant(partyId, userId);
+    if (!isInParty) {
+      return res.status(403).json({ error: 'Not a participant', code: 'NOT_PARTICIPANT' });
+    }
+
+    // Check message limit and delete oldest if needed
+    const messageCount = await countPartyMessages(partyId);
+    if (messageCount >= config.limits.maxMessagesPerParty) {
+      // Delete oldest messages to make room (keep maxMessagesPerParty - 1)
+      await deleteOldestPartyMessages(partyId, config.limits.maxMessagesPerParty - 1);
+    }
+
+    // Create message
+    const dbMessage = await createPartyMessage(partyId, userId, content.trim());
+
+    const message: PartyMessage = {
+      id: dbMessage.id,
+      partyId: dbMessage.partyId,
+      author: dbMessage.author,
+      content: dbMessage.content,
+      createdAt: dbMessage.createdAt,
+    };
+
+    res.status(201).json({ message } as SendPartyMessageResponse);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get party messages
+router.get('/:id/messages', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.userId!;
+    const partyId = req.params.id as string;
+    const since = req.query.since ? parseInt(req.query.since as string, 10) : undefined;
+
+    // Check party exists
+    const dbParty = await getPartyById(partyId);
+    if (!dbParty) {
+      return res.status(404).json({ error: 'Party not found', code: 'PARTY_NOT_FOUND' });
+    }
+
+    // Check user is a participant
+    const isInParty = await isParticipant(partyId, userId);
+    if (!isInParty) {
+      return res.status(403).json({ error: 'Not a participant', code: 'NOT_PARTICIPANT' });
+    }
+
+    // Get messages
+    const dbMessages = await getPartyMessages(partyId, since);
+
+    const messages: PartyMessage[] = dbMessages.map((m) => ({
+      id: m.id,
+      partyId: m.partyId,
+      author: m.author,
+      content: m.content,
+      createdAt: m.createdAt,
+    }));
+
+    res.json({ messages } as GetPartyMessagesResponse);
   } catch (error) {
     next(error);
   }

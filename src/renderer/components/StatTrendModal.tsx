@@ -33,8 +33,18 @@ interface StatTrendModalProps {
   onClose: () => void;
 }
 
+// Custom tooltip props for trend chart
+interface TrendTooltipProps {
+  active?: boolean;
+  payload?: Array<{ value: number }>;
+  label?: string;
+  unitType: UnitType;
+  statType: TrendableStatType;
+  t: Record<string, string>;
+}
+
 // Custom tooltip component
-function CustomTooltip({ active, payload, label, unitType, statType, t }: any) {
+function CustomTooltip({ active, payload, label, unitType, statType, t }: TrendTooltipProps) {
   if (!active || !payload?.length) return null;
 
   const formatDate = (dateStr: string) => {

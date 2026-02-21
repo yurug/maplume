@@ -261,6 +261,32 @@ export interface InviteToPartyRequest {
   friendIds: string[];
 }
 
+// Party Messages (Ephemeral Chat)
+export interface PartyMessage {
+  id: string;
+  partyId: string;
+  author: {
+    id: string;
+    username: string;
+    avatarPreset: string | null;
+    avatarData?: import('./social-types').AvatarData | null;
+  };
+  content: string;
+  createdAt: number;
+}
+
+export interface SendPartyMessageRequest {
+  content: string;
+}
+
+export interface SendPartyMessageResponse {
+  message: PartyMessage;
+}
+
+export interface GetPartyMessagesResponse {
+  messages: PartyMessage[];
+}
+
 // Share Comments and Reactions
 export interface ShareCommentAuthor {
   id: string;

@@ -48,6 +48,9 @@ import type {
   AddReactionRequest,
   AddReactionResponse,
   GetReactionsResponse,
+  SendPartyMessageRequest,
+  SendPartyMessageResponse,
+  GetPartyMessagesResponse,
 } from '@maplume/shared';
 import { sign, bytesToBase64 } from './crypto';
 
@@ -76,21 +79,17 @@ class ApiClient {
   async initialize(): Promise<void> {
     // Load server URL from config
     const storedUrl = await window.electronAPI.getConfigValue(SERVER_URL_KEY);
-    console.log('[API] Stored URL:', storedUrl, 'Default URL:', DEFAULT_SERVER_URL);
 
     if (storedUrl && typeof storedUrl === 'string') {
       // Migrate from old localhost URL to new Scaleway URL
       if (storedUrl.includes('localhost') || storedUrl.includes('127.0.0.1')) {
         // Clear old localhost URL, use default
-        console.log('[API] Migrating from localhost to:', DEFAULT_SERVER_URL);
         await window.electronAPI.setConfigValue(SERVER_URL_KEY, DEFAULT_SERVER_URL);
         this.baseUrl = DEFAULT_SERVER_URL;
       } else {
         this.baseUrl = storedUrl;
       }
     }
-
-    console.log('[API] Using server URL:', this.baseUrl);
 
     // Load tokens from secure storage
     await this.loadTokens();
@@ -260,7 +259,6 @@ class ApiClient {
       encryptionPublicKey: encryptionPublicKey ? bytesToBase64(encryptionPublicKey) : undefined,
     };
 
-    console.log('[API] Registering user at:', this.baseUrl);
     return this.request<RegisterResponse>('POST', '/api/auth/register', request, false);
   }
 
@@ -608,6 +606,26 @@ class ApiClient {
    */
   async declinePartyInvite(inviteId: string): Promise<{ success: boolean }> {
     return this.request('POST', `/api/parties/invites/${inviteId}/decline`);
+  }
+
+  // ============ Party Messages (Ephemeral Chat) ============
+
+  /**
+   * Send a message to party chat
+   */
+  async sendPartyMessage(partyId: string, content: string): Promise<SendPartyMessageResponse> {
+    const request: SendPartyMessageRequest = { content };
+    return this.request<SendPartyMessageResponse>('POST', `/api/parties/${partyId}/messages`, request);
+  }
+
+  /**
+   * Get party messages
+   * @param partyId The party ID
+   * @param since Optional timestamp to get only messages after this time
+   */
+  async getPartyMessages(partyId: string, since?: number): Promise<GetPartyMessagesResponse> {
+    const queryParam = since !== undefined && since > 0 ? `?since=${since}` : '';
+    return this.request<GetPartyMessagesResponse>('GET', `/api/parties/${partyId}/messages${queryParam}`);
   }
 
   // ============ Health Check ============

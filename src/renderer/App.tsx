@@ -8,6 +8,7 @@ import { SyncBridge } from './components/SyncBridge';
 import { I18nProvider } from './i18n/I18nProvider';
 import { useI18n } from './i18n';
 import { SetupScreen } from './components/SetupScreen';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProjectList } from './components/ProjectList';
 import { ProjectForm } from './components/ProjectForm';
 import { WordEntryForm } from './components/WordEntryForm';
@@ -349,7 +350,9 @@ function AppContent() {
                   transition={{ duration: 0.3 }}
                   className="relative z-10 h-full overflow-y-auto"
                 >
-                  <Dashboard />
+                  <ErrorBoundary sectionName="Dashboard">
+                    <Dashboard />
+                  </ErrorBoundary>
                 </motion.div>
               ) : showSocial ? (
                 <motion.div
@@ -360,7 +363,9 @@ function AppContent() {
                   transition={{ duration: 0.3 }}
                   className="relative z-10 h-full"
                 >
-                  <SocialTab selectedPartyId={selectedPartyId} />
+                  <ErrorBoundary sectionName="Social">
+                    <SocialTab selectedPartyId={selectedPartyId} />
+                  </ErrorBoundary>
                 </motion.div>
               ) : selectedSharedProjectId ? (
                 <motion.div
@@ -371,10 +376,12 @@ function AppContent() {
                   transition={{ duration: 0.3 }}
                   className="relative z-10 h-full"
                 >
-                  <SharedProjectView
-                    shareId={selectedSharedProjectId}
-                    onBack={() => setSelectedSharedProjectId(null)}
-                  />
+                  <ErrorBoundary sectionName="Shared Project">
+                    <SharedProjectView
+                      shareId={selectedSharedProjectId}
+                      onBack={() => setSelectedSharedProjectId(null)}
+                    />
+                  </ErrorBoundary>
                 </motion.div>
               ) : activeProject ? (
                 <motion.div
@@ -385,6 +392,7 @@ function AppContent() {
                   transition={{ duration: 0.3 }}
                   className="relative z-10 space-y-6"
                 >
+                  <ErrorBoundary sectionName="Project View">
                   {/* Project Header */}
                   <div className="flex items-start justify-between gap-4">
                     <div className="space-y-1">
@@ -488,6 +496,7 @@ function AppContent() {
                       )}
                     </AnimatePresence>
                   </motion.div>
+                  </ErrorBoundary>
                 </motion.div>
               ) : (
                 <div className="relative z-10">
@@ -501,33 +510,41 @@ function AppContent() {
         {/* Project Form Modal */}
         <AnimatePresence>
           {showProjectForm && dataPath && (
-            <ProjectForm
-              project={editingProject}
-              entries={editingProject ? state.entries.filter(e => e.projectId === editingProject.id) : []}
-              onSave={handleSaveProject}
-              onCancel={() => {
-                setShowProjectForm(false);
-                setEditingProject(undefined);
-              }}
-              onArchive={editingProject ? handleArchiveProject : undefined}
-              dataPath={dataPath}
-            />
+            <ErrorBoundary sectionName="Project Form">
+              <ProjectForm
+                project={editingProject}
+                entries={editingProject ? state.entries.filter(e => e.projectId === editingProject.id) : []}
+                onSave={handleSaveProject}
+                onCancel={() => {
+                  setShowProjectForm(false);
+                  setEditingProject(undefined);
+                }}
+                onArchive={editingProject ? handleArchiveProject : undefined}
+                dataPath={dataPath}
+              />
+            </ErrorBoundary>
           )}
         </AnimatePresence>
 
         {/* Settings Panel */}
         <AnimatePresence>
-          {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+          {showSettings && (
+            <ErrorBoundary sectionName="Settings">
+              <SettingsPanel onClose={() => setShowSettings(false)} />
+            </ErrorBoundary>
+          )}
         </AnimatePresence>
 
         {/* Global Statistics */}
         <AnimatePresence>
           {showGlobalStats && (
-            <GlobalStatistics
-              projects={state.projects}
-              entries={state.entries}
-              onClose={() => setShowGlobalStats(false)}
-            />
+            <ErrorBoundary sectionName="Global Statistics">
+              <GlobalStatistics
+                projects={state.projects}
+                entries={state.entries}
+                onClose={() => setShowGlobalStats(false)}
+              />
+            </ErrorBoundary>
           )}
         </AnimatePresence>
 
@@ -543,11 +560,13 @@ function AppContent() {
             if (!projectToShare) return null;
             const projectEntries = state.entries.filter(e => e.projectId === sharingProjectId);
             return (
-              <ShareProjectModal
-                project={projectToShare}
-                entries={projectEntries}
-                onClose={() => setSharingProjectId(null)}
-              />
+              <ErrorBoundary sectionName="Share Project">
+                <ShareProjectModal
+                  project={projectToShare}
+                  entries={projectEntries}
+                  onClose={() => setSharingProjectId(null)}
+                />
+              </ErrorBoundary>
             );
           })()}
         </AnimatePresence>

@@ -427,4 +427,10 @@ export default {
   friday: '金',
   saturday: '土',
   sunday: '日',
+
+  // Party Chat
+  chat: 'チャット',
+  sendMessage: '送信',
+  typeMessage: 'メッセージを入力...',
+  noMessages: 'まだメッセージはありません。挨拶しましょう！',
 } as const;

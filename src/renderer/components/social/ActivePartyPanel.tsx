@@ -34,6 +34,7 @@ import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import { formatTimeRemaining } from './PartySection';
 import { Avatar } from './Avatar';
+import { PartyChat } from './PartyChat';
 
 interface ActivePartyPanelProps {
   partyId: string;
@@ -521,6 +522,9 @@ export function ActivePartyPanel({ partyId, onBack }: ActivePartyPanelProps) {
           </div>
         </div>
       )}
+
+      {/* Party Chat */}
+      <PartyChat partyId={partyId} isActive={party.status === 'active'} />
 
       {/* Actions */}
       <div className="p-6 border-t border-warm-200 dark:border-warm-700 flex gap-3">

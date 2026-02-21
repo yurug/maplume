@@ -4,7 +4,7 @@
  * Shows user info and social features
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LogOut, Users, Share2, PartyPopper, Cloud, RefreshCw, Download, Check, ChevronRight, Plus, History, Pencil } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { useApp } from '../../context/AppContext';
@@ -40,13 +40,16 @@ export function SocialDashboard({ selectedPartyId }: SocialDashboardProps) {
   const [showJoinParty, setShowJoinParty] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
+  // Use ref to access latest actions without including in deps
+  const actionsRef = useRef(actions);
+  actionsRef.current = actions;
+
   // Load shares and parties on mount (only once when user is available and online)
   useEffect(() => {
     if (state.user && state.isOnline) {
-      actions.refreshShares();
-      actions.refreshParties();
+      actionsRef.current.refreshShares();
+      actionsRef.current.refreshParties();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.user?.id, state.isOnline]);
 
   // Navigate to party when selectedPartyId prop changes

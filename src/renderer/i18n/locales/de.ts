@@ -427,4 +427,10 @@ export default {
   friday: 'Fr',
   saturday: 'Sa',
   sunday: 'So',
+
+  // Party Chat
+  chat: 'Chat',
+  sendMessage: 'Senden',
+  typeMessage: 'Nachricht eingeben...',
+  noMessages: 'Noch keine Nachrichten. Sag Hallo!',
 } as const;

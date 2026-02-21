@@ -427,4 +427,10 @@ export default {
   friday: 'Vie',
   saturday: 'Sáb',
   sunday: 'Dom',
+
+  // Party Chat
+  chat: 'Chat',
+  sendMessage: 'Enviar',
+  typeMessage: 'Escribe un mensaje...',
+  noMessages: 'Sin mensajes aún. ¡Di hola!',
 } as const;

@@ -4,7 +4,7 @@
  * Allows users to select a friend and share type (full or stats only).
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X, Share2, Users, Eye, Lock, RefreshCw, Check, UserX, MessageSquare } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
@@ -32,11 +32,14 @@ export function ShareProjectModal({ project, entries, onClose }: ShareProjectMod
   // Check if any entries have notes
   const hasNotes = entries.some(e => e.note);
 
+  // Use ref to access latest actions without including in deps
+  const actionsRef = useRef(actions);
+  actionsRef.current = actions;
+
   // Load friends when modal opens
   useEffect(() => {
-    actions.refreshFriends();
-    actions.refreshShares();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    actionsRef.current.refreshFriends();
+    actionsRef.current.refreshShares();
   }, []);
 
   // Get shares for this project

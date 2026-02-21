@@ -427,4 +427,10 @@ export default {
   friday: '五',
   saturday: '六',
   sunday: '日',
+
+  // Party Chat
+  chat: '聊天',
+  sendMessage: '发送',
+  typeMessage: '输入消息...',
+  noMessages: '还没有消息，打个招呼吧！',
 } as const;

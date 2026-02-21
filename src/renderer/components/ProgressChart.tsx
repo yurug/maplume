@@ -28,6 +28,26 @@ interface ProgressChartProps {
   onDateSelect?: (date: string) => void;
 }
 
+// Recharts tooltip payload item type
+interface TooltipPayloadItem {
+  dataKey: string;
+  value: number;
+  color: string;
+  payload: {
+    notes?: string[];
+    [key: string]: unknown;
+  };
+}
+
+// Custom tooltip props
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadItem[];
+  label?: string;
+  t: Record<string, string>;
+  unitType: UnitType;
+}
+
 // Get unit display name
 function getUnitDisplay(unitType: UnitType, t: Record<string, string>): string {
   switch (unitType) {
@@ -38,7 +58,7 @@ function getUnitDisplay(unitType: UnitType, t: Record<string, string>): string {
 }
 
 // Custom tooltip component
-function CustomTooltip({ active, payload, label, t, unitType }: any) {
+function CustomTooltip({ active, payload, label, t, unitType }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
 
   const formatDate = (dateStr: string) => {
@@ -66,7 +86,7 @@ function CustomTooltip({ active, payload, label, t, unitType }: any) {
     <div className="chart-tooltip">
       <p className="mb-2 font-medium text-warm-900 dark:text-warm-100">{formatDate(label)}</p>
       <div className="space-y-1.5">
-        {payload.map((entry: any, index: number) => (
+        {payload.map((entry: TooltipPayloadItem, index: number) => (
           <div key={`${entry.dataKey}-${index}`} className="flex items-center gap-2">
             <div
               className="h-2.5 w-2.5 rounded-full"

@@ -38,6 +38,9 @@ export interface Config {
     maxPendingFriendRequests: number;
     // Challenge limits
     maxChallengesPerUser: number;
+    // Party message limits
+    maxPartyMessageLength: number;
+    maxMessagesPerParty: number;
   };
 }
 
@@ -109,6 +112,9 @@ export function loadConfig(): Config {
       maxPendingFriendRequests: 50,
       // Challenge limits (in-memory)
       maxChallengesPerUser: 5,
+      // Party message limits
+      maxPartyMessageLength: 500,
+      maxMessagesPerParty: 1000,
     },
   };
 }
