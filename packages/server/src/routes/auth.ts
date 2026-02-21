@@ -131,6 +131,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response, next) =>
         id: user.id,
         username: user.username,
         avatarPreset: user.avatarPreset,
+        avatarData: user.avatarData,
       },
     });
   } catch (err) {

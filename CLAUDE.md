@@ -175,8 +175,8 @@ cd packages/server
 docker build -t rg.fr-par.scw.cloud/maplume/server:latest -f Dockerfile ../..
 docker push rg.fr-par.scw.cloud/maplume/server:latest
 
-# 2. Redeploy the container (pulls latest image)
-scw container container redeploy <container-id>
+# 2. Deploy the container (pulls latest image)
+scw container container deploy <container-id>
 ```
 
 ### Updating Environment Variables
