@@ -25,6 +25,22 @@ export function EntriesTable({ entries }: EntriesTableProps) {
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
+  // Compute running cumulative total and delta for each entry
+  const entryTotals = new Map<string, { cumulative: number; delta: number }>();
+  let cumulative = 0;
+  for (const entry of sortedEntries) {
+    const prevCumulative = cumulative;
+    if (entry.isIncrement) {
+      cumulative += entry.wordCount;
+    } else {
+      cumulative = entry.wordCount;
+    }
+    entryTotals.set(entry.id, {
+      cumulative,
+      delta: cumulative - prevCumulative,
+    });
+  }
+
   const handleEdit = (entry: WordEntry) => {
     setEditingId(entry.id);
     setEditWordCount(entry.wordCount.toString());
@@ -84,6 +100,9 @@ export function EntriesTable({ entries }: EntriesTableProps) {
                 {t.words}
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-warm-500 dark:text-warm-400">
+                {t.cumulativeTotal}
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-warm-500 dark:text-warm-400">
                 {t.type}
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-warm-500 dark:text-warm-400">
@@ -135,6 +154,30 @@ export function EntriesTable({ entries }: EntriesTableProps) {
                         {entry.wordCount.toLocaleString()}
                       </span>
                     )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const totals = entryTotals.get(entry.id);
+                      if (!totals) return null;
+                      const { cumulative: total, delta } = totals;
+                      return (
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-mono font-medium text-warm-900 dark:text-warm-50">
+                            {total.toLocaleString()}
+                          </span>
+                          {delta !== 0 && (
+                            <span className={cn(
+                              'text-xs font-mono',
+                              delta > 0
+                                ? 'text-success-600 dark:text-success-400'
+                                : 'text-danger-600 dark:text-danger-400'
+                            )}>
+                              {delta > 0 ? '+' : ''}{delta.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3">
                     <Badge

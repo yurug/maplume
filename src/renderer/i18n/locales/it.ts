@@ -63,6 +63,7 @@ export default {
   type: 'Tipo',
   add: '+ Aggiungi',
   total: '= Totale',
+  cumulativeTotal: 'Totale',
   log: 'Registra',
   unitsLogged: '{unit} registrate!',
 

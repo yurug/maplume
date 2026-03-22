@@ -63,6 +63,7 @@ export default {
   type: 'Type',
   add: '+ Add',
   total: '= Total',
+  cumulativeTotal: 'Total',
   log: 'Log',
   unitsLogged: '{unit} logged!',
   addNote: 'Add a note',

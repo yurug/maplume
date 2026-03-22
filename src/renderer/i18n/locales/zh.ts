@@ -63,6 +63,7 @@ export default {
   type: '类型',
   add: '+ 增量',
   total: '= 总计',
+  cumulativeTotal: '总计',
   log: '记录',
   unitsLogged: '{unit} 已记录！',
 

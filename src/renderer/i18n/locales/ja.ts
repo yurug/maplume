@@ -63,6 +63,7 @@ export default {
   type: 'タイプ',
   add: '+ 追加',
   total: '= 合計',
+  cumulativeTotal: '合計',
   log: '記録',
   unitsLogged: '{unit}を記録しました！',
 

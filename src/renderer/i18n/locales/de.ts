@@ -63,6 +63,7 @@ export default {
   type: 'Typ',
   add: '+ Hinzufügen',
   total: '= Gesamt',
+  cumulativeTotal: 'Gesamt',
   log: 'Eintragen',
   unitsLogged: '{unit} eingetragen!',
 
