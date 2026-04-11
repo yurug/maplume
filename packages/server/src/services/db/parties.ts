@@ -2,7 +2,7 @@
  * Party database operations
  */
 
-import { randomUUID } from 'crypto';
+import { randomUUID, randomBytes } from 'crypto';
 import { getPool } from './connection';
 import type { DbUser } from './users';
 
@@ -48,9 +48,10 @@ export interface DbPartyInvite {
 // Helper to generate a 6-character alphanumeric join code
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars like 0, O, I, 1
+  const bytes = randomBytes(6);
   let code = '';
   for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+    code += chars.charAt(bytes[i] % chars.length);
   }
   return code;
 }
@@ -143,17 +144,19 @@ export async function getPartyByJoinCode(joinCode: string): Promise<DbParty | nu
   };
 }
 
-export async function getActivePartiesForUser(userId: string): Promise<Array<DbParty & { participantCount: number; isParticipating: boolean }>> {
+export async function getActivePartiesForUser(userId: string): Promise<Array<DbParty & { participantCount: number; isParticipating: boolean; creatorUsername: string; creatorAvatarPreset: string | null }>> {
   const result = await getPool().query(
     `SELECT p.id, p.creator_id, p.title, p.scheduled_start, p.actual_start, p.duration_minutes, p.ended_at, p.join_code, p.ranking_enabled, p.created_at, p.status,
+            u.username as creator_username, u.avatar_preset as creator_avatar_preset,
             COUNT(DISTINCT pp.user_id) as participant_count,
             EXISTS(SELECT 1 FROM party_participants WHERE party_id = p.id AND user_id = $1 AND left_at IS NULL) as is_participating
      FROM parties p
+     JOIN users u ON u.id = p.creator_id
      LEFT JOIN party_participants pp ON pp.party_id = p.id AND pp.left_at IS NULL
      WHERE p.status = 'active'
        AND (EXISTS(SELECT 1 FROM party_participants WHERE party_id = p.id AND user_id = $1 AND left_at IS NULL)
             OR p.creator_id = $1)
-     GROUP BY p.id
+     GROUP BY p.id, u.username, u.avatar_preset
      ORDER BY p.actual_start DESC`,
     [userId]
   );
@@ -172,21 +175,25 @@ export async function getActivePartiesForUser(userId: string): Promise<Array<DbP
     status: row.status,
     participantCount: parseInt(row.participant_count),
     isParticipating: row.is_participating,
+    creatorUsername: row.creator_username,
+    creatorAvatarPreset: row.creator_avatar_preset,
   }));
 }
 
-export async function getUpcomingPartiesForUser(userId: string): Promise<Array<DbParty & { participantCount: number; isParticipating: boolean }>> {
+export async function getUpcomingPartiesForUser(userId: string): Promise<Array<DbParty & { participantCount: number; isParticipating: boolean; creatorUsername: string; creatorAvatarPreset: string | null }>> {
   const result = await getPool().query(
     `SELECT p.id, p.creator_id, p.title, p.scheduled_start, p.actual_start, p.duration_minutes, p.ended_at, p.join_code, p.ranking_enabled, p.created_at, p.status,
+            u.username as creator_username, u.avatar_preset as creator_avatar_preset,
             COUNT(DISTINCT pp.user_id) as participant_count,
             EXISTS(SELECT 1 FROM party_participants WHERE party_id = p.id AND user_id = $1 AND left_at IS NULL) as is_participating
      FROM parties p
+     JOIN users u ON u.id = p.creator_id
      LEFT JOIN party_participants pp ON pp.party_id = p.id AND pp.left_at IS NULL
      WHERE p.status = 'scheduled'
        AND (EXISTS(SELECT 1 FROM party_participants WHERE party_id = p.id AND user_id = $1 AND left_at IS NULL)
             OR EXISTS(SELECT 1 FROM party_invites WHERE party_id = p.id AND invited_user_id = $1 AND status = 'pending')
             OR p.creator_id = $1)
-     GROUP BY p.id
+     GROUP BY p.id, u.username, u.avatar_preset
      ORDER BY p.scheduled_start ASC`,
     [userId]
   );
@@ -205,18 +212,22 @@ export async function getUpcomingPartiesForUser(userId: string): Promise<Array<D
     status: row.status,
     participantCount: parseInt(row.participant_count),
     isParticipating: row.is_participating,
+    creatorUsername: row.creator_username,
+    creatorAvatarPreset: row.creator_avatar_preset,
   }));
 }
 
-export async function getPartyHistoryForUser(userId: string, limit = 20): Promise<Array<DbParty & { participantCount: number }>> {
+export async function getPartyHistoryForUser(userId: string, limit = 20): Promise<Array<DbParty & { participantCount: number; creatorUsername: string; creatorAvatarPreset: string | null }>> {
   const result = await getPool().query(
     `SELECT p.id, p.creator_id, p.title, p.scheduled_start, p.actual_start, p.duration_minutes, p.ended_at, p.join_code, p.ranking_enabled, p.created_at, p.status,
+            u.username as creator_username, u.avatar_preset as creator_avatar_preset,
             COUNT(DISTINCT pp.user_id) as participant_count
      FROM parties p
+     JOIN users u ON u.id = p.creator_id
      LEFT JOIN party_participants pp ON pp.party_id = p.id
      WHERE p.status = 'ended'
        AND EXISTS(SELECT 1 FROM party_participants WHERE party_id = p.id AND user_id = $1)
-     GROUP BY p.id
+     GROUP BY p.id, u.username, u.avatar_preset
      ORDER BY p.ended_at DESC
      LIMIT $2`,
     [userId, limit]
@@ -235,6 +246,8 @@ export async function getPartyHistoryForUser(userId: string, limit = 20): Promis
     createdAt: parseInt(row.created_at),
     status: row.status,
     participantCount: parseInt(row.participant_count),
+    creatorUsername: row.creator_username,
+    creatorAvatarPreset: row.creator_avatar_preset,
   }));
 }
 

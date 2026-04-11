@@ -1,20 +1,11 @@
 import { Router } from 'express';
-import { Pool } from 'pg';
-import { config } from '../config';
+import { getPool } from '../services/database';
 
 const router = Router();
 
 // Simple admin token check (set via environment variable)
 // For a production system, use proper admin authentication
 const ADMIN_TOKEN = process.env.ADMIN_STATS_TOKEN;
-
-// Initialize pool for stats queries
-function getPool(): Pool {
-  return new Pool({
-    connectionString: config.databaseUrl,
-    ssl: config.databaseUrl.includes('sslmode=require') ? { rejectUnauthorized: false } : undefined,
-  });
-}
 
 interface ServerStats {
   users: {
@@ -66,7 +57,6 @@ router.get('/', async (req, res) => {
   }
 
   const pool = getPool();
-
   try {
     const now = Date.now();
     const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
@@ -182,8 +172,6 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error fetching stats:', error);
     res.status(500).json({ error: 'Failed to fetch statistics' });
-  } finally {
-    await pool.end();
   }
 });
 

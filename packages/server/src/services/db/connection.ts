@@ -10,7 +10,10 @@ let pool: Pool | null = null;
 export async function initDatabase(): Promise<void> {
   pool = new Pool({
     connectionString: config.databaseUrl,
-    ssl: config.databaseUrl.includes('sslmode=require') ? { rejectUnauthorized: false } : undefined,
+    ssl: config.databaseUrl.includes('sslmode=require') ? { rejectUnauthorized: true } : undefined,
+    max: 5,
+    idleTimeoutMillis: 10000,
+    connectionTimeoutMillis: 5000,
   });
 
   // Test connection

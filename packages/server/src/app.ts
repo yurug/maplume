@@ -60,8 +60,13 @@ export function createApp(): Express {
     res.json({ status: 'ok', timestamp: Date.now() });
   });
 
-  // Debug endpoint (shows connection info without secrets)
-  app.get('/debug', (_req: Request, res: Response) => {
+  // Debug endpoint (shows connection info without secrets, requires admin token)
+  app.get('/debug', (req: Request, res: Response) => {
+    const adminToken = process.env.ADMIN_STATS_TOKEN;
+    const authHeader = req.headers.authorization;
+    if (!adminToken || !authHeader || authHeader !== `Bearer ${adminToken}`) {
+      return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
     // Parse DATABASE_URL to show host/db without credentials
     let dbInfo: { host?: string; port?: string; database?: string; ssl?: boolean } = {};
     try {

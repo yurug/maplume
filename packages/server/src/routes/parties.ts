@@ -51,8 +51,11 @@ import type {
 const router = Router();
 
 // Helper to convert DbParty to API Party type
-async function toApiParty(dbParty: DbParty & { participantCount?: number; isParticipating?: boolean }, includeParticipants = false): Promise<Party> {
-  const creator = await getCreatorInfo(dbParty.creatorId);
+async function toApiParty(dbParty: DbParty & { participantCount?: number; isParticipating?: boolean; creatorUsername?: string; creatorAvatarPreset?: string | null }, includeParticipants = false): Promise<Party> {
+  // Use pre-fetched creator info from JOINed queries when available, avoiding N+1
+  const creator = dbParty.creatorUsername
+    ? { id: dbParty.creatorId, username: dbParty.creatorUsername, avatarPreset: dbParty.creatorAvatarPreset ?? null }
+    : await getCreatorInfo(dbParty.creatorId);
   let participants: PartyParticipant[] | undefined;
 
   if (includeParticipants) {

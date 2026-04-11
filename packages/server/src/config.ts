@@ -59,10 +59,12 @@ function getEnvOrThrow(key: string): string {
 export function loadConfig(): Config {
   const httpsEnabled = getEnvOrDefault('HTTPS_ENABLED', 'false') === 'true';
 
-  // Warn if using default JWT secret in production
-  const jwtSecret = getEnvOrDefault('JWT_SECRET', 'dev-secret-change-in-production');
-  if (jwtSecret === 'dev-secret-change-in-production' && process.env.NODE_ENV === 'production') {
-    console.error('⚠️  WARNING: Using default JWT_SECRET in production! Set JWT_SECRET environment variable.');
+  // Require JWT_SECRET in production
+  let jwtSecret: string;
+  if (process.env.NODE_ENV === 'production') {
+    jwtSecret = getEnvOrThrow('JWT_SECRET');
+  } else {
+    jwtSecret = getEnvOrDefault('JWT_SECRET', 'dev-secret-change-in-production');
   }
 
   return {

@@ -3,7 +3,8 @@ import https from 'https';
 import fs from 'fs';
 import { createApp, setDbStatus } from './app';
 import { config } from './config';
-import { initDatabase } from './services/database';
+import { initDatabase, closeDatabase } from './services/database';
+import { stopChallengeCleanup } from './services/auth';
 
 let dbReady = false;
 
@@ -72,9 +73,11 @@ async function main() {
   }
 
   // Graceful shutdown
-  const shutdown = () => {
+  const shutdown = async () => {
     console.log('\nShutting down...');
-    server.close(() => {
+    stopChallengeCleanup();
+    server.close(async () => {
+      await closeDatabase();
       console.log('Server closed');
       process.exit(0);
     });

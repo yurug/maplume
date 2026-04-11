@@ -8,9 +8,9 @@ import * as db from './database';
 const challenges = new Map<string, { challenge: string; expiresAt: number }>();
 
 // Maximum total challenges to prevent memory exhaustion
-const MAX_TOTAL_CHALLENGES = 10000;
+const MAX_TOTAL_CHALLENGES = 1000;
 
-// Cleanup interval (run every minute)
+// Cleanup interval (run every 30 seconds)
 let cleanupInterval: NodeJS.Timeout | null = null;
 
 function startChallengeCleanup(): void {
@@ -22,7 +22,15 @@ function startChallengeCleanup(): void {
         challenges.delete(userId);
       }
     }
-  }, 60 * 1000);
+  }, 30 * 1000);
+}
+
+export function stopChallengeCleanup(): void {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
+  challenges.clear();
 }
 
 export function generateChallenge(): string {
