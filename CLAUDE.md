@@ -214,10 +214,19 @@ scw container container update <container-id> \
 # Migrations run automatically on server startup
 ```
 
-### Current Resource IDs (as of Jan 2026)
-- Container ID: `86cdd28e-7483-40a7-b48e-8543a7ca22a2`
-- Database ID: `5eb67483-e3be-437e-98d9-52d0b512a19a`
-- Namespace ID: `31b0702f-cc87-4f00-ae29-7d991fe42192`
+### Current Resource IDs
+
+Not recorded here: this file is public, and pre-baking the container/database/
+namespace IDs hands a future credential leak a ready-made target list. They are
+also short-lived — the database ID changes every time the database is recreated
+(see the wipe procedure above).
+
+Look them up when you need them, with the `list` commands in the section above:
+
+```bash
+scw container container list   # container ID, namespace ID
+scw sdb-sql database list      # database ID
+```
 
 ## Website & Releases
 
