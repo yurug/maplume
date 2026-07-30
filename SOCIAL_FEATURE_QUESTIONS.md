@@ -27,7 +27,7 @@
 ### Network Access
 - **Domain name**: Do you have a domain, or will this be accessed via IP + port?
 
-yurug.freeboxos.fr and the port of your choice
+your-domain.example and the port of your choice
 
 - **Dynamic IP**: Does your home connection have a static IP, or do you need dynamic DNS (e.g., DuckDNS, No-IP)?
 

@@ -359,7 +359,7 @@ const jwtConfig = {
 
 ```bash
 # Certbot with standalone mode (server handles renewal)
-certbot certonly --standalone -d yurug.freeboxos.fr --agree-tos --email your@email.com
+certbot certonly --standalone -d your-domain.example --agree-tos --email your@email.com
 ```
 
 ### 2.5 TUI Admin Panel
@@ -670,7 +670,7 @@ services:
       - ./data:/data
       - ./certs:/etc/letsencrypt
     environment:
-      - DOMAIN=yurug.freeboxos.fr
+      - DOMAIN=your-domain.example
       - ADMIN_SECRET=${ADMIN_SECRET}
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "https://localhost/health"]
@@ -683,7 +683,7 @@ services:
 
 ```bash
 # .env
-DOMAIN=yurug.freeboxos.fr
+DOMAIN=your-domain.example
 PORT=443
 DATA_DIR=/data
 JWT_SECRET=<generated-secret>
